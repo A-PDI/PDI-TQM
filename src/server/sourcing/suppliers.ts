@@ -6,6 +6,7 @@ import { many, one, withTransaction } from '../db.js';
 import { conflict, forbidden, notFound, unprocessable } from '../errors.js';
 import { nextRecordNumber } from '../numbering.js';
 import type { Services } from '../services.js';
+import { qualityContext } from '../quality/context.js';
 import { activeRestrictions, effectiveSourceStatuses, siteQualifications } from './status.js';
 
 const uuid = z.string().uuid();
@@ -25,7 +26,7 @@ export function registerSupplierRoutes(app: FastifyInstance, svc: Services) {
          FROM supplier s ORDER BY s.legal_name`,
     );
     const restrictions = await activeRestrictions(db, rows.map((r) => r.id));
-    return rows.map((r) => ({ ...r, restricted: restrictions.some((x) => x.supplier_id === r.id) }));
+    return rows.map((r) => ({ ...r, restricted: restrictions.some((x) => x.supplier_id === r.id && x.source_id === null) }));
   });
 
   app.post('/api/suppliers', async (req, reply) => {
@@ -134,7 +135,9 @@ export function registerSupplierRoutes(app: FastifyInstance, svc: Services) {
       ),
       many(
         db,
-        `SELECT r.id, r.site_id AS "siteId", ss.name AS "siteName", r.reason, r.decided_at AS "decidedAt", u.display_name AS "decidedBy",
+        `SELECT r.id, r.kind, r.site_id AS "siteId", ss.name AS "siteName", r.source_id AS "sourceId",
+                (SELECT p.part_number || ' @ ' || xs.name FROM source x JOIN company_part p ON p.id = x.part_id JOIN supplier_site xs ON xs.id = x.site_id WHERE x.id = r.source_id) AS "sourceLabel",
+                r.reason, r.decided_at AS "decidedAt", u.display_name AS "decidedBy",
                 r.lifted_at AS "liftedAt", l.display_name AS "liftedBy", r.lift_reason AS "liftReason"
            FROM supplier_restriction r JOIN app_user u ON u.id = r.decided_by LEFT JOIN app_user l ON l.id = r.lifted_by
            LEFT JOIN supplier_site ss ON ss.id = r.site_id
@@ -164,6 +167,7 @@ export function registerSupplierRoutes(app: FastifyInstance, svc: Services) {
       restrictions,
       certificates,
       supplierParts,
+      quality: await qualityContext(db, { supplierId: id }, svc.config.displayTimeZone),
       permissions: {
         canManage: has(auth, 'supplier.manage'),
         canQualify: has(auth, 'supplier.qualify'),
@@ -311,21 +315,50 @@ export function registerSupplierRoutes(app: FastifyInstance, svc: Services) {
     return reply.code(201).send(created);
   });
 
+  // Restriction of one exact source, e.g. after a failed verification of a supplier commitment (AT-07).
+  app.post('/api/sources/:id/restrictions', async (req, reply) => {
+    const { id } = req.params as { id: string };
+    if (!uuid.safeParse(id).success) throw notFound('Source');
+    const auth = await requireCapability(db, req, 'supplier.restrict', { action: 'source.restrict', entityType: 'source', entityId: id });
+    const body = z.object({ reason: z.string().trim().min(5).max(2000) }).parse(req.body);
+    const created = await withTransaction(db, async (tx) => {
+      const src = await one<{ supplier_id: string }>(tx, 'SELECT supplier_id FROM source WHERE id = $1 FOR UPDATE', [id]);
+      if (!src) throw notFound('Source');
+      if (await one(tx, 'SELECT 1 FROM supplier_restriction WHERE source_id = $1 AND lifted_at IS NULL', [id])) throw conflict('This source is already restricted');
+      const r = await one<{ id: string }>(
+        tx,
+        `INSERT INTO supplier_restriction (supplier_id, source_id, kind, reason, decided_by) VALUES ($1,$2,'RESTRICTED',$3,$4) RETURNING id`,
+        [src.supplier_id, id, body.reason, auth.userId],
+      );
+      await audit(tx, { actorId: auth.userId, action: 'source.restrict', entityType: 'source', entityId: id, summary: 'Exact source restricted; new approvals and receipts are held', reason: body.reason, after: { restrictionId: r!.id }, requestId: req.id });
+      return { id: r!.id };
+    });
+    return reply.code(201).send(created);
+  });
+
   app.post('/api/restrictions/:id/lift', async (req) => {
     const { id } = req.params as { id: string };
     const auth = await requireCapability(db, req, 'supplier.restrict', { action: 'supplier.reinstate', entityType: 'supplier_restriction', entityId: id });
     const body = z.object({ reason: z.string().trim().min(5).max(2000) }).parse(req.body);
     if (!uuid.safeParse(id).success) throw notFound('Restriction');
     return withTransaction(db, async (tx) => {
-      const r = await one<{ supplier_id: string; lifted_at: Date | null; decided_by: string }>(
+      const r = await one<{ supplier_id: string; source_id: string | null; lifted_at: Date | null; decided_by: string }>(
         tx,
-        'SELECT supplier_id, lifted_at, decided_by FROM supplier_restriction WHERE id = $1 FOR UPDATE',
+        'SELECT supplier_id, source_id, lifted_at, decided_by FROM supplier_restriction WHERE id = $1 FOR UPDATE',
         [id],
       );
       if (!r) throw notFound('Restriction');
       if (r.lifted_at) throw conflict('This restriction was already lifted');
       await tx.query('UPDATE supplier_restriction SET lifted_at = now(), lifted_by = $2, lift_reason = $3 WHERE id = $1', [id, auth.userId, body.reason]);
-      await audit(tx, { actorId: auth.userId, action: 'supplier.reinstate', entityType: 'supplier', entityId: r.supplier_id, summary: 'Suspension lifted (reinstated)', reason: body.reason, requestId: req.id });
+      await audit(tx, {
+        actorId: auth.userId,
+        action: 'supplier.reinstate',
+        entityType: r.source_id ? 'source' : 'supplier',
+        entityId: r.source_id ?? r.supplier_id,
+        summary: r.source_id ? 'Source restriction lifted (reinstated)' : 'Suspension lifted (reinstated)',
+        reason: body.reason,
+        requestId: req.id,
+      });
       return { ok: true };
     });
   });

@@ -4,7 +4,9 @@ import type { EffectiveSourceStatus } from '../../shared/sourcing';
 import { api, fmtDate, fmtDateTime } from '../api';
 import { useAuth } from '../auth';
 import { FileLinks, QualificationBadge, SourceStatusBadge, UploadEvidence, useBusy } from '../components/sourcing';
+import { type QualityContext, QualityContextCard } from '../components/quality';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
+import { NewCommitmentDialog } from './Commitments';
 
 const Synthetic = ({ on }: { on: boolean }) => (on ? <span className="badge badge-synthetic">fictional</span> : null);
 
@@ -142,7 +144,21 @@ interface SupplierData {
   inspections: Array<{ id: string; number: string; partNumber: string; status: string; outcome: string | null; dateReceived: string }>;
   concerns: Array<{ id: string; number: string; title: string; status: string }>;
   qualifications: Qualification[];
-  restrictions: Array<{ id: string; siteId: string | null; siteName: string | null; reason: string; decidedAt: string; decidedBy: string; liftedAt: string | null; liftedBy: string | null; liftReason: string | null }>;
+  restrictions: Array<{
+    id: string;
+    kind: string;
+    siteId: string | null;
+    siteName: string | null;
+    sourceId: string | null;
+    sourceLabel: string | null;
+    reason: string;
+    decidedAt: string;
+    decidedBy: string;
+    liftedAt: string | null;
+    liftedBy: string | null;
+    liftReason: string | null;
+  }>;
+  quality: QualityContext;
   certificates: Array<{ id: string; siteName: string | null; certType: string; certNumber: string | null; issuer: string | null; validUntil: string | null; expired: boolean; files: Array<{ linkId: string; fileId: string; name: string }> }>;
   supplierParts: Array<{ id: string; supplierPartNumber: string; description: string | null }>;
   permissions: { canManage: boolean; canQualify: boolean; canRestrict: boolean };
@@ -152,8 +168,9 @@ type DialogKind = null | 'site' | 'assess' | 'part' | 'cert' | { decide: Qualifi
 
 export function SupplierDetail() {
   const { id = '' } = useParams();
-  const { me } = useAuth();
+  const { me, can } = useAuth();
   const { data, error, loading, reload } = useLoad<SupplierData>(`/api/suppliers/${id}`);
+  const [commitmentOpen, setCommitmentOpen] = useState(false);
   const [dialog, setDialog] = useState<DialogKind>(null);
   const { busy, run, banner } = useBusy();
   const [f, setF] = useState<Record<string, string>>({});
@@ -161,7 +178,8 @@ export function SupplierDetail() {
   if (!data) return <LoadState loading={loading} error={error} />;
   const s = data.supplier;
   const p = data.permissions;
-  const activeRestrictions = data.restrictions.filter((r) => !r.liftedAt);
+  const activeRestrictions = data.restrictions.filter((r) => !r.liftedAt && !r.sourceId);
+  const sourceHolds = data.restrictions.filter((r) => !r.liftedAt && r.sourceId);
   const close = () => {
     setDialog(null);
     setF({});
@@ -196,6 +214,11 @@ export function SupplierDetail() {
         </div>
       </div>
       {banner}
+      {sourceHolds.map((r) => (
+        <div key={r.id} className="notice notice-warn">
+          <strong>Source restricted:</strong> <Link to={`/sources/${r.sourceId}`}>{r.sourceLabel}</Link> since {fmtDateTime(r.decidedAt)} by {r.decidedBy}: {r.reason}
+        </div>
+      ))}
       {activeRestrictions.map((r) => (
         <div key={r.id} className="notice notice-error" role="alert">
           <strong>{r.siteName ? `Site ${r.siteName}` : 'Supplier'} suspended</strong> since {fmtDateTime(r.decidedAt)} by {r.decidedBy}: {r.reason}. Approved sources affected by this
@@ -412,6 +435,18 @@ export function SupplierDetail() {
           </p>
         )}
       </section>
+
+      <QualityContextCard
+        context={data.quality}
+        actions={
+          can('commitment.manage') ? (
+            <button type="button" className="btn btn-small" onClick={() => setCommitmentOpen(true)}>
+              + Record commitment
+            </button>
+          ) : null
+        }
+      />
+      <NewCommitmentDialog open={commitmentOpen} onClose={() => setCommitmentOpen(false)} supplierId={id} sources={data.sources} />
 
       {(data.inspections.length > 0 || data.concerns.length > 0) && (
         <section className="card">

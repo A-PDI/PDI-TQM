@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-ro
 import type { EffectiveSourceStatus } from '../../shared/sourcing';
 import { api, fmtDate, fmtDateTime } from '../api';
 import { useAuth } from '../auth';
+import { type QualityContext, QualityContextCard } from '../components/quality';
 import { SourceStatusBadge, useBusy } from '../components/sourcing';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
 
@@ -195,6 +196,7 @@ interface PartDetailData {
   inspections: Array<{ id: string; number: string; status: string; outcome: string | null; poNumber: string | null; lotNumber: string | null; dateReceived: string }>;
   concerns: Array<{ id: string; number: string; title: string; status: string }>;
   sourcing: Array<{ id: string; number: string; title: string; pathway: string; status: string }>;
+  quality: QualityContext;
 }
 
 const OWNERSHIP_TEXT: Record<string, string> = { PDI: 'PDI-owned definition', SUPPLIER: 'Supplier-owned specification', SUPPLIER_PLUS_DELTA: 'Supplier base + PDI delta' };
@@ -344,6 +346,7 @@ export function PartDetail() {
         </section>
       )}
 
+      <QualityContextCard context={data.quality} />
       <section className="card">
         <h2>Inspections</h2>
         {data.inspections.length === 0 ? (

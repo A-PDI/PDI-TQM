@@ -92,6 +92,18 @@ export async function renderRecordReport(s: RecordReportSnapshot, logo: Buffer |
   y += 36;
 
   for (const section of s.sections) {
+    // Keep a section title with its first content: title (22) + table header (14) + first row, or the first paragraph.
+    font('Helvetica', section.kind === 'table' ? 7.5 : 8);
+    const firstH =
+      section.kind === 'table'
+        ? 14 +
+          (section.rows[0]
+            ? Math.max(16, ...section.rows[0].map((cell, i) => doc.heightOfString(pdfText(cell) || ' ', { width: section.columns[i]!.width * CONTENT_W - 8, lineGap: 1 }) + 8))
+            : 18)
+        : section.paragraphs[0]
+          ? doc.heightOfString(pdfText(section.paragraphs[0]), { width: CONTENT_W - 8 }) + 4
+          : 0;
+    if (y + 22 + firstH > BOTTOM) newPage();
     sectionBar(section.title);
     if (section.kind === 'text') {
       for (const p of section.paragraphs) {

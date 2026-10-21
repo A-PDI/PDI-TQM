@@ -128,11 +128,22 @@ export const GATE_LABELS: Record<string, string> = {
   SUPPLIER_ACKNOWLEDGED: 'Supplier acknowledged the exact governing revision',
   FAI_ACCEPTED: 'First article / validation accepted for the governing revision',
   EVIDENCE_COMPLETE: 'Required evidence satisfied or waived',
-  NO_BLOCKING_QUALITY: 'No open high-severity quality concern on this source',
+  NO_BLOCKING_QUALITY: 'No blocking nonconformance or untriaged concern on this source',
+  CONCESSIONS_CURRENT: 'No expired concession relied on by open nonconformances',
+  CHANGE_CONTROL: 'No pending change requiring requalification',
   RISK_ASSESSED: 'Risk assessed for this sourcing request',
 };
 
-export type EffectiveSourceStatus = 'NOT_APPROVED' | 'IN_REVIEW' | 'APPROVED' | 'APPROVED_CONDITIONAL' | 'SUSPENDED' | 'EXPIRED' | 'AT_RISK';
+export type EffectiveSourceStatus =
+  | 'NOT_APPROVED'
+  | 'IN_REVIEW'
+  | 'APPROVED'
+  | 'APPROVED_CONDITIONAL'
+  | 'SUSPENDED'
+  | 'RESTRICTED'
+  | 'EXPIRED'
+  | 'AT_RISK'
+  | 'REQUALIFICATION_REQUIRED';
 
 export const SOURCE_STATUS_TEXT: Record<EffectiveSourceStatus, string> = {
   NOT_APPROVED: 'Not approved',
@@ -142,4 +153,6 @@ export const SOURCE_STATUS_TEXT: Record<EffectiveSourceStatus, string> = {
   SUSPENDED: 'Suspended — supplier or site restricted',
   EXPIRED: 'Approval expired',
   AT_RISK: 'At risk — site qualification no longer current',
+  RESTRICTED: 'Restricted — this exact source is on hold',
+  REQUALIFICATION_REQUIRED: 'Requalification required — an approved change is not yet verified',
 };

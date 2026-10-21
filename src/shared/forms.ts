@@ -61,6 +61,8 @@ export const formDefinitionSchema = z
     formNumber: z.string().regex(/^PDI-IQI-[0-9A-Z]+$/),
     component: z.string().min(1),
     revisionLabel: z.string().nullable(),
+    /** Governed one-off form built for a single inspection (FR-042); never a released template. */
+    oneOff: z.boolean().optional(),
     sections: z.array(sectionSchema).min(1),
   })
   .superRefine((def, ctx) => {

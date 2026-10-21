@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { CAPABILITIES, type Capability, ROLE_BUNDLES } from '../shared/capabilities.js';
+import { dayIn } from '../shared/quality.js';
 import { audit } from './audit.js';
 import {
   attemptLogin,
@@ -17,6 +18,7 @@ import {
 import { many, one, withTransaction } from './db.js';
 import { AppError, badRequest, forbidden, notFound, unprocessable } from './errors.js';
 import type { Services } from './services.js';
+import { qualityContext } from './quality/context.js';
 import { effectiveSourceStatuses } from './sourcing/status.js';
 
 const uuid = z.string().uuid();
@@ -94,7 +96,16 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
                 WHEN 'SOURCING_REQUEST' THEN '/sourcing/' || w.subject_id
                 WHEN 'BASELINE_REVISION' THEN '/baselines/' || w.subject_id
                 WHEN 'QUALIFICATION' THEN '/suppliers/' || (SELECT q.supplier_id FROM supplier_qualification q WHERE q.id = w.subject_id)
-              END AS link
+                WHEN 'NCR' THEN '/quality/ncrs/' || w.subject_id
+                WHEN 'MATERIAL_SCOPE' THEN '/quality/ncrs/' || (SELECT m.ncr_id FROM material_scope m WHERE m.id = w.subject_id)
+                WHEN 'CONCESSION' THEN '/quality/concessions/' || w.subject_id
+                WHEN 'SCAR' THEN '/quality/scars/' || w.subject_id
+                WHEN 'COMMITMENT' THEN '/commitments/' || w.subject_id
+                WHEN 'CHANGE' THEN '/changes/' || w.subject_id
+                WHEN 'CHANGE_ACTION' THEN '/changes/' || (SELECT ca.change_id FROM change_action ca WHERE ca.id = w.subject_id)
+                WHEN 'FORM_REVISION' THEN '/forms/' || w.subject_id
+              END AS link,
+              (w.due_at IS NOT NULL AND w.due_at < now()) AS overdue
          FROM work_item w LEFT JOIN app_user a ON a.id = w.assignee_id
         WHERE w.status = 'OPEN' AND ($3 OR w.assignee_id = $1 OR (w.assignee_id IS NULL AND w.required_capability = ANY($2::text[])))
         ORDER BY w.due_at NULLS LAST, w.created_at`,
@@ -106,16 +117,21 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
          FROM inspection WHERE inspector_id = $1 AND status IN ('DRAFT', 'PARTIAL') ORDER BY updated_at DESC LIMIT 20`,
       [auth.userId],
     );
-    const counts = await one<{ awaiting_review: number; open_concerns: number; open_inspections: number }>(
+    const counts = await one<{ awaiting_review: number; open_concerns: number; open_inspections: number; open_ncrs: number; open_scars: number; overdue_commitments: number }>(
       db,
       `SELECT (SELECT count(*)::int FROM inspection WHERE status = 'READY_FOR_REVIEW') AS awaiting_review,
               (SELECT count(*)::int FROM quality_event WHERE status IN ('CAPTURED', 'TRIAGED')) AS open_concerns,
-              (SELECT count(*)::int FROM inspection WHERE status IN ('DRAFT', 'PARTIAL')) AS open_inspections`,
+              (SELECT count(*)::int FROM inspection WHERE status IN ('DRAFT', 'PARTIAL')) AS open_inspections,
+              (SELECT count(*)::int FROM ncr WHERE status <> 'CLOSED') AS open_ncrs,
+              (SELECT count(*)::int FROM scar WHERE status <> 'CLOSED') AS open_scars,
+              (SELECT count(*)::int FROM supplier_commitment WHERE status IN ('OPEN', 'SUPPLIER_CLAIMS_DONE') AND due_date < $1::date) AS overdue_commitments`,
+      [dayIn(config.displayTimeZone)],
     );
     const recent = await many(
       db,
       `SELECT DISTINCT ON (a.entity_type, a.entity_id) a.entity_type AS "entityType", a.entity_id AS "entityId", a.summary, a.occurred_at AS "occurredAt"
-         FROM audit_event a WHERE a.actor_id = $1 AND a.entity_type IN ('inspection', 'quality_event') AND a.outcome = 'SUCCESS'
+         FROM audit_event a WHERE a.actor_id = $1 AND a.entity_type IN ('inspection', 'quality_event', 'ncr', 'scar', 'concession', 'change_request', 'supplier_commitment')
+          AND a.outcome = 'SUCCESS'
         ORDER BY a.entity_type, a.entity_id, a.occurred_at DESC`,
       [auth.userId],
     );
@@ -127,7 +143,7 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
     await requireCapability(db, req, 'records.read', { action: 'search', consequential: false });
     const q = z.object({ q: z.string().trim().min(2).max(100) }).parse(req.query);
     const p = like(q.q);
-    const [parts, inspections, suppliers, events] = await Promise.all([
+    const [parts, inspections, suppliers, events, records] = await Promise.all([
       many(
         db,
         `SELECT DISTINCT p.id, p.part_number AS "partNumber", p.description FROM company_part p LEFT JOIN part_alias a ON a.part_id = p.id
@@ -155,8 +171,26 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
           ORDER BY reported_at DESC LIMIT 10`,
         [p],
       ),
+      // Quality and change records: NCR (incl. affected lots/serials), SCAR, concession, change, commitment.
+      many(
+        db,
+        `(SELECT 'NCR' AS type, n.id, n.number, n.title, n.status, '/quality/ncrs/' || n.id AS link FROM ncr n
+           WHERE n.number ILIKE $1 OR n.title ILIKE $1 OR n.lot_number ILIKE $1
+              OR EXISTS (SELECT 1 FROM material_scope m WHERE m.ncr_id = n.id AND (m.lot_number ILIKE $1 OR array_to_string(m.serial_numbers, ' ') ILIKE $1)) LIMIT 10)
+         UNION ALL
+         (SELECT 'SCAR', s.id, s.number, s.title, s.status, '/quality/scars/' || s.id FROM scar s WHERE s.number ILIKE $1 OR s.title ILIKE $1 LIMIT 10)
+         UNION ALL
+         (SELECT 'Concession', c.id, c.number, c.characteristic, c.status, '/quality/concessions/' || c.id FROM concession c WHERE c.number ILIKE $1 OR c.lot_number ILIKE $1 LIMIT 10)
+         UNION ALL
+         (SELECT 'Change', c.id, c.number, c.title, c.status, '/changes/' || c.id FROM change_request c
+           WHERE c.number ILIKE $1 OR c.title ILIKE $1 OR c.supplier_reference ILIKE $1 OR c.effective_lot ILIKE $1 LIMIT 10)
+         UNION ALL
+         (SELECT 'Commitment', c.id, c.number, c.promised_action, c.status, '/commitments/' || c.id FROM supplier_commitment c
+           WHERE c.number ILIKE $1 OR c.promised_action ILIKE $1 OR c.representative ILIKE $1 LIMIT 10)`,
+        [p],
+      ),
     ]);
-    return { parts, inspections, suppliers, qualityEvents: events };
+    return { parts, inspections, suppliers, qualityEvents: events, records };
   });
 
   app.get('/api/users/directory', async (req) => {
@@ -266,7 +300,8 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
       `SELECT id, number, title, pathway, status FROM sourcing_request WHERE part_id = $1 ORDER BY created_at DESC`,
       [id],
     );
-    return { part, aliases, sources: sources.map((s) => ({ ...s, effective: statuses.get((s as { id: string }).id) })), baselines, inspections, concerns, sourcing };
+    const quality = await qualityContext(db, { partId: id }, config.displayTimeZone);
+    return { part, aliases, sources: sources.map((s) => ({ ...s, effective: statuses.get((s as { id: string }).id) })), baselines, inspections, concerns, sourcing, quality };
   });
 
   app.get('/api/parts/:id/launch-options', async (req) => {

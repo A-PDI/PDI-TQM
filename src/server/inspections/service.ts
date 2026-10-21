@@ -1,8 +1,11 @@
+import { createHash } from 'node:crypto';
 import type { FastifyRequest } from 'fastify';
 import {
   type FormDefinition,
   type ResponseStatus,
   allowedStatuses,
+  canonicalJson,
+  formDefinitionSchema,
   isPassAllEligible,
   readingLimitRef,
   sectionRows,
@@ -16,6 +19,8 @@ import { type Db, type DbClient, many, one, withTransaction } from '../db.js';
 import { badRequest, conflict, forbidden, unprocessable } from '../errors.js';
 import { enqueueJob } from '../jobs.js';
 import { nextRecordNumber } from '../numbering.js';
+import { dayIn } from '../../shared/quality.js';
+import { assertConcessionCovers } from '../quality/ncr.js';
 import { effectiveSourceStatuses } from '../sourcing/status.js';
 import { buildReportSnapshot, snapshotHash } from './report-snapshot.js';
 import { type BaselineSnapshot, type LoadedInspection, loadInspection } from './state.js';
@@ -42,7 +47,9 @@ export async function createInspection(
   req: FastifyRequest,
   input: {
     partId: string;
-    formRevisionId: string;
+    /** A released catalogue revision, or omitted when `oneOff` builds a governed one-off form (FR-042). */
+    formRevisionId?: string;
+    oneOff?: { definition: FormDefinition; reason: string };
     unitCount: number;
     poNumber?: string | null;
     dateReceived: string;
@@ -74,13 +81,31 @@ export async function createInspection(
     );
     if (!part || !part.active) throw unprocessable('Part not found or inactive');
 
+    let formRevisionId = input.formRevisionId ?? null;
+    if (input.oneOff) {
+      // One-off forms are stored as immutable ONE_OFF revisions of the Miscellaneous form; they never become a released template.
+      const misc = await one<{ id: string }>(tx, `SELECT id FROM inspection_form WHERE form_number = 'PDI-IQI-MISC' FOR UPDATE`);
+      if (!misc) throw unprocessable('The Miscellaneous form is not loaded');
+      const definition = formDefinitionSchema.parse({ ...input.oneOff.definition, formNumber: 'PDI-IQI-MISC', oneOff: true });
+      const seq = (await one<{ n: number }>(tx, 'SELECT coalesce(max(sequence), 0)::int + 1 AS n FROM form_revision WHERE form_id = $1', [misc.id]))!.n;
+      const label = `ONE-OFF ${seq}`;
+      const def = JSON.parse(JSON.stringify({ ...definition, revisionLabel: label })) as FormDefinition;
+      const created = await one<{ id: string }>(
+        tx,
+        `INSERT INTO form_revision (form_id, sequence, revision_label, status, definition, definition_sha256, provenance, change_summary, created_by)
+         VALUES ($1, $2, $3, 'ONE_OFF', $4, $5, $6, $7, $8) RETURNING id`,
+        [misc.id, seq, label, JSON.stringify(def), createHash('sha256').update(canonicalJson(def)).digest('hex'), `One-off form built by inspector for ${part.part_number}`, input.oneOff.reason, auth.userId],
+      );
+      formRevisionId = created!.id;
+    }
+    if (!formRevisionId) throw unprocessable('Choose an inspection form');
     const form = await one<{ id: string; status: string; definition: FormDefinition; definition_sha256: string }>(
       tx,
       'SELECT id, status, definition, definition_sha256 FROM form_revision WHERE id = $1 FOR SHARE',
-      [input.formRevisionId],
+      [formRevisionId],
     );
     if (!form) throw unprocessable('Inspection form not found');
-    if (form.status !== 'RELEASED') throw unprocessable('Only the currently released form revision can start new inspections');
+    if (form.status === 'ONE_OFF' ? !input.oneOff : form.status !== 'RELEASED') throw unprocessable('Only the currently released form revision can start new inspections');
 
     let source: { id: string; supplier_id: string; site_id: string; approval_state: string; baseline_revision_id: string | null } | null = null;
     if (input.sourceId) {
@@ -546,7 +571,7 @@ export async function reviewInspection(
   config: Config,
   req: FastifyRequest,
   id: string,
-  input: { decision: 'CONFIRM' | 'RETURN'; comment?: string | null; expectedVersion: number },
+  input: { decision: 'CONFIRM' | 'RETURN'; comment?: string | null; expectedVersion: number; concessionId?: string | null },
 ): Promise<{ status: string }> {
   const auth = await requireCapability(db, req, 'inspection.review', { action: 'inspection.review', entityType: 'inspection', entityId: id });
   return withTransaction(db, async (tx) => {
@@ -573,6 +598,21 @@ export async function reviewInspection(
     }
     const comment = input.comment?.trim() || null;
     if (input.decision === 'RETURN' && !comment) throw unprocessable('A reason is required to return an inspection for correction');
+    let concession: { id: string; number: string } | null = null;
+    if (input.concessionId) {
+      if (input.decision !== 'CONFIRM' || !hasAccepted) throw unprocessable('A concession applies only when confirming Accepted results');
+      // Only the accepted items consume the concession; it must cover this exact part, source, lot and date (AT-02, AT-14).
+      const ev = state.evaluation;
+      const acceptedUnits = Object.values(ev.unitOutcomes).filter((o) => o === 'ACCEPTED').length || (ev.sharedOutcome === 'ACCEPTED' ? state.row.unit_count : 0);
+      concession = await assertConcessionCovers(
+        tx,
+        input.concessionId,
+        { partId: state.row.part_id, sourceId: state.row.source_id, lotNumber: state.row.lot_number, quantity: acceptedUnits },
+        dayIn(config.displayTimeZone),
+      );
+      await tx.query('INSERT INTO concession_use (concession_id, quantity, inspection_id, used_by) VALUES ($1,$2,$3,$4)', [concession.id, acceptedUnits, id, auth.userId]);
+      await audit(tx, { actorId: auth.userId, action: 'concession.use', entityType: 'concession', entityId: concession.id, summary: `${acceptedUnits} accepted item(s) of ${state.row.number} covered`, requestId: req.id });
+    }
     if (input.decision === 'CONFIRM' && state.evaluation.errors.length) throw conflict('Inspection has unresolved entries and cannot be confirmed');
     await tx.query(
       `INSERT INTO inspection_review (inspection_id, decision, reviewer_id, reasons, comment, grants_used) VALUES ($1,$2,$3,$4,$5,$6)`,
@@ -605,7 +645,7 @@ export async function reviewInspection(
       action: input.decision === 'CONFIRM' ? 'inspection.review_confirm' : 'inspection.review_return',
       entityType: 'inspection',
       entityId: id,
-      summary: `${state.row.number} ${input.decision === 'CONFIRM' ? 'review confirmed' : 'returned for correction'}`,
+      summary: `${state.row.number} ${input.decision === 'CONFIRM' ? 'review confirmed' : 'returned for correction'}${concession ? `; accepted items under ${concession.number}` : ''}`,
       reason: comment,
       after: { grantsUsed: grants, reasons: state.evaluation.reviewReasons.map((r) => `${r.path}: ${r.message}`) },
       requestId: req.id,

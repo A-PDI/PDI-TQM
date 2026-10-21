@@ -1,12 +1,12 @@
 import { Link, useSearchParams } from 'react-router-dom';
-import { fmtDateTime } from '../api';
+import { fmtDate, fmtDateTime } from '../api';
 import { useAuth } from '../auth';
 import { LoadState, StatusBadge, useLoad } from '../components/ui';
 
 interface HomeData {
-  work: Array<{ id: string; kind: string; title: string; subjectType: string; subjectId: string; createdAt: string; assignee: string | null; link: string | null }>;
+  work: Array<{ id: string; kind: string; title: string; subjectType: string; subjectId: string; createdAt: string; dueAt: string | null; overdue: boolean; assignee: string | null; link: string | null }>;
   drafts: Array<{ id: string; number: string; partNumber: string; partDescription: string; status: string; updatedAt: string; unitCount: number }>;
-  counts: { awaiting_review: number; open_concerns: number; open_inspections: number };
+  counts: { awaiting_review: number; open_concerns: number; open_inspections: number; open_ncrs: number; open_scars: number; overdue_commitments: number };
   recent: Array<{ entityType: string; entityId: string; summary: string; occurredAt: string }>;
   teamView: boolean;
 }
@@ -22,9 +22,35 @@ const KIND_LABEL: Record<string, string> = {
   SOURCE_APPROVAL: 'Source approval',
   SUPPLIER_RESPONSE: 'Supplier response',
   SOURCING_REQUEST: 'Sourcing',
+  NCR_ACTION: 'NCR',
+  CONTAINMENT_AUTHORIZATION: 'Containment',
+  SEGREGATION_VERIFICATION: 'Verify hold',
+  DISPOSITION_DECISION: 'Disposition',
+  DISPOSITION_VERIFICATION: 'Verify disposition',
+  MATERIAL_RELEASE: 'Release',
+  CONCESSION_DECISION: 'Concession',
+  SCAR_RESPONSE: 'SCAR response',
+  SCAR_VERIFICATION: 'SCAR verification',
+  COMMITMENT_FOLLOW_UP: 'Commitment',
+  COMMITMENT_ESCALATION: 'Escalation',
+  CHANGE_IMPACT: 'Change impact',
+  CHANGE_DECISION: 'Change decision',
+  CHANGE_ACTION: 'Change action',
+  CHANGE_VERIFICATION: 'Verify change',
+  FORM_RELEASE: 'Form release',
 };
 
-const subjectLink = (type: string, id: string) => (type === 'INSPECTION' || type === 'inspection' ? `/inspections/${id}` : `/quality/${id}`);
+const RECENT_LINK: Record<string, string> = {
+  inspection: '/inspections/',
+  quality_event: '/quality/',
+  ncr: '/quality/ncrs/',
+  scar: '/quality/scars/',
+  concession: '/quality/concessions/',
+  change_request: '/changes/',
+  supplier_commitment: '/commitments/',
+};
+
+const subjectLink = (type: string, id: string) => `${RECENT_LINK[type] ?? RECENT_LINK[type.toLowerCase()] ?? '/quality/'}${id}`;
 
 export function Home() {
   const { me, can } = useAuth();
@@ -68,6 +94,15 @@ export function Home() {
             <Link className="stat" to="/inspections?status=OPEN">
               <strong>{data.counts.open_inspections}</strong> Open inspections (all)
             </Link>
+            <Link className="stat" to="/quality/ncrs?status=OPEN">
+              <strong>{data.counts.open_ncrs}</strong> Open NCRs
+            </Link>
+            <Link className="stat" to="/quality/scars?status=OPEN">
+              <strong>{data.counts.open_scars}</strong> Open SCARs
+            </Link>
+            <Link className="stat" to="/commitments?view=OVERDUE">
+              <strong>{data.counts.overdue_commitments}</strong> Overdue supplier commitments
+            </Link>
           </div>
 
           <section className="card" aria-labelledby="work-h">
@@ -82,7 +117,7 @@ export function Home() {
                       <th>Type</th>
                       <th>Work</th>
                       <th>Assignee</th>
-                      <th>Since</th>
+                      <th>Due / since</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -95,7 +130,15 @@ export function Home() {
                           <Link to={w.link ?? subjectLink(w.subjectType, w.subjectId)}>{w.title}</Link>
                         </td>
                         <td>{w.assignee ?? <span className="muted">Role queue</span>}</td>
-                        <td className="small">{fmtDateTime(w.createdAt)}</td>
+                        <td className="small">
+                          {w.dueAt ? (
+                            <>
+                              due {fmtDate(w.dueAt)} {w.overdue && <span className="badge badge-fail">overdue</span>}
+                            </>
+                          ) : (
+                            fmtDateTime(w.createdAt)
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -56,6 +56,9 @@ export interface ActiveRestriction {
   id: string;
   supplier_id: string;
   site_id: string | null;
+  /** Set for a restriction of one exact source (Stage 3); supplier/site suspensions leave it null. */
+  source_id: string | null;
+  kind: string;
   reason: string;
   decided_at: Date;
 }
@@ -64,7 +67,7 @@ export async function activeRestrictions(db: Queryable, supplierIds: string[]): 
   if (!supplierIds.length) return [];
   return many<ActiveRestriction>(
     db,
-    `SELECT id, supplier_id, site_id, reason, decided_at FROM supplier_restriction WHERE lifted_at IS NULL AND supplier_id = ANY($1::uuid[])`,
+    `SELECT id, supplier_id, site_id, source_id, kind, reason, decided_at FROM supplier_restriction WHERE lifted_at IS NULL AND supplier_id = ANY($1::uuid[])`,
     [supplierIds],
   );
 }
@@ -96,6 +99,13 @@ export async function effectiveSourceStatuses(db: Queryable, sourceIds: string[]
   );
   const restrictions = await activeRestrictions(db, [...new Set(sources.map((s) => s.supplier_id))]);
   const sites = await siteQualifications(db, [...new Set(sources.map((s) => s.site_id))]);
+  // Approved or effective changes that require requalification and are not yet verified (NEG-17).
+  const pendingChanges = await many<{ source_id: string; number: string }>(
+    db,
+    `SELECT cs.source_id, c.number FROM change_source cs JOIN change_request c ON c.id = cs.change_id
+      WHERE cs.source_id = ANY($1::uuid[]) AND c.status IN ('APPROVED', 'EFFECTIVE') AND c.requalification_required`,
+    [sourceIds],
+  );
   for (const s of sources) {
     const d = decisions.find((x) => x.source_id === s.id);
     const approval =
@@ -103,11 +113,16 @@ export async function effectiveSourceStatuses(db: Queryable, sourceIds: string[]
         ? { id: d.id, number: d.number, decision: d.decision, validUntil: d.valid_until, conditions: d.conditions, decidedAt: d.decided_at }
         : null;
     const reasons: string[] = [];
-    const restriction = restrictions.find((r) => r.supplier_id === s.supplier_id && (r.site_id === null || r.site_id === s.site_id));
+    const restriction = restrictions.find((r) => r.source_id === null && r.supplier_id === s.supplier_id && (r.site_id === null || r.site_id === s.site_id));
+    const sourceHold = restrictions.find((r) => r.source_id === s.id);
+    const change = pendingChanges.find((c) => c.source_id === s.id);
     let status: EffectiveSourceStatus;
     if (restriction) {
       status = 'SUSPENDED';
       reasons.push(`${restriction.site_id ? 'Site' : 'Supplier'} suspended: ${restriction.reason}`);
+    } else if (sourceHold) {
+      status = 'RESTRICTED';
+      reasons.push(`Source restricted: ${sourceHold.reason}`);
     } else if (approval) {
       const site = sites.get(s.site_id);
       if (approval.validUntil && approval.validUntil < today()) {
@@ -116,6 +131,9 @@ export async function effectiveSourceStatuses(db: Queryable, sourceIds: string[]
       } else if (!site || !['QUALIFIED', 'CONDITIONALLY_QUALIFIED'].includes(site.status)) {
         status = 'AT_RISK';
         reasons.push(`Site qualification is ${site?.status.replaceAll('_', ' ').toLowerCase() ?? 'missing'}`);
+      } else if (change) {
+        status = 'REQUALIFICATION_REQUIRED';
+        reasons.push(`Change ${change.number} approved; implementation not yet verified`);
       } else {
         status = approval.decision as EffectiveSourceStatus;
       }

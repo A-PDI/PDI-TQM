@@ -90,11 +90,14 @@ export function registerQualityRoutes(app: FastifyInstance, svc: Services) {
         WHERE a.entity_type = 'quality_event' AND a.entity_id = $1 ORDER BY a.id`,
       [id],
     );
+    const ncr = await one<{ id: string; number: string; status: string }>(db, 'SELECT id, number, status FROM ncr WHERE quality_event_id = $1', [id]);
     return {
       event,
       photos,
       history,
+      ncr,
       permissions: {
+        canConfirmNcr: has(auth, 'ncr.manage') && event.reported_by !== auth.userId && ['CAPTURED', 'TRIAGED'].includes(event.status),
         canTriage: has(auth, 'quality.triage') && event.reported_by !== auth.userId && event.status === 'CAPTURED',
         triageBlockedReason:
           event.reported_by === auth.userId && has(auth, 'quality.triage') ? 'Triage must be performed by someone other than the reporter.' : null,

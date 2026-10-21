@@ -9,6 +9,7 @@ import { auditedDenial, has, recheckCapability, requireCapability } from '../aut
 import { many, one, withTransaction } from '../db.js';
 import { conflict, forbidden, notFound, unprocessable } from '../errors.js';
 import { enqueueJob } from '../jobs.js';
+import { qualityContext } from '../quality/context.js';
 import { nextRecordNumber } from '../numbering.js';
 import type { Services } from '../services.js';
 import { buildApprovalReportSnapshot } from './approval-report.js';
@@ -115,6 +116,13 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
       risk: ctx.risk,
       siteQualification: ctx.siteQualification,
       status,
+      quality: await qualityContext(db, { sourceId: id }, config.displayTimeZone),
+      sourceRestrictions: await many(
+        db,
+        `SELECT r.id, r.reason, r.decided_at AS "decidedAt", u.display_name AS "decidedBy" FROM supplier_restriction r JOIN app_user u ON u.id = r.decided_by
+          WHERE r.source_id = $1 AND r.lifted_at IS NULL`,
+        [id],
+      ),
       gates: evaluation.gates,
       approvable: evaluation.approvable,
       conditionalOnly: evaluation.conditionalOnly,
@@ -129,6 +137,7 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
         canApprove: has(auth, 'source.approve') && ctx.request?.owner_id !== auth.userId,
         approveBlockedReason: has(auth, 'source.approve') && ctx.request?.owner_id === auth.userId ? 'The sourcing request owner cannot approve their own source.' : null,
         canRegisterFai: has(auth, 'sourcing.manage') && !openFai && ctx.revision?.status === 'RELEASED',
+        canRestrict: has(auth, 'supplier.restrict'),
       },
     };
   });

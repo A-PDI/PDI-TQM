@@ -54,6 +54,63 @@ const RULES: Record<string, EntityRule> = {
       return r && { open: true, closedReason: '', auditType: 'supplier', auditId: r.supplier_id };
     },
   },
+  NCR: {
+    capability: 'ncr.manage',
+    resolve: async (db, id) => {
+      const r = await one<{ status: string }>(db, 'SELECT status FROM ncr WHERE id = $1', [id]);
+      return r && { open: r.status !== 'CLOSED', closedReason: 'The NCR is closed', auditType: 'ncr', auditId: id };
+    },
+  },
+  MATERIAL_SCOPE: {
+    capability: 'containment.verify',
+    resolve: async (db, id) => {
+      const r = await one<{ state: string; ncr_id: string; ncr_status: string }>(
+        db,
+        'SELECT m.state, m.ncr_id, n.status AS ncr_status FROM material_scope m JOIN ncr n ON n.id = m.ncr_id WHERE m.id = $1',
+        [id],
+      );
+      return r && { open: r.ncr_status !== 'CLOSED' && r.state !== 'RELEASED', closedReason: 'The material is released or the NCR is closed', auditType: 'ncr', auditId: r.ncr_id };
+    },
+  },
+  DISPOSITION: {
+    capability: 'disposition.verify',
+    resolve: async (db, id) => {
+      const r = await one<{ voided_at: Date | null; ncr_id: string; ncr_status: string }>(
+        db,
+        'SELECT d.voided_at, m.ncr_id, n.status AS ncr_status FROM disposition_decision d JOIN material_scope m ON m.id = d.scope_id JOIN ncr n ON n.id = m.ncr_id WHERE d.id = $1',
+        [id],
+      );
+      return r && { open: !r.voided_at && r.ncr_status !== 'CLOSED', closedReason: 'The disposition is void or the NCR is closed', auditType: 'ncr', auditId: r.ncr_id };
+    },
+  },
+  CONCESSION: {
+    capability: 'concession.request',
+    resolve: async (db, id) => {
+      const r = await one<{ status: string }>(db, 'SELECT status FROM concession WHERE id = $1', [id]);
+      return r && { open: r.status === 'REQUESTED', closedReason: 'The concession has been decided', auditType: 'concession', auditId: id };
+    },
+  },
+  SCAR: {
+    capability: 'scar.manage',
+    resolve: async (db, id) => {
+      const r = await one<{ status: string }>(db, 'SELECT status FROM scar WHERE id = $1', [id]);
+      return r && { open: r.status !== 'CLOSED', closedReason: 'The SCAR is closed', auditType: 'scar', auditId: id };
+    },
+  },
+  COMMITMENT: {
+    capability: 'commitment.manage',
+    resolve: async (db, id) => {
+      const r = await one<{ status: string }>(db, 'SELECT status FROM supplier_commitment WHERE id = $1', [id]);
+      return r && { open: r.status === 'OPEN' || r.status === 'SUPPLIER_CLAIMS_DONE', closedReason: 'The commitment is closed', auditType: 'supplier_commitment', auditId: id };
+    },
+  },
+  CHANGE: {
+    capability: 'change.manage',
+    resolve: async (db, id) => {
+      const r = await one<{ status: string }>(db, 'SELECT status FROM change_request WHERE id = $1', [id]);
+      return r && { open: !['REJECTED', 'IMPLEMENTATION_VERIFIED', 'CANCELLED'].includes(r.status), closedReason: 'The change is closed', auditType: 'change_request', auditId: id };
+    },
+  },
   BASELINE_REVISION: {
     capability: 'engineering.author',
     resolve: async (db, id) => {

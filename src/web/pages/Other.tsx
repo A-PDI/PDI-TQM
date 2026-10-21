@@ -275,8 +275,8 @@ function FormsAdmin() {
   return (
     <>
       <p className="small muted">
-        Controlled inspection forms from Appendix A v1.0. Released revisions are immutable; completed inspections keep their frozen copy. A structured revision editor with review and
-        publish is planned for Stage 3.
+        Controlled inspection forms from Appendix A v1.0. Released revisions are immutable; completed inspections keep their frozen copy. Revisions are drafted, reviewed and
+        released in the <Link to="/forms">form editor</Link>.
       </p>
       <LoadState loading={loading && !data} error={error} />
       {data && (

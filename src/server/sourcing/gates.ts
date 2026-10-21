@@ -1,5 +1,6 @@
 import { GATE_LABELS, type GateResult, type Pathway, type RiskLevel } from '../../shared/sourcing.js';
 import { type Queryable, many, one } from '../db.js';
+import { NCR_BLOCKING_RULE } from '../../shared/quality.js';
 import { activeRestrictions, siteQualifications } from './status.js';
 
 export interface GateContext {
@@ -33,11 +34,14 @@ export interface GateContext {
   request: { id: string; number: string; owner_id: string; status: string } | null;
   risk: { result: RiskLevel; score: number; rule_version: string; assessed_at: Date } | null;
   siteQualification: Awaited<ReturnType<typeof siteQualifications>> extends Map<string, infer V> ? V : never;
-  restrictions: Array<{ id: string; site_id: string | null; reason: string }>;
+  restrictions: Array<{ id: string; site_id: string | null; source_id: string | null; reason: string }>;
   acknowledgment: { id: string; baseline_revision_id: string; revision_label: string; response: string; representative: string | null; responded_at: Date | null; sent_at: Date } | null;
   fais: Array<{ id: string; number: string; sequence: number; sample_type: string; status: string; decision: string | null; defects: string | null; conditions: string | null; corrective_rationale: string | null; decided_at: Date | null; decided_by_name: string | null; baseline_revision_id: string }>;
   requirements: Array<{ id: string; code: string; title: string; applicability: string; status: string; waiver_reason: string | null; files: Array<{ fileId: string; name: string; sha256: string }> }>;
   blockingConcerns: Array<{ id: string; number: string; status: string; severity: string | null }>;
+  openNcrs: Array<{ id: string; number: string; status: string; severity: string }>;
+  concessions: Array<{ id: string; number: string; valid_until: string; valid_from: string; ncr_open: boolean }>;
+  openChanges: Array<{ id: string; number: string; status: string; requalification_required: boolean | null }>;
 }
 
 export interface GateEvaluation {
@@ -98,7 +102,9 @@ export async function evaluateGates(db: Queryable, sourceId: string, timeZone = 
       )
     : null;
   const siteQualification = (await siteQualifications(db, [source.site_id])).get(source.site_id)!;
-  const restrictions = (await activeRestrictions(db, [source.supplier_id])).filter((r) => r.site_id === null || r.site_id === source.site_id);
+  const restrictions = (await activeRestrictions(db, [source.supplier_id])).filter(
+    (r) => (r.source_id === null && (r.site_id === null || r.site_id === source.site_id)) || r.source_id === source.id,
+  );
   const acknowledgment = revision
     ? await one<NonNullable<GateContext['acknowledgment']>>(
         db,
@@ -133,6 +139,26 @@ export async function evaluateGates(db: Queryable, sourceId: string, timeZone = 
     [sourceId],
   );
 
+  const openNcrs = await many<GateContext['openNcrs'][number]>(
+    db,
+    `SELECT id, number, status, severity FROM ncr WHERE source_id = $1 AND status NOT IN ('VERIFIED_RESOLVED', 'CLOSED') ORDER BY confirmed_at`,
+    [sourceId],
+  );
+  const concessions = await many<GateContext['concessions'][number]>(
+    db,
+    `SELECT c.id, c.number, c.valid_until::text AS valid_until, c.valid_from::text AS valid_from,
+            coalesce(n.status NOT IN ('VERIFIED_RESOLVED', 'CLOSED'), false) AS ncr_open
+       FROM concession c LEFT JOIN ncr n ON n.id = c.ncr_id
+      WHERE c.source_id = $1 AND c.status = 'APPROVED' ORDER BY c.valid_until`,
+    [sourceId],
+  );
+  const openChanges = await many<GateContext['openChanges'][number]>(
+    db,
+    `SELECT c.id, c.number, c.status, c.requalification_required FROM change_source cs JOIN change_request c ON c.id = cs.change_id
+      WHERE cs.source_id = $1 AND c.status IN ('PROPOSED', 'IMPACT_ASSESSED', 'APPROVED', 'EFFECTIVE') ORDER BY c.requested_at`,
+    [sourceId],
+  );
+
   const context: GateContext = {
     source,
     revision,
@@ -146,6 +172,9 @@ export async function evaluateGates(db: Queryable, sourceId: string, timeZone = 
     fais,
     requirements,
     blockingConcerns,
+    openNcrs,
+    concessions,
+    openChanges,
   };
   const gates: GateResult[] = [];
   const gate = (code: string, status: GateResult['status'], detail: string, link?: string) =>
@@ -177,7 +206,7 @@ export async function evaluateGates(db: Queryable, sourceId: string, timeZone = 
   }
 
   // 3. Supplier / site restrictions.
-  if (restrictions.length) gate('SUPPLIER_NOT_RESTRICTED', 'FAIL', restrictions.map((r) => `${r.site_id ? 'Site' : 'Supplier'} suspended: ${r.reason}`).join('; '), `/suppliers/${source.supplier_id}`);
+  if (restrictions.length) gate('SUPPLIER_NOT_RESTRICTED', 'FAIL', restrictions.map((r) => `${r.source_id ? 'This source restricted' : r.site_id ? 'Site suspended' : 'Supplier suspended'}: ${r.reason}`).join('; '), `/suppliers/${source.supplier_id}`);
   else gate('SUPPLIER_NOT_RESTRICTED', 'PASS', 'No active suspension.');
 
   // 4. This exact site's qualification.
@@ -226,10 +255,37 @@ export async function evaluateGates(db: Queryable, sourceId: string, timeZone = 
     else gate('EVIDENCE_COMPLETE', 'PASS', `${required.length} required item(s) satisfied or waived.`);
   }
 
-  // 9. Open quality concerns on this source.
-  if (blockingConcerns.length)
-    gate('NO_BLOCKING_QUALITY', 'FAIL', `Open: ${blockingConcerns.map((c) => `${c.number} (${c.status === 'CAPTURED' ? 'awaiting triage' : c.severity})`).join(', ')}.`, `/quality/${blockingConcerns[0]!.id}`);
+  // 9. Open concerns and nonconformances on this source (NCR-BLOCK-INTERIM-1, POL-14).
+  const blockingNcrs = openNcrs.filter((n) => n.severity === 'HIGH' || n.severity === 'CRITICAL');
+  const otherNcrs = openNcrs.filter((n) => !blockingNcrs.includes(n));
+  if (blockingConcerns.length || blockingNcrs.length) {
+    const items = [
+      ...blockingNcrs.map((n) => `${n.number} (${n.severity.toLowerCase()} nonconformance, ${n.status.replaceAll('_', ' ').toLowerCase()})`),
+      ...blockingConcerns.map((c) => `${c.number} (${c.status === 'CAPTURED' ? 'awaiting triage' : c.severity})`),
+    ];
+    const link = blockingNcrs.length ? `/quality/ncrs/${blockingNcrs[0]!.id}` : `/quality/${blockingConcerns[0]!.id}`;
+    gate('NO_BLOCKING_QUALITY', 'FAIL', `Open: ${items.join(', ')}. Resolve and verify the material, or close with a documented outcome.`, link);
+  } else if (otherNcrs.length)
+    gate('NO_BLOCKING_QUALITY', 'WARN', `Open lower-severity nonconformance: ${otherNcrs.map((n) => n.number).join(', ')}. Only a conditional approval is possible (${NCR_BLOCKING_RULE}).`, `/quality/ncrs/${otherNcrs[0]!.id}`);
   else gate('NO_BLOCKING_QUALITY', 'PASS', 'None open.');
+
+  // 10. Concessions: an expired one relied on by open nonconformance blocks; a current one limits approval to conditional.
+  const today = day(new Date());
+  const expired = concessions.filter((c) => c.valid_until < today && c.ncr_open);
+  const current = concessions.filter((c) => c.valid_from <= today && c.valid_until >= today);
+  if (expired.length)
+    gate('CONCESSIONS_CURRENT', 'FAIL', `${expired.map((c) => `${c.number} expired ${c.valid_until}`).join(', ')} while its nonconformance is still open. Disposition the material another way or request a new concession.`, `/quality/concessions/${expired[0]!.id}`);
+  else if (current.length)
+    gate('CONCESSIONS_CURRENT', 'WARN', `Active deviation ${current.map((c) => `${c.number} (until ${c.valid_until})`).join(', ')}; a concession is not a specification change, so only a conditional approval is possible.`, `/quality/concessions/${current[0]!.id}`);
+  else gate('CONCESSIONS_CURRENT', 'PASS', 'No concession relied on.');
+
+  // 11. Change control: a change needing requalification must be verified first.
+  const requal = openChanges.filter((c) => (c.status === 'APPROVED' || c.status === 'EFFECTIVE') && c.requalification_required);
+  if (requal.length)
+    gate('CHANGE_CONTROL', 'FAIL', `${requal.map((c) => c.number).join(', ')} requires requalification and its implementation is not yet verified.`, `/changes/${requal[0]!.id}`);
+  else if (openChanges.length)
+    gate('CHANGE_CONTROL', 'WARN', `Pending change ${openChanges.map((c) => `${c.number} (${c.status.replaceAll('_', ' ').toLowerCase()})`).join(', ')}; only a conditional approval is possible until it is decided.`, `/changes/${openChanges[0]!.id}`);
+  else gate('CHANGE_CONTROL', 'PASS', 'No pending change on this source.');
 
   const approvable = !gates.some((g) => g.status === 'FAIL');
   const conditionalOnly = gates.some((g) => g.status === 'WARN');

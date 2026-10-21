@@ -552,6 +552,10 @@ function sourceStateText(state: string): string {
       return 'Source approval expired — material held pending authorized review';
     case 'AT_RISK':
       return 'Source at risk — site qualification not current';
+    case 'RESTRICTED':
+      return 'Exact source RESTRICTED — material held pending authorized review';
+    case 'REQUALIFICATION_REQUIRED':
+      return 'Source change not yet verified — requalification required';
     default:
       return state;
   }

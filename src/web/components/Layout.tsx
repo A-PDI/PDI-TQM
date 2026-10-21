@@ -5,12 +5,12 @@ import { QuickCapture } from './QuickCapture';
 
 const NAV: Array<{ to: string; label: string; built: boolean; stage?: string; also?: string[] }> = [
   { to: '/', label: 'Home', built: true },
-  { to: '/inspections', label: 'Inspections', built: true },
+  { to: '/inspections', label: 'Inspections', built: true, also: ['/forms'] },
   { to: '/quality', label: 'Quality', built: true },
   { to: '/parts', label: 'Parts & Sources', built: true, also: ['/sourcing', '/sources', '/baselines'] },
-  { to: '/suppliers', label: 'Suppliers', built: true },
+  { to: '/suppliers', label: 'Suppliers', built: true, also: ['/commitments'] },
   { to: '/injectors', label: 'Injectors', built: false, stage: 'Stage 4' },
-  { to: '/changes', label: 'Changes', built: false, stage: 'Stage 3' },
+  { to: '/changes', label: 'Changes', built: true },
   { to: '/reports', label: 'Reports', built: false, stage: 'Stage 4' },
 ];
 

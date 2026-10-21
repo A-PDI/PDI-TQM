@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { type EffectiveSourceStatus, type GateResult, PATHWAYS, type Pathway } from '../../shared/sourcing';
 import { api, fmtDate, fmtDateTime } from '../api';
 import { FileLinks, GateList, QualificationBadge, SourceStatusBadge, UploadEvidence, useBusy } from '../components/sourcing';
+import { type QualityContext, QualityContextCard } from '../components/quality';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
 
 interface Fai {
@@ -46,7 +47,9 @@ interface SourceData {
   decisions: Array<{ id: string; number: string; decision: string; scope: string; conditions: string | null; validUntil: string | null; rationale: string; decidedAt: string; approver: string; manifestSha256: string; report: { fileId: string; sha256: string; pageCount: number } | null }>;
   inspections: Array<{ id: string; number: string; status: string; outcome: string | null; dateReceived: string; lotNumber: string | null; sourceStateAtStart: string }>;
   repointCandidates: Array<{ id: string; revisionLabel: string }>;
-  permissions: { canManage: boolean; canDecideFai: boolean; canApprove: boolean; approveBlockedReason: string | null; canRegisterFai: boolean };
+  quality: QualityContext;
+  sourceRestrictions: Array<{ id: string; reason: string; decidedAt: string; decidedBy: string }>;
+  permissions: { canManage: boolean; canDecideFai: boolean; canApprove: boolean; approveBlockedReason: string | null; canRegisterFai: boolean; canRestrict: boolean };
 }
 
 type DialogKind = null | 'ack' | 'fai' | 'approve' | { response: string } | { results: Fai } | { decide: Fai };
@@ -322,6 +325,50 @@ export function Source() {
           ))
         )}
       </section>
+
+      {data.sourceRestrictions.map((r) => (
+        <div key={r.id} className="notice notice-error">
+          This exact source is restricted since {fmtDateTime(r.decidedAt)} by {r.decidedBy}: {r.reason}
+          {data.permissions.canRestrict && (
+            <>
+              {' '}
+              <button
+                type="button"
+                className="btn-link"
+                onClick={async () => {
+                  const reason = window.prompt('Reason for lifting the restriction (reinstatement)');
+                  if (reason) {
+                    await api(`/api/restrictions/${r.id}/lift`, { body: { reason } }).catch((e: Error) => window.alert(e.message));
+                    reload();
+                  }
+                }}
+              >
+                Lift restriction…
+              </button>
+            </>
+          )}
+        </div>
+      ))}
+      <QualityContextCard
+        context={data.quality}
+        actions={
+          data.permissions.canRestrict && data.sourceRestrictions.length === 0 ? (
+            <button
+              type="button"
+              className="btn btn-small btn-danger"
+              onClick={async () => {
+                const reason = window.prompt('Reason for restricting this exact source (new approvals and receipts are held)');
+                if (reason) {
+                  await api(`/api/sources/${id}/restrictions`, { body: { reason } }).catch((e: Error) => window.alert(e.message));
+                  reload();
+                }
+              }}
+            >
+              Restrict this source…
+            </button>
+          ) : null
+        }
+      />
 
       <section className="card">
         <h2>Approval decisions</h2>
