@@ -9,13 +9,43 @@ interface SearchData {
   inspections: Array<{ id: string; number: string; partNumber: string; poNumber: string | null; lotNumber: string | null; status: string }>;
   suppliers: Array<{ id: string; code: string; legalName: string }>;
   qualityEvents: Array<{ id: string; number: string; title: string; status: string }>;
+  records: Array<{ type: string; id: string; number: string; title: string | null; status: string; link: string }>;
+}
+
+/** Quality, change, injector and document matches grouped by record type, in server order. */
+function RecordResults({ records }: { records: SearchData['records'] }) {
+  const groups = new Map<string, SearchData['records']>();
+  for (const r of records) groups.set(r.type, [...(groups.get(r.type) ?? []), r]);
+  return (
+    <>
+      {[...groups].map(([type, rows]) => (
+        <section className="card" key={type}>
+          <h2>{type === 'Document' ? 'Documents and files' : `${type}s`}</h2>
+          <ul>
+            {rows.map((r) => (
+              <li key={`${r.id}-${r.number}`}>
+                {r.link.startsWith('/api/') ? (
+                  <a href={r.link} target="_blank" rel="noopener noreferrer">
+                    {r.number}
+                  </a>
+                ) : (
+                  <Link to={r.link}>{r.number}</Link>
+                )}{' '}
+                {r.title} <StatusBadge status={r.status} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </>
+  );
 }
 
 export function Search() {
   const [params] = useSearchParams();
   const q = params.get('q') ?? '';
   const { data, error, loading } = useLoad<SearchData>(q.length >= 2 ? `/api/search?q=${encodeURIComponent(q)}` : null);
-  const total = data ? data.parts.length + data.inspections.length + data.suppliers.length + data.qualityEvents.length : 0;
+  const total = data ? data.parts.length + data.inspections.length + data.suppliers.length + data.qualityEvents.length + data.records.length : 0;
   return (
     <>
       <h1>Search: “{q}”</h1>
@@ -69,6 +99,7 @@ export function Search() {
           </ul>
         </section>
       )}
+      {data && data.records.length > 0 && <RecordResults records={data.records} />}
     </>
   );
 }

@@ -38,6 +38,8 @@ export const CAPABILITIES = {
   'change.manage': { description: 'Propose changes and assess their impact', sensitive: false },
   'change.approve': { description: 'Approve or reject technical and supplier changes', sensitive: true },
   'change.verify': { description: 'Verify implementation of an effective change', sensitive: true },
+  'injector.test': { description: 'Import and record injector bench tests and repairs', sensitive: false },
+  'injector.evaluate': { description: 'Issue injector shipment evaluations', sensitive: true },
   'work.view_team': { description: 'View team-wide and unassigned work', sensitive: false },
   'reports.export': { description: 'Export operational data', sensitive: false },
   'admin.users': { description: 'Manage user accounts and authority grants', sensitive: true },
@@ -50,7 +52,7 @@ export const CAPABILITY_CODES = Object.keys(CAPABILITIES) as Capability[];
 export const ROLE_BUNDLES: Record<string, { label: string; capabilities: Capability[] }> = {
   inspector: {
     label: 'Receiving inspector',
-    capabilities: ['records.read', 'inspection.perform', 'quality.capture', 'containment.verify', 'concession.request'],
+    capabilities: ['records.read', 'inspection.perform', 'quality.capture', 'containment.verify', 'concession.request', 'injector.test'],
   },
   quality: {
     label: 'Quality',
@@ -74,6 +76,8 @@ export const ROLE_BUNDLES: Record<string, { label: string; capabilities: Capabil
       'commitment.manage',
       'commitment.verify',
       'change.verify',
+      'injector.evaluate',
+      'reports.export',
     ],
   },
   engineering: {
@@ -120,6 +124,7 @@ export const ROLE_BUNDLES: Record<string, { label: string; capabilities: Capabil
       'scar.close',
       'change.approve',
       'commitment.verify',
+      'injector.evaluate',
     ],
   },
   purchasing: {

@@ -133,14 +133,13 @@ test('AT-01 inspector walkthrough: launch, shared section, two items, missing ph
 test('navigation: every visible destination works, list filters survive Back', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop', 'desktop navigation');
   await login(page, 'riley.chen@example.com');
-  for (const name of ['Inspections', 'Quality', 'Parts & Sources', 'Suppliers', 'Policy register', 'Home']) {
+  for (const name of ['Inspections', 'Quality', 'Parts & Sources', 'Suppliers', 'Injectors', 'Changes', 'Reports', 'Policy register', 'Home']) {
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name, exact: true }).click();
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByText('Page not found')).toHaveCount(0);
   }
-  // Unbuilt destinations are visibly unavailable, not dead links.
-  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: /Injectors/ })).toHaveCount(0);
-  await expect(page.getByText('Stage 4').first()).toBeVisible();
+  // Every main destination is built; no placeholder entries remain.
+  await expect(page.locator('.nav-disabled')).toHaveCount(0);
 
   await apiCreateInspection(page, 1);
   await page.goto('/inspections?status=OPEN&q=TQ-PRK');

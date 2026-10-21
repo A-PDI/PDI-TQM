@@ -39,7 +39,7 @@ export function Inspections() {
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState(params.get('q') ?? '');
   const query = new URLSearchParams();
-  for (const k of ['q', 'status', 'outcome', 'mine', 'page']) {
+  for (const k of ['q', 'status', 'outcome', 'mine', 'page', 'completedFrom', 'completedTo', 'supplierId']) {
     const v = params.get(k);
     if (v) query.set(k, v);
   }
@@ -111,6 +111,20 @@ export function Inspections() {
           </label>
         </form>
       </div>
+      {(params.get('completedFrom') || params.get('completedTo') || params.get('outcome') || params.get('supplierId')) && (
+        <div className="notice row-actions small" role="status">
+          <span>
+            Report drill-down:
+            {params.get('completedFrom') && ` completed ${fmtDate(params.get('completedFrom'))} – ${fmtDate(params.get('completedTo'))}`}
+            {params.get('outcome') && ` · outcome ${params.get('outcome')!.toLowerCase()}`}
+            {params.get('supplierId') && ' · one supplier'}
+            {data && ` · ${data.total} inspection${data.total === 1 ? '' : 's'}`}
+          </span>
+          <button type="button" className="btn btn-small" onClick={() => update({ completedFrom: null, completedTo: null, outcome: null, supplierId: null })}>
+            Clear report filters
+          </button>
+        </div>
+      )}
       <LoadState loading={loading && !data} error={error} />
       {data && (
         <div className="table-wrap">

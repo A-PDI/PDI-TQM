@@ -1,7 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { CAPABILITIES, type Capability, ROLE_BUNDLES } from '../shared/capabilities.js';
-import { dayIn } from '../shared/quality.js';
 import { audit } from './audit.js';
 import {
   attemptLogin,
@@ -19,6 +18,7 @@ import { many, one, withTransaction } from './db.js';
 import { AppError, badRequest, forbidden, notFound, unprocessable } from './errors.js';
 import type { Services } from './services.js';
 import { qualityContext } from './quality/context.js';
+import { currentCounts } from './reports/metrics.js';
 import { effectiveSourceStatuses } from './sourcing/status.js';
 
 const uuid = z.string().uuid();
@@ -117,16 +117,8 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
          FROM inspection WHERE inspector_id = $1 AND status IN ('DRAFT', 'PARTIAL') ORDER BY updated_at DESC LIMIT 20`,
       [auth.userId],
     );
-    const counts = await one<{ awaiting_review: number; open_concerns: number; open_inspections: number; open_ncrs: number; open_scars: number; overdue_commitments: number }>(
-      db,
-      `SELECT (SELECT count(*)::int FROM inspection WHERE status = 'READY_FOR_REVIEW') AS awaiting_review,
-              (SELECT count(*)::int FROM quality_event WHERE status IN ('CAPTURED', 'TRIAGED')) AS open_concerns,
-              (SELECT count(*)::int FROM inspection WHERE status IN ('DRAFT', 'PARTIAL')) AS open_inspections,
-              (SELECT count(*)::int FROM ncr WHERE status <> 'CLOSED') AS open_ncrs,
-              (SELECT count(*)::int FROM scar WHERE status <> 'CLOSED') AS open_scars,
-              (SELECT count(*)::int FROM supplier_commitment WHERE status IN ('OPEN', 'SUPPLIER_CLAIMS_DONE') AND due_date < $1::date) AS overdue_commitments`,
-      [dayIn(config.displayTimeZone)],
-    );
+    // Shared with the reports overview so Home and reports always agree (FR-102).
+    const counts = await currentCounts(db, config.displayTimeZone);
     const recent = await many(
       db,
       `SELECT DISTINCT ON (a.entity_type, a.entity_id) a.entity_type AS "entityType", a.entity_id AS "entityId", a.summary, a.occurred_at AS "occurredAt"
@@ -186,8 +178,44 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
            WHERE c.number ILIKE $1 OR c.title ILIKE $1 OR c.supplier_reference ILIKE $1 OR c.effective_lot ILIKE $1 LIMIT 10)
          UNION ALL
          (SELECT 'Commitment', c.id, c.number, c.promised_action, c.status, '/commitments/' || c.id FROM supplier_commitment c
-           WHERE c.number ILIKE $1 OR c.promised_action ILIKE $1 OR c.representative ILIKE $1 LIMIT 10)`,
-        [p],
+           WHERE c.number ILIKE $1 OR c.promised_action ILIKE $1 OR c.representative ILIKE $1 LIMIT 10)
+         UNION ALL
+         (SELECT 'Injector', j.id, j.serial_number, p.part_number || ' — ' || p.description,
+                 coalesce((SELECT t.pdi_evaluation FROM injector_test t WHERE t.injector_id = j.id ORDER BY t.tested_at DESC, t.recorded_at DESC LIMIT 1), 'NOT_TESTED'), '/injectors/' || j.id
+            FROM injector j JOIN company_part p ON p.id = j.part_id
+           WHERE j.serial_number ILIKE $1 OR j.normalized_serial LIKE upper(regexp_replace($2, '[^A-Za-z0-9]', '', 'g')) || '%' OR j.oe_part_number ILIKE $1 LIMIT 10)
+         UNION ALL
+         (SELECT 'Bench test', t.injector_id, j.serial_number || ' ' || to_char(t.tested_at, 'YYYY-MM-DD'), t.machine_id || ' · ' || t.test_plan, t.pdi_evaluation, '/injectors/' || t.injector_id
+            FROM injector_test t JOIN injector j ON j.id = t.injector_id WHERE t.machine_id ILIKE $1 OR t.test_plan ILIKE $1 ORDER BY t.tested_at DESC LIMIT 10)
+         UNION ALL
+         (SELECT 'Bench import', b.id, b.number, f.original_name, b.status, '/injectors/imports/' || b.id
+            FROM bench_import b JOIN file_object f ON f.id = b.file_id WHERE b.number ILIKE $1 OR f.original_name ILIKE $1 LIMIT 10)
+         UNION ALL
+         (SELECT 'Shipment evaluation', e.id, e.number, e.reference, e.conclusion, '/injectors/shipments/' || e.id
+            FROM shipment_evaluation e WHERE e.number ILIKE $1 OR e.reference ILIKE $1 LIMIT 10)
+         UNION ALL
+         (SELECT 'Document', f.id, f.original_name, coalesce(l.caption, initcap(replace(l.entity_type, '_', ' '))), l.entity_type,
+                 CASE
+                   WHEN l.inspection_id IS NOT NULL THEN '/inspections/' || l.inspection_id
+                   WHEN l.entity_type = 'EVIDENCE_REQUIREMENT' THEN '/sourcing/' || (SELECT r.sourcing_request_id FROM evidence_requirement r WHERE r.id = l.entity_id)
+                   WHEN l.entity_type = 'ACKNOWLEDGMENT' THEN '/sources/' || (SELECT a.source_id FROM supplier_acknowledgment a WHERE a.id = l.entity_id)
+                   WHEN l.entity_type = 'FAI' THEN '/sources/' || (SELECT x.source_id FROM fai_sample x WHERE x.id = l.entity_id)
+                   WHEN l.entity_type = 'QUALIFICATION' THEN '/suppliers/' || (SELECT x.supplier_id FROM supplier_qualification x WHERE x.id = l.entity_id)
+                   WHEN l.entity_type = 'CERTIFICATE' THEN '/suppliers/' || (SELECT x.supplier_id FROM supplier_certificate x WHERE x.id = l.entity_id)
+                   WHEN l.entity_type = 'NCR' THEN '/quality/ncrs/' || l.entity_id
+                   WHEN l.entity_type = 'MATERIAL_SCOPE' THEN '/quality/ncrs/' || (SELECT m.ncr_id FROM material_scope m WHERE m.id = l.entity_id)
+                   WHEN l.entity_type = 'DISPOSITION' THEN '/quality/ncrs/' || (SELECT m.ncr_id FROM disposition_decision d JOIN material_scope m ON m.id = d.scope_id WHERE d.id = l.entity_id)
+                   WHEN l.entity_type = 'CONCESSION' THEN '/quality/concessions/' || l.entity_id
+                   WHEN l.entity_type = 'SCAR' THEN '/quality/scars/' || l.entity_id
+                   WHEN l.entity_type = 'COMMITMENT' THEN '/commitments/' || l.entity_id
+                   WHEN l.entity_type = 'CHANGE' THEN '/changes/' || l.entity_id
+                   WHEN l.entity_type = 'BASELINE_REVISION' THEN '/baselines/' || l.entity_id
+                   WHEN l.entity_type = 'BENCH_IMPORT' THEN '/injectors/imports/' || l.entity_id
+                   ELSE '/api/files/' || f.id
+                 END
+            FROM evidence_link l JOIN file_object f ON f.id = l.file_id
+           WHERE l.unlinked_at IS NULL AND f.status = 'AVAILABLE' AND (f.original_name ILIKE $1 OR l.caption ILIKE $1) ORDER BY l.linked_at DESC LIMIT 10)`,
+        [p, q.q],
       ),
     ]);
     return { parts, inspections, suppliers, qualityEvents: events, records };

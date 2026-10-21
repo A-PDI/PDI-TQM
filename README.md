@@ -1,10 +1,10 @@
 # PDI TQMS — Total Quality Management System
 
-Internal quality-management web application for PDI: receiving inspections, quality concerns and NCRs with containment and disposition, concessions, SCARs, supplier commitments, parts/sources/suppliers with A/B/C sourcing, change control, controlled forms and reports, and (in a later stage) injector testing.
+Internal quality-management web application for PDI: receiving inspections, quality concerns and NCRs with containment and disposition, concessions, SCARs, supplier commitments, parts/sources/suppliers with A/B/C sourcing, change control, controlled forms, injector bench testing and repair, management reports and traceability.
 
 One TypeScript modular monolith: React web app + Fastify (Node 22) API, PostgreSQL as the source of truth, a private persistent disk for original files and generated PDFs, and a database-backed job queue. Designed to run as a single Render web service.
 
-**Status: Stages 0–3 (foundation, receiving inspection, supplier qualification and sourcing, NCR/concession/SCAR, supplier commitments, change control and the form editor).** Not production-ready; see [docs/DESIGN_BASELINE.md](docs/DESIGN_BASELINE.md) for what is built, what is not, and the business decisions PDI must sign.
+**Status: Stages 0–4 (foundation, receiving inspection, supplier qualification and sourcing, NCR/concession/SCAR, supplier commitments, change control, the form editor, injector tests/repairs with an interim synthetic bench-file adapter, management reports/exports and traceability).** Not production-ready; see [docs/DESIGN_BASELINE.md](docs/DESIGN_BASELINE.md) for what is built, what is not, and the business decisions PDI must sign.
 
 ## Local development
 
@@ -76,7 +76,7 @@ npm run build && npm run test:e2e   # Playwright desktop (1440) and phone (390) 
 ## Repository layout
 
 ```
-src/shared/     domain rules shared by server and browser (forms, measurement, completion, sourcing, quality/change rules)
+src/shared/     domain rules shared by server and browser (forms, measurement, completion, sourcing, quality/change rules, bench CSV, metric definitions)
 src/server/     Fastify API, auth, audit, storage, jobs, PDF rendering, CLIs
 src/web/        React application
 migrations/     forward-only SQL migrations

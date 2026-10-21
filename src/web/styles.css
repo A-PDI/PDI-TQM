@@ -203,3 +203,25 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
   .qrow > .qcol-status, .qrow > .qcol-note, .qrow > .qcol-photo { grid-column: 2; }
   .seg button { min-width: 52px; }
 }
+
+/* ---------- charts (Stage 4) ---------- */
+.viz-title { font-weight: 600; font-size: 13px; color: var(--navy); margin-bottom: 6px; }
+.viz-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text); margin-bottom: 4px; }
+.viz-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.viz-tip { position: absolute; pointer-events: none; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; font-size: 12px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); min-width: 140px; z-index: 5; }
+.viz rect[tabindex]:focus { outline: none; }
+.viz rect[tabindex]:focus-visible { outline: 2px solid var(--navy); outline-offset: -2px; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.metric { display: block; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--surface); color: var(--text); text-decoration: none; }
+.metric strong { display: block; font-size: 1.4rem; color: var(--navy); }
+.metric .small { color: var(--muted); }
+a.metric:hover { border-color: var(--navy); }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.stage-badge { font-size: 11px; }
+@media (max-width: 640px) {
+  table.data.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table.data.stack, table.data.stack tbody, table.data.stack tr, table.data.stack td { display: block; width: 100%; }
+  table.data.stack tr { border-top: 1px solid var(--border); padding: 6px 0; }
+  table.data.stack td { border-top: none; padding: 3px 12px; }
+  table.data.stack td[data-label]::before { content: attr(data-label); display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+}

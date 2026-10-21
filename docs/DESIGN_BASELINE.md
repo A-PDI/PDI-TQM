@@ -1,4 +1,4 @@
-# TQMS design baseline (Stages 0–3)
+# TQMS design baseline (Stages 0–4)
 
 Source: *PDI TQMS Zero-to-Production Construction Set* (20 Oct 2026). The authoritative requirements are copied verbatim in [`requirements/`](requirements) and the construction drawings in [`construction/`](construction). This file covers items (a)–(e) of the master prompt's Part XI response contract.
 
@@ -12,7 +12,7 @@ Status vocabulary (Drawing F1): **implemented** → **unit-tested** → **integr
 | 1 Inspector's room | Appendix A catalogue, launch, multi-unit workbench, all specialized patterns, photos, partial/complete, independent review, amendments, branded PDF, linked concern + triage | AT-01, AT-02 (part), AT-03 (part), AT-04, AT-06 (part) | **Built in this PR** |
 | 2 Supplier/engineering | site qualification, A/B/C sourcing, baseline release workflow and UI, FAI reject/resubmit, supplier acknowledgment, source approval with frozen manifest | AT-09–AT-13, AT-17, NEG-04, NEG-05 | **Built (Stage 2 PR)** |
 | 3 Quality/change | NCR scope/containment/disposition/verification/release, concession, SCAR/8D/effectiveness/recurrence, supplier commitments with reminders, change control, form-revision editor and one-off forms, OPS-03/04/05/06/07/08 PDFs | AT-02, AT-03, AT-06, AT-07, AT-08, AT-12 (concession gate), AT-14–AT-16, AT-18, NEG-01, NEG-06–08, NEG-17, NEG-18 | **Built (Stage 3 PR)** |
-| 4 Injector & management | serialized tests/repairs, import adapters, comparison reports, dashboards/reports, exports | AT-05, AT-20 | Not started |
+| 4 Injector & management | serialized injectors, idempotent bench-file import (interim adapter), manual tests, repair cases with quick measurements, retest attribution, comparison, shipment evaluation, injector analytics; management overview with shared metric definitions, drill-down, CSV exports, issued management report PDF; traceability by part + lot or serial | AT-05, AT-20, NEG-09, NEG-22 | **Built (Stage 4 PR)** |
 | 5 Finishes | all 21 AT + adversarial cases, visual regression baselines, accessibility audit, performance | all | Not started |
 | 6 Inspection & occupancy | Render staging, PG + disk backup/restore drill, PDI sign-off, production go/no-go | AT-21 (restore), NEG-14 | Not started; needs owner approval |
 
@@ -46,8 +46,8 @@ Seeded into the `policy_decision` table and shown in the app (*Policy register*)
 | POL-04 | Risk method, assessment/FAI/PPAP triggers, SCAR/suspension criteria, response due dates | `RISK-INTERIM-1` and `CHECKLIST-INTERIM-1` as in Stage 2. SCAR effectiveness needs a completed, non-failing inspection received after implementation was verified, or a documented alternative with evidence. `REMINDER-INTERIM-1`: overdue commitments get a daily in-app reminder; HIGH escalates to management at once, MEDIUM after 7 days, LOW is only reminded. E-mail stays disabled |
 | POL-05 | Concessions, containment, partial release, physical verification | `DISPOSITION-INTERIM-1`: containment authorized by management and physically verified on site; disposition per quantity/serial; use-as-is only under a current approved concession for the same part and lot within its quantity; rework/repair verified only by a PDI reinspection of the same lot showing the failed characteristic conforms; release by someone other than the decider; no ERP stock movement |
 | POL-06 | Change effectivity, old lots, requalification | Impact assessment before decision; a site change always requires requalification; effectivity needs the new baseline revision released (optional first lot); implementation is verified by a completed, passing inspection of an affected source on or after the effective date under the changed revision; earlier lots keep their recorded revision |
-| POL-07 | Signature format, brand artwork/fonts/colors, numbering, retention | Reference logo extract + suggested navy tokens; `IR-`/`QE-`/`NCR-`/`DEV-`/`SCAR-`/`COM-`/`CHG-YYYY-NNNNN`; controlled record PDFs issued as numbered editions; nothing destructively deleted |
-| POL-08 | Injector bench formats and rules | Not built |
+| POL-07 | Signature format, brand artwork/fonts/colors, numbering, retention | Reference logo extract + suggested navy tokens; `IR-`/`QE-`/`NCR-`/`DEV-`/`SCAR-`/`COM-`/`CHG-`/`BI-`/`REP-`/`SHP-`/`CMP-`/`MR-YYYY-NNNNN`; the management report uses the uncatalogued code `TQMS-MR`; controlled record PDFs issued as numbered editions; nothing destructively deleted |
+| POL-08 | Injector bench formats and rules | Interim synthetic layout `TQMS-BENCH-CSV-1` (one row per measured value; labelled *not a CarbonZapp format*). No bench integration. A PDI verdict is calculated only from released FUNCTIONAL baseline characteristics referenced `injector:<condition>__<parameter>`, compared exactly and only in the same unit; otherwise the result is NO_CRITERIA / PARTIAL_CRITERIA and the machine verdict is shown separately, never as a PDI verdict. Must be validated against real bench files before production |
 | POL-09 | Render budget/sizing, monitoring owner, RPO/RTO, off-site backup, MFA, launch gate | Local + template only; nothing provisioned |
 | POL-10 | Whether historical sample reports/photos may be imported | Nothing imported; all fixtures fabricated |
 | POL-11 | Authority/timing for Accepted results (FR-050) | Requires reviewer holding `inspection.review_accepted` |
@@ -77,11 +77,17 @@ Seeded into the `policy_decision` table and shown in the app (*Policy register*)
 16. **SCAR (FR-074, AT-15).** Supplier responses are kept as numbered revisions in an 8D-style structure and never advance the SCAR by themselves (NEG-07). Implementation needs objective PDI evidence; effectiveness needs a plan, a verifier other than the implementation verifier, and later production evidence. A recurrence NCR reopens a verified or closed SCAR into a new cycle; earlier responses and verifications stay frozen.
 17. **Supplier commitments and change control (C6, C7).** A commitment records the representative, channel, statement, promised action, owner, due date (or a reason for none) and verification method; a supplier claim is only a claim, a failed verification keeps the duty open with its owner, and the exact source can be restricted (`RESTRICTED` status overlay). Changes go through impact assessment, an independent decision, effectivity after the revision is released, and verification on the first conforming lot; approved changes requiring requalification mark affected approved sources `REQUALIFICATION_REQUIRED` until verified (NEG-17).
 18. **Forms (FR-042, AT-03).** Revisions are drafted from the released revision, edited in a structured editor (rows of existing keys keep their keys; new rows are keyed from their names), submitted, and released by someone other than the author; release supersedes the prior revision. One-off inspections store an immutable `ONE_OFF` revision of the Miscellaneous form, copy a released receiving checklist, and always require independent review.
-19. **Unbuilt destinations** (Injectors, Reports) are shown disabled with their stage label, not as dead links.
+19. **Bench imports (FR-060, NEG-09, NEG-22).** The original file is stored unchanged and linked to the import record. A test is identified by machine + normalized serial + test time (time zone required) + sequence; the same key with the same content is skipped, with different content is a *conflict* that never overwrites the original. Invalid tests are excluded whole with a line-referenced reason; unknown part numbers are excluded. The whole import is one transaction (the import record is written last through a deferred foreign key), so an interruption leaves no tests, injectors, file record or stored object. Test values and verdicts are immutable (trigger); only a retest attribution may be added once.
+20. **Repair and retest (FR-062, C9).** A repair case holds immutable actions with optional quick measurements (recorded as entered; no limits implied). A retest is attributed to an action only if it was performed after it, and a case closes only once a retest is attributed. The chronology labels first test, retest after repair, shipment evaluation and other retests.
+21. **Comparison and shipment evaluation (FR-061, FR-063).** Comparisons keep the selected order and put values recorded in different units on separate rows. A shipment evaluation freezes each injector's latest test with its PDI evaluation and machine verdict; anything not fully covered by released PDI criteria, or untested, is an exception. It is explicitly not a material release.
+22. **Metric definitions (FR-102, C10).** `METRICS-INTERIM-1` definitions live in `src/shared/reports.ts` and are shown on screen, written into every CSV header and frozen into each issued report. Home and the overview call the same `currentCounts`; inspection outcomes always use the latest amended outcome, and the inspection list's drill-down filters use the same SQL. Period figures use whole dates in the display time zone; "now" figures ignore the period. Expiry uses a selectable reporting window (default 90 days), stated as not a policy limit.
+23. **Exports.** CSV exports require `reports.export`, are audited (denials too), and neutralize spreadsheet formula triggers while keeping plain numbers numeric.
+24. **Traceability (AT-20, FR-010).** For part + lot or a serial, the trace lists inspections with the exact form revision and spec snapshot, FAI history with nonconforming characteristics, quality events, NCR material scopes and dispositions, concessions, changes and bench history. "What applied on this date" is computed from the decision history at the end of that date: latest released requirement revision per baseline, latest source approval and its validity, restrictions and site qualification then in force, concessions and changes in effect — separately from the source's current status.
+25. **Notifications.** In-app only: the work queue and the hourly reminder sweep (Stage 3). E-mail delivery remains disabled pending owner approval.
 
 ## (d) Acceptance matrix (current state)
 
-Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspection.test.ts`, `R` = `tests/integration/reports.test.ts`, `S` = `tests/integration/sourcing.test.ts`, `Q` = `tests/integration/quality.test.ts`, `E` = `tests/e2e/inspection.spec.ts`, `E2` = `tests/e2e/sourcing.spec.ts`, `E3` = `tests/e2e/quality.spec.ts`.
+Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspection.test.ts`, `R` = `tests/integration/reports.test.ts`, `S` = `tests/integration/sourcing.test.ts`, `Q` = `tests/integration/quality.test.ts`, `E` = `tests/e2e/inspection.spec.ts`, `E2` = `tests/e2e/sourcing.spec.ts`, `E3` = `tests/e2e/quality.spec.ts`, `J` = `tests/integration/injectors.test.ts`, `M` = `tests/integration/management.test.ts`, `UJ` = `tests/unit/injectors.test.ts`, `E4` = `tests/e2e/injectors.spec.ts`, `E5` = `tests/e2e/reports.spec.ts`.
 
 | Case | State | Evidence |
 |---|---|---|
@@ -89,7 +95,7 @@ Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspecti
 | AT-02 accepted item | Integration-tested: Accepted confirmed only with review-accepted authority; a current concession for the lot is consumed; outcome stays ACCEPTED | Q "AT-02…", I, R crankshaft |
 | AT-03 template history | UI-tested: draft → edit → submit → independent release; old inspections keep their revision | Q "AT-03 / NEG-03…", E3 "Form editor…", I |
 | AT-04 special measurements | Integration + PDF tested | R six-cylinder head, I/U ring end-gap limits, U vacuum/valve rules |
-| AT-05 injector | Not built | — |
+| AT-05 injector | UI-tested with synthetic bench data: import with per-test report, auto-registration, separate machine/PDI verdicts, repair with quick measurements, attributed retest, comparison (CSV + PDF), shipment evaluation PDF, analytics with explicit denominators. Real bench formats are POL-08 open | J, UJ, E4 |
 | AT-06 concern → NCR | UI-tested: concern → triage → NCR with the same photos → scope → containment → disposition → verification → close; SCAR issued | Q "AT-06…", E3 walkthrough |
 | AT-07 supplier coating | Integration-tested: commitment tied to the exact source and revision; supplier claim ≠ verification; failed incoming inspection fails it; source restricted; duty stays open with its owner | Q "AT-07…" |
 | AT-08 FAI recurrence | Integration-tested: later NCR linked as recurrence reopens the SCAR; NCR shows rejected and accepted FAIs with results, approvals, prior NCRs and follow-up | Q "AT-08…", S FAI test |
@@ -103,8 +109,8 @@ Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspecti
 | AT-16 change control | Integration-tested: before/after diff, impact, independent decision, requalification actions with objective evidence, effectivity, first-lot verification, per-lot revision history | Q "AT-16 / NEG-17…", E3 (proposal + impact) |
 | AT-18 ownership | Integration-tested: overdue reminders and severity escalation (idempotent), My Work overdue flag, verification with evidence, supplier history | Q "AT-18…", E3 (record from supplier hub), U |
 | AT-17 documents/PPAP | Integration-tested: HIGH-risk checklist with PPAP elements satisfied or waived; LOW-risk list stays short; approval record PDF lists exact revisions and files | S, `var/report-samples/source-approval-record.pdf` |
-| AT-19 roles | Partial | I, S independence; Q: inspector cannot disposition (NEG-01), nobody approves their own concession/change/form, release ≠ decider, effectiveness ≠ implementation verifier |
-| AT-20 traceability | Partial: search by part/alias/PO/lot/serial/record | API `/api/search`, part/supplier hubs |
+| AT-19 roles | Partial | I, S independence; Q: inspector cannot disposition (NEG-01), nobody approves their own concession/change/form, release ≠ decider, effectiveness ≠ implementation verifier; J/M: only `injector.test` imports, only `injector.evaluate` freezes shipment evaluations, only `reports.export` exports or issues reports (denials audited) |
+| AT-20 traceability | UI-tested: part + lot or serial returns inspections (form/spec revision, photos, flagged rows), FAI defects, NCR/disposition/concession/change history, bench history, and what applied on a chosen date; search also finds injectors, bench imports and documents by file name | M "AT-20…", J search, E4 trace |
 | AT-21 failure recovery | Partial: unsaved-entry restore, upload failure message, report-job reclaim, redeploy persistence; **backup/restore not built** | E "AT-21", I "report job recovery", Docker redeploy check |
 | NEG-01 | Integration-tested: inspector calling the disposition API is denied and audited; no decision recorded | Q |
 | NEG-02, NEG-03 | Integration-tested | I |
@@ -120,7 +126,9 @@ Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspecti
 | NEG-05 | Integration-tested: explicit gate failures with links, no partial approval | S Path A, Path C |
 | NEG-06, NEG-07, NEG-08 | Integration-tested | Q |
 | NEG-17 | Integration-tested: approved source shows REQUALIFICATION_REQUIRED and the CHANGE_CONTROL gate fails until implementation is verified | Q "AT-16 / NEG-17…" |
-| NEG-09, 14, 22 | Not built (Stages 4, 6) | — |
+| NEG-09 | Integration-tested: same file → DUPLICATE_FILE, nothing added; changed value under the same key → conflict, original unchanged | J |
+| NEG-22 | Integration-tested: an import interrupted after the second test leaves every table and the storage object unchanged; re-running imports each test once | J |
+| NEG-14 | Not built (Stage 6) | — |
 
 ### Functional requirement traceability (Stage 1 scope)
 
@@ -166,6 +174,15 @@ Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspecti
 | FR-080 – FR-084 | `src/server/changes/changes.ts`, `src/web/pages/Changes.tsx`; `REQUALIFICATION_REQUIRED` overlay in `sourcing/status.ts` |
 | FR-090 – FR-093 | Partial: OPS-03/04/05/06/07/08 controlled PDFs (`src/server/quality/reports.ts`) as numbered editions; no administrative document-type catalogue editor yet |
 
+### Functional requirement traceability (Stage 4 scope)
+
+| FR | Where |
+|---|---|
+| FR-010, FR-101 | `src/server/reports/trace.ts`, `src/web/pages/Reports.tsx` (Trace); search additions in `routes-core.ts` |
+| FR-060 – FR-064 | `src/server/injectors/bench.ts`, `routes.ts`, `reports.ts`; `src/web/pages/Injectors.tsx`; migration 0006 |
+| FR-102 – FR-104 | `src/server/reports/metrics.ts`, `routes.ts`, `management-report.ts`; `src/shared/reports.ts`; recurrence by part/supplier/characteristic/failure mode and repeated rejected-FAI defects |
+| FR-114 | Partial: imports and report rendering use the monitored job queue; e-mail notifications not enabled |
+
 ## (e) First vertical transaction (delivered)
 
 An inspector searches a part (including by OE alias) and launches the suggested released form against an exact source. They answer the shared receiving section once, complete serialized items with checklist answers, measurements (compared against the released synthetic baseline) and row photos, then save, reload and resume. Completion is blocked with exact-path messages until required evidence is present. A failed result goes to an independent reviewer; confirmation freezes the record and a background job renders the branded PDF edition with a stored SHA-256. An authorized amendment adds a new edition and leaves the original untouched. A concern raised from a failed row carries the identity, expected/actual values and the *same* photo files into the quality queue for triage by someone other than the reporter.
@@ -177,3 +194,7 @@ Purchasing starts a sourcing request, picks pathway A, B or C, and records a ris
 ## (g) Stage 3 transaction (delivered)
 
 An inspector records an uncoated ring with a photo and raises a concern; quality triages it and someone other than the reporter confirms an NCR that carries the same identity and photos. The affected lot, quantity and serials are recorded; management authorizes containment and an inspector verifies the physical hold. Management decides dispositions per quantity — return, scrap, rework, repair, or use as is under a current concession for that lot — and someone else verifies each with objective evidence (a same-lot reinspection for rework; a replacement lot is refused). Verified usable material is released by someone other than the decider, and the NCR closes while its SCAR stays open. The supplier's 8D-style response is recorded as its position; PDI verifies implementation and, independently, effectiveness on later production. A later recurrence reopens the SCAR and shows the full FAI and approval history. Supplier promises are tracked with reminders and escalation until PDI verifies them, and supplier or PDI changes move through impact, decision, effectivity and first-lot verification, flagging affected approved sources until requalified. Form revisions are edited, reviewed and released without touching completed inspections.
+
+## (h) Stage 4 transaction (delivered)
+
+A technician uploads a bench file in the interim layout. The original is stored, each test is added once, and the import report explains every skipped, conflicting or excluded test; new serials are registered automatically. The injector's chronology shows the machine verdict next to the PDI evaluation against released criteria. A failing injector gets a repair case with an adjustment and quick measurements, a retest attributed to that action, and closure. Quality compares injectors (first → latest values, CSV or PDF), freezes a shipment evaluation that lists exceptions without releasing material, and reviews first-pass and post-repair yields with their denominators. Management opens Reports for a period: throughput and outcomes with drill-down to exactly the counted inspections, defect types, supplier quality, open and overdue corrective actions, expiring evidence, changes, approval decisions, recurrence and injector performance, then exports CSVs or issues a frozen management report PDF. Anyone with read access can trace a lot or serial and see what requirements and source approval applied on a given date.

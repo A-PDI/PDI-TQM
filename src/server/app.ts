@@ -22,6 +22,8 @@ import { registerNcrRoutes } from './quality/ncr.js';
 import { registerScarRoutes } from './quality/scars.js';
 import { registerChangeRoutes } from './changes/changes.js';
 import { registerFormRoutes } from './forms/forms.js';
+import { registerInjectorRoutes } from './injectors/routes.js';
+import { registerReportRoutes } from './reports/routes.js';
 import { registerCoreRoutes } from './routes-core.js';
 import { recordReportHandler } from './sourcing/approval-report.js';
 import { registerBaselineRoutes } from './sourcing/baselines.js';
@@ -161,6 +163,8 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
   registerCommitmentRoutes(app, svc);
   registerChangeRoutes(app, svc);
   registerFormRoutes(app, svc);
+  registerInjectorRoutes(app, svc);
+  registerReportRoutes(app, svc);
 
   if (existsSync(path.join(config.webDistDir, 'index.html'))) {
     await app.register(fastifyStatic, { root: config.webDistDir, wildcard: false, index: false });

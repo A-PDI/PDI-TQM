@@ -1,3 +1,4 @@
+import { EFFECTIVE_OUTCOME_SQL, completedOn } from '../reports/metrics.js';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { has, requireCapability } from '../auth.js';
@@ -52,6 +53,9 @@ const listQuery = z.object({
   outcome: z.enum(['PASS', 'FAIL', 'ACCEPTED']).optional(),
   mine: z.enum(['1']).optional(),
   partId: z.string().uuid().optional(),
+  supplierId: z.string().uuid().optional(),
+  completedFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  completedTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
 });
 
@@ -79,9 +83,17 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
     }
     if (q.status === 'OPEN') where.push("i.status IN ('DRAFT', 'PARTIAL')");
     else if (q.status) add('i.status = $?', q.status);
-    if (q.outcome) add('i.outcome = $?', q.outcome);
+    // Same effective outcome and completion-date definitions as the reports (drill-down consistency).
+    if (q.outcome) add(`${EFFECTIVE_OUTCOME_SQL} = $?`, q.outcome);
     if (q.mine) add('i.inspector_id = $?', auth.userId);
     if (q.partId) add('i.part_id = $?', q.partId);
+    if (q.supplierId) add('i.supplier_id = $?', q.supplierId);
+    if (q.completedFrom || q.completedTo) {
+      params.push(config.displayTimeZone);
+      const tzRef = `$${params.length}`;
+      if (q.completedFrom) add(`${completedOn(tzRef)} >= $?::date`, q.completedFrom);
+      if (q.completedTo) add(`${completedOn(tzRef)} <= $?::date`, q.completedTo);
+    }
     const whereSql = where.join(' AND ');
     const total = await one<{ n: number }>(db, `SELECT count(*)::int AS n FROM inspection i WHERE ${whereSql}`, params);
     const items = await many(

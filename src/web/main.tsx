@@ -29,6 +29,8 @@ const scars = () => import('./pages/Scars');
 const commitments = () => import('./pages/Commitments');
 const changes = () => import('./pages/Changes');
 const forms = () => import('./pages/Forms');
+const injectors = () => import('./pages/Injectors');
+const reports = () => import('./pages/Reports');
 
 function Gate() {
   const { me, loading } = useAuth();
@@ -70,6 +72,16 @@ const router = createBrowserRouter([
           { path: '/sources', element: page(master, 'SourcesList') },
           { path: '/sources/:id', element: page(() => import('./pages/Source'), 'Source') },
           { path: '/baselines/:id', element: page(() => import('./pages/Baseline'), 'Baseline') },
+          { path: '/injectors', element: page(injectors, 'InjectorList') },
+          { path: '/injectors/imports', element: page(injectors, 'ImportList') },
+          { path: '/injectors/imports/:id', element: page(injectors, 'ImportDetail') },
+          { path: '/injectors/compare', element: page(injectors, 'Compare') },
+          { path: '/injectors/shipments', element: page(injectors, 'ShipmentList') },
+          { path: '/injectors/shipments/:id', element: page(injectors, 'ShipmentDetail') },
+          { path: '/injectors/analytics', element: page(injectors, 'InjectorAnalytics') },
+          { path: '/injectors/:id', element: page(injectors, 'InjectorDetail') },
+          { path: '/reports', element: page(reports, 'Reports') },
+          { path: '/trace', element: page(reports, 'Trace') },
           { path: '/search', element: page(other, 'Search') },
           { path: '/policies', element: page(other, 'Policies') },
           { path: '/admin', element: page(other, 'Admin') },
