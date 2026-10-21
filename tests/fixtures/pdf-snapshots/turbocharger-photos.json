@@ -1,0 +1,419 @@
+{
+  "form": {
+    "sha256": "c5027462a61b3a2e60489fe4c79cfd769b24cde85f57ace600b335d6e50a2612",
+    "component": "Turbocharger",
+    "formNumber": "PDI-IQI-011",
+    "revisionLabel": null
+  },
+  "kind": "INSPECTION_REPORT",
+  "draft": false,
+  "units": [
+    {
+      "serial": null,
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "compressor_wheel_blades",
+              "note": null,
+              "spec": null,
+              "label": "Compressor Wheel Blades",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Compressor wheel blades are free from chips, cracks, bends, nicks, or foreign-object damage.",
+              "photoNumbers": [
+                1,
+                7,
+                13
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "turbine_wheel_blades",
+              "note": null,
+              "spec": null,
+              "label": "Turbine Wheel Blades",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Turbine wheel blades are free from cracks, missing material, bends, or visible impact damage.",
+              "photoNumbers": [
+                2,
+                8,
+                14
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "compressor_turbine_housings",
+              "note": null,
+              "spec": null,
+              "label": "Compressor & Turbine Housings",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Compressor and turbine housings are free from cracks, dents, casting defects, or broken flanges.",
+              "photoNumbers": [
+                3,
+                9,
+                15
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "inlet_outlet_openings",
+              "note": null,
+              "spec": null,
+              "label": "Inlet & Outlet Openings",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Inlet and outlet openings are clean and free from debris, metal chips, or loose material.",
+              "photoNumbers": [
+                4,
+                10,
+                16
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "mounting_flanges",
+              "note": null,
+              "spec": null,
+              "label": "Mounting Flanges",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Mounting flanges and gasket faces are smooth and free from scratches, gouges, dents, or corrosion.",
+              "photoNumbers": [
+                5,
+                11,
+                17
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "studs_threaded_holes",
+              "note": null,
+              "spec": null,
+              "label": "Studs & Threaded Holes",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Studs, threaded holes, and fastener areas are visually undamaged and free from burrs or deformation.",
+              "photoNumbers": [
+                6,
+                12,
+                18
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "actuator_wastegate",
+              "note": null,
+              "spec": null,
+              "label": "Actuator & Wastegate",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Actuator, linkage, and wastegate/VGT external components are intact, correctly seated, and not bent or damaged.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "oil_coolant_connections",
+              "note": null,
+              "spec": null,
+              "label": "Oil & Coolant Connections",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Oil and coolant connection areas are clean and free from cracks, damaged threads, or sealing-surface defects.",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        }
+      ],
+      "unitIndex": 1,
+      "dispositionNote": null
+    }
+  ],
+  "photos": [
+    {
+      "mime": "image/png",
+      "fileId": "466e488d-3e5c-40e1-b063-18559335f834",
+      "number": 1,
+      "sha256": "5505d21ef584626baef2cacd888c190045ea80a7f53383af12007fcd0d91086c",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Compressor Wheel Blades",
+      "storageKey": "ea77e68a-c291-4571-b639-e1d2b2f22066"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "9720cf23-c883-4bad-974a-3230686050c7",
+      "number": 2,
+      "sha256": "277684dbaaf195a726fd6fef58d34b302d9fcca824fcd29a3d23979b42a89972",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Turbine Wheel Blades",
+      "storageKey": "0054efb7-22bd-41da-831a-3921ef86d3cd"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "0f88ba5a-0a90-4aa9-b6e1-1e3d7ef21c94",
+      "number": 3,
+      "sha256": "f0eb71a1062664d8eca1cd477e5516274e6af9b97abfa1f8d1b5e38d4e2e396f",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Compressor & Turbine Housings",
+      "storageKey": "571ba5f9-59bd-4b5e-a805-4105cf003ed2"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "f77187e9-c707-4f62-96a6-cabaa403ced5",
+      "number": 4,
+      "sha256": "fb1cca34d7f5c38194c2450dc8f4602eb221668b965c1e03d571247e69d09ac4",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Inlet & Outlet Openings",
+      "storageKey": "bfcf2e5d-6c6a-4be4-90e6-38f5866b65af"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "02b6e486-5519-4f56-8bff-ae297ee15f77",
+      "number": 5,
+      "sha256": "e8478988b94bfe13e9c6e833d1f9e5198ac955d5c374578616e99f723c3de1c6",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Mounting Flanges",
+      "storageKey": "d47662be-e030-45ca-88b6-c7c5e77e545f"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "0d7e138c-0342-4889-b35d-943b9acf6cb3",
+      "number": 6,
+      "sha256": "bfbb6e3ba5761e400e076e72c84993c2a7c42a19350562cde4f1d5e50025a0fd",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Studs & Threaded Holes",
+      "storageKey": "559d027a-93d8-4c45-a2bc-2a37028e84ef"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "1af3bded-8aa9-4a05-954d-98fb365a00ab",
+      "number": 7,
+      "sha256": "eac1269b69908286cb36344e843ee1e965bf02391b8a2396236ace22d448340e",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Compressor Wheel Blades",
+      "storageKey": "91aab396-f165-46e1-9b82-e823d5fce451"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "d4629368-bc71-42d3-8873-2fccdd5eab00",
+      "number": 8,
+      "sha256": "1e6ffa716a33f946fd61f5f7c2f24051808feeea69eb0246575e47ad39b69cf9",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Turbine Wheel Blades",
+      "storageKey": "076c5666-38a2-47ef-8bc5-b7976f968bbe"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "8f57f486-2e24-45f0-8a6c-73dcb204ee1e",
+      "number": 9,
+      "sha256": "7aeeb660aa83a7e579a84d436e6b22f4b99f13e45fc6fb7e0c76c501a11db7f4",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Compressor & Turbine Housings",
+      "storageKey": "00ee69d0-e279-4ae0-8037-62d966097de2"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "5bbdca38-0893-4152-85a4-682c387a23bc",
+      "number": 10,
+      "sha256": "2ed410994a1bfc5253bfa2c93e45f013bb902b158a2bfdc46cd4ce47c39e5d65",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Inlet & Outlet Openings",
+      "storageKey": "8b5f4fe1-05c3-41c9-a5a8-1dc44e3606ba"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "4cf8b578-192b-48ab-9b96-3ab16f8e3689",
+      "number": 11,
+      "sha256": "ae92b659698cd396900f5effd86345e5f2e486eeed8d30dea2df0ed510fd3eb8",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Mounting Flanges",
+      "storageKey": "8305681d-f124-4eeb-8d7c-be8340124a21"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "89412a82-6b2f-430c-9621-bfdbf9e73e32",
+      "number": 12,
+      "sha256": "ecf8c395de8dcd59ecc78194743eb69b168e8b762e13cbd7341033be25e98192",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Studs & Threaded Holes",
+      "storageKey": "34499420-0f40-4b7b-ba75-0f369373e4f9"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "d970df99-7293-4332-a180-8288e52c829a",
+      "number": 13,
+      "sha256": "153d3b5de905562cc14b08732172b7406b849d314f8f2450c425b5bdfb58390b",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Compressor Wheel Blades",
+      "storageKey": "ae4f85a4-f292-4853-9fe2-860896d0712e"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "609716bb-1f65-45e8-980e-5ed3c778e18d",
+      "number": 14,
+      "sha256": "3edcca0003f15dcad9cc8e418c46b9b325fa385ca485d1d40f7a1b6a38524e17",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Turbine Wheel Blades",
+      "storageKey": "ed9ea191-0acf-427c-b83f-6cb5a17d1034"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "aa71e9eb-d2e7-4ba1-81dc-a7844e18ac49",
+      "number": 15,
+      "sha256": "54fc0ef932ea75a7705f1575555a6bcfeed43a3c923892613d2089720fdc1db9",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Compressor & Turbine Housings",
+      "storageKey": "8ea04177-032b-4936-b444-dd328af4fb22"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "86d80446-8360-4000-b3fd-d1c9ed1d3710",
+      "number": 16,
+      "sha256": "64cfe8026d050b3c77fbed3855e047ccb02b53414172377b604a550062f6ed99",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Inlet & Outlet Openings",
+      "storageKey": "3cd16dc3-010c-488d-9b1b-dea1eecc3734"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "3e213d2a-68a0-4d37-a581-63a37a65d5fe",
+      "number": 17,
+      "sha256": "ef04b37f4a17153af6b3e560ccfd1571778d20b5d788f2a77f1f180d4e0f5c01",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Mounting Flanges",
+      "storageKey": "58e845f3-07a8-4c02-a9ef-8c9677e79744"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "23c88e2c-e8de-4884-ab7b-e6676b41f28e",
+      "number": 18,
+      "sha256": "5edba9e587f83ebb1bb95d8b61cf7994fda14be30527d728c51e8262089c790b",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Studs & Threaded Holes",
+      "storageKey": "65248db5-e71b-4b29-a35a-6bd2e708796b"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "e468c38b-a66f-4db4-9389-04da69f5d554",
+      "number": 19,
+      "sha256": "64cd473c646ca943fadc5cd48abc590501409448a09ae0fac0299f79d8d7a5f6",
+      "caption": "",
+      "context": "General",
+      "storageKey": "80606eb5-f965-4e04-bf29-7f24b775b504"
+    }
+  ],
+  "review": null,
+  "shared": [
+    {
+      "key": "A",
+      "rows": [
+        {
+          "key": "outer_carton_condition",
+          "note": null,
+          "spec": null,
+          "label": "Outer Carton Condition",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "box_package_label",
+          "note": null,
+          "spec": null,
+          "label": "Box / Package Label",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Label present; part number, description, and quantity match purchase order exactly",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "part_marking",
+          "note": null,
+          "spec": null,
+          "label": "Part Marking",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "PDI logo and part number permanently marked on part; matches purchase order",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "quantity_verification",
+          "note": null,
+          "spec": null,
+          "label": "Quantity Verification",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "corrosion_contamination_protection",
+          "note": null,
+          "spec": null,
+          "label": "Corrosion / Contamination Protection",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival",
+          "photoNumbers": [],
+          "specReleased": false
+        }
+      ],
+      "title": "A. RECEIVING & DOCUMENTATION VERIFICATION",
+      "pattern": "pfn_checklist",
+      "limitSummary": null,
+      "readingLabels": []
+    }
+  ],
+  "edition": 1,
+  "baseline": null,
+  "amendment": null,
+  "inspection": {
+    "site": null,
+    "number": "IR-2026-00006",
+    "status": "COMPLETED",
+    "lotSize": null,
+    "outcome": "PASS",
+    "poNumber": "PO-60411",
+    "supplier": null,
+    "inspector": "Jordan Rivera",
+    "lotNumber": "LOT-2026-118",
+    "startedAt": "2026-10-21T14:30:33.916Z",
+    "unitCount": 1,
+    "partNumber": "TQ-TRB-5005",
+    "completedAt": "2026-10-21T14:30:34.406Z",
+    "sourceState": "NO_SOURCE",
+    "dateReceived": "2026-10-18",
+    "samplingNote": null,
+    "partDescription": "Turbocharger, VGT"
+  },
+  "generatedAt": "2026-10-21T15:00:00.000Z",
+  "schemaVersion": 1,
+  "displayTimeZone": "America/Chicago"
+}

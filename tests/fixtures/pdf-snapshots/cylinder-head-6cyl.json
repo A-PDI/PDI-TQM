@@ -1,0 +1,913 @@
+{
+  "form": {
+    "sha256": "5ae056956db3984c807cc45be184e33251ba58b0f459c5bceb9e24448caf633f",
+    "component": "Cylinder Head",
+    "formNumber": "PDI-IQI-005",
+    "revisionLabel": "B"
+  },
+  "kind": "INSPECTION_REPORT",
+  "draft": false,
+  "units": [
+    {
+      "serial": null,
+      "outcome": "FAIL",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "oxidation_markings",
+              "note": null,
+              "spec": null,
+              "label": "Oxidation / Markings",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Should be free of rust, pitting, or other material oxidation",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "edge_debur",
+              "note": null,
+              "spec": null,
+              "label": "Edge Debur",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Check machined edges for sharp edges",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "block_off_plugs",
+              "note": null,
+              "spec": null,
+              "label": "Block-off Plugs",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Confirm all required plugs are in place and torqued to spec",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "heat_tab",
+              "note": null,
+              "spec": null,
+              "label": "Heat Tab",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Confirm Heat Tab in installed appropriately",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "casting_quality",
+              "note": null,
+              "spec": null,
+              "label": "Casting Quality",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Using bore-scope verify casting quality in all intake and exhaust ports",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "finish",
+              "note": null,
+              "spec": null,
+              "label": "Finish",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Confirm machining finish and casting quality",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "machining_quality",
+              "note": null,
+              "spec": null,
+              "label": "Machining Quality",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Verify machining quality in all intake and exhaust ports if applicable",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "material_type",
+              "note": null,
+              "spec": null,
+              "label": "Material Type",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Confirm injector cup material type",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "pass_through_bore_cummins",
+              "note": null,
+              "spec": null,
+              "label": "Pass-through bore (Cummins)",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Confirm pass through tube fits bore",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "correct_valves",
+              "note": null,
+              "spec": null,
+              "label": "Correct Valves",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Confirm intake/exhaust in correct locations",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "springs_retainers_keepers",
+              "note": null,
+              "spec": null,
+              "label": "Springs / Retainers / Keepers",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Confirm correct spring assemblies and everything assembled properly",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pfn_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C_general",
+          "rows": [
+            {
+              "key": "cylinder_head_height",
+              "note": null,
+              "spec": "4.795 – 4.805 in",
+              "label": "Cylinder Head Height",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Actual",
+                  "value": "4.801",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            },
+            {
+              "key": "surface_finish_ra",
+              "note": null,
+              "spec": null,
+              "label": "Surface Finish (Ra)",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Actual",
+                  "value": "5.0",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flatness",
+              "note": null,
+              "spec": null,
+              "label": "Flatness",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Actual",
+                  "value": ".002",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "valve_stem_height",
+              "note": "Not specified for this casting",
+              "spec": null,
+              "label": "Valve Stem Height",
+              "status": "N",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Actual",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION — General",
+          "pattern": "general_measurements",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual"
+          ]
+        },
+        {
+          "key": "C_fire_ring",
+          "rows": [
+            {
+              "key": "groove_diameter",
+              "note": null,
+              "spec": "6.300\" Groove OD for CAT, 5.990\" Groove OD for Cummins (reference text)",
+              "label": "Groove Diameter",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "C1",
+                  "value": "5.990",
+                  "outside": false
+                },
+                {
+                  "label": "C2",
+                  "value": "5.990",
+                  "outside": false
+                },
+                {
+                  "label": "C3",
+                  "value": "5.990",
+                  "outside": false
+                },
+                {
+                  "label": "C4",
+                  "value": "5.990",
+                  "outside": false
+                },
+                {
+                  "label": "C5",
+                  "value": "5.990",
+                  "outside": false
+                },
+                {
+                  "label": "C6",
+                  "value": "5.990",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "groove_depth",
+              "note": null,
+              "spec": "0.029 – 0.031 in",
+              "label": "Groove Depth",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "C1",
+                  "value": ".031",
+                  "outside": false
+                },
+                {
+                  "label": "C2",
+                  "value": ".030",
+                  "outside": false
+                },
+                {
+                  "label": "C3",
+                  "value": ".031",
+                  "outside": false
+                },
+                {
+                  "label": "C4",
+                  "value": ".030",
+                  "outside": false
+                },
+                {
+                  "label": "C5",
+                  "value": ".031",
+                  "outside": false
+                },
+                {
+                  "label": "C6",
+                  "value": ".030",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            },
+            {
+              "key": "wire_protrusion",
+              "note": null,
+              "spec": "0.008 – 0.010 in",
+              "label": "Wire Protrusion",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "C1",
+                  "value": ".009",
+                  "outside": false
+                },
+                {
+                  "label": "C2",
+                  "value": ".009",
+                  "outside": false
+                },
+                {
+                  "label": "C3",
+                  "value": ".009",
+                  "outside": false
+                },
+                {
+                  "label": "C4",
+                  "value": ".009",
+                  "outside": false
+                },
+                {
+                  "label": "C5",
+                  "value": ".009",
+                  "outside": false
+                },
+                {
+                  "label": "C6",
+                  "value": ".009",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION — Fire Ring",
+          "pattern": "groove_specs",
+          "limitSummary": null,
+          "readingLabels": [
+            "C1",
+            "C2",
+            "C3",
+            "C4",
+            "C5",
+            "C6"
+          ]
+        },
+        {
+          "key": "C_valve_recession",
+          "rows": [
+            {
+              "key": "c1",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 1",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Int 1",
+                  "value": ".033",
+                  "outside": false
+                },
+                {
+                  "label": "Int 2",
+                  "value": ".031",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 1",
+                  "value": ".041",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 2",
+                  "value": ".044",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            },
+            {
+              "key": "c2",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 2",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Int 1",
+                  "value": ".033",
+                  "outside": false
+                },
+                {
+                  "label": "Int 2",
+                  "value": ".032",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 1",
+                  "value": ".041",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 2",
+                  "value": ".044",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            },
+            {
+              "key": "c3",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 3",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Int 1",
+                  "value": ".033",
+                  "outside": false
+                },
+                {
+                  "label": "Int 2",
+                  "value": ".033",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 1",
+                  "value": ".041",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 2",
+                  "value": ".044",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            },
+            {
+              "key": "c4",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 4",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Int 1",
+                  "value": ".033",
+                  "outside": false
+                },
+                {
+                  "label": "Int 2",
+                  "value": ".034",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 1",
+                  "value": ".041",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 2",
+                  "value": ".044",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            },
+            {
+              "key": "c5",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 5",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Int 1",
+                  "value": ".033",
+                  "outside": false
+                },
+                {
+                  "label": "Int 2",
+                  "value": ".035",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 1",
+                  "value": ".041",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 2",
+                  "value": ".044",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            },
+            {
+              "key": "c6",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 6",
+              "status": "P",
+              "location": null,
+              "readings": [
+                {
+                  "label": "Int 1",
+                  "value": ".033",
+                  "outside": false
+                },
+                {
+                  "label": "Int 2",
+                  "value": ".036",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 1",
+                  "value": ".041",
+                  "outside": false
+                },
+                {
+                  "label": "Exh 2",
+                  "value": ".044",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": true
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION — Valve Recession",
+          "pattern": "valve_recession",
+          "limitSummary": "Intake limit: 0.030 – 0.050 in · Exhaust limit: 0.030 – 0.050 in",
+          "readingLabels": [
+            "Int 1",
+            "Int 2",
+            "Exh 1",
+            "Exh 2"
+          ]
+        },
+        {
+          "key": "C_vacuum_test",
+          "rows": [
+            {
+              "key": "c1",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 1",
+              "status": "P",
+              "valves": [
+                {
+                  "label": "Intake 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Intake 2 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 2 valve",
+                  "status": null
+                }
+              ],
+              "location": null,
+              "readings": [],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "c2",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 2",
+              "status": "P",
+              "valves": [
+                {
+                  "label": "Intake 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Intake 2 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 2 valve",
+                  "status": null
+                }
+              ],
+              "location": null,
+              "readings": [],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "c3",
+              "note": "Vacuum decay on cylinder 3",
+              "spec": null,
+              "label": "Cylinder 3",
+              "status": "F",
+              "valves": [
+                {
+                  "label": "Intake 1 valve",
+                  "status": "P"
+                },
+                {
+                  "label": "Intake 2 valve",
+                  "status": "F"
+                },
+                {
+                  "label": "Exhaust 1 valve",
+                  "status": "P"
+                },
+                {
+                  "label": "Exhaust 2 valve",
+                  "status": "P"
+                }
+              ],
+              "location": null,
+              "readings": [],
+              "criterion": null,
+              "photoNumbers": [
+                1
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "c4",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 4",
+              "status": "P",
+              "valves": [
+                {
+                  "label": "Intake 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Intake 2 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 2 valve",
+                  "status": null
+                }
+              ],
+              "location": null,
+              "readings": [],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "c5",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 5",
+              "status": "P",
+              "valves": [
+                {
+                  "label": "Intake 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Intake 2 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 2 valve",
+                  "status": null
+                }
+              ],
+              "location": null,
+              "readings": [],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "c6",
+              "note": null,
+              "spec": null,
+              "label": "Cylinder 6",
+              "status": "P",
+              "valves": [
+                {
+                  "label": "Intake 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Intake 2 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 1 valve",
+                  "status": null
+                },
+                {
+                  "label": "Exhaust 2 valve",
+                  "status": null
+                }
+              ],
+              "location": null,
+              "readings": [],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION — Vacuum Test",
+          "pattern": "vacuum_test",
+          "limitSummary": null,
+          "readingLabels": []
+        }
+      ],
+      "unitIndex": 1,
+      "dispositionNote": null
+    }
+  ],
+  "photos": [
+    {
+      "mime": "image/png",
+      "fileId": "6c7a3a1b-4562-4b9a-8485-6e2d0af54104",
+      "number": 1,
+      "sha256": "d96d1903b25658e3e244447ffc99e0452587e158dba72d9aa68ae9d7958ed18d",
+      "caption": "",
+      "context": "Item 1 · C. DIMENSIONAL INSPECTION — Vacuum Test · Cylinder 3",
+      "storageKey": "738a2a11-4e8e-429b-acf4-5360494e0c87"
+    }
+  ],
+  "review": {
+    "comment": "Reviewed (synthetic)",
+    "reasons": [
+      "Outcome FAIL — independent review required",
+      "Specification not released for 3 recorded measurement(s) — Surface Finish (Ra), Flatness, Groove Diameter; readings reviewed as observations, not validated against limits"
+    ],
+    "decision": "CONFIRMED",
+    "reviewer": "Casey Morgan",
+    "reviewedAt": "2026-10-21T14:30:33.047Z"
+  },
+  "shared": [
+    {
+      "key": "A",
+      "rows": [
+        {
+          "key": "outer_carton_condition",
+          "note": null,
+          "spec": null,
+          "label": "Outer Carton Condition",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "box_package_label",
+          "note": null,
+          "spec": null,
+          "label": "Box / Package Label",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Label present; part number, description, and quantity match purchase order exactly",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "part_marking",
+          "note": null,
+          "spec": null,
+          "label": "Part Marking",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "PDI logo and part number permanently marked on part; matches purchase order",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "quantity_verification",
+          "note": null,
+          "spec": null,
+          "label": "Quantity Verification",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "corrosion_contamination_protection",
+          "note": null,
+          "spec": null,
+          "label": "Corrosion / Contamination Protection",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival",
+          "photoNumbers": [],
+          "specReleased": false
+        }
+      ],
+      "title": "A. RECEIVING & DOCUMENTATION VERIFICATION",
+      "pattern": "pfn_checklist",
+      "limitSummary": null,
+      "readingLabels": []
+    }
+  ],
+  "edition": 1,
+  "baseline": {
+    "title": "PDI drawing TQ-CYH-4004 (synthetic)",
+    "synthetic": true,
+    "revisionLabel": "A"
+  },
+  "amendment": null,
+  "inspection": {
+    "site": "Foundry A",
+    "number": "IR-2026-00003",
+    "status": "COMPLETED",
+    "lotSize": null,
+    "outcome": "FAIL",
+    "poNumber": "PO-60411",
+    "supplier": "Bluestone Castings Co. (fictional)",
+    "inspector": "Jordan Rivera",
+    "lotNumber": "LOT-2026-118",
+    "startedAt": "2026-10-21T14:30:32.747Z",
+    "unitCount": 1,
+    "partNumber": "TQ-CYH-4004",
+    "completedAt": "2026-10-21T14:30:33.047Z",
+    "sourceState": "NOT_APPROVED",
+    "dateReceived": "2026-10-18",
+    "samplingNote": null,
+    "partDescription": "Cylinder head, 6-cylinder"
+  },
+  "generatedAt": "2026-10-21T15:00:00.000Z",
+  "schemaVersion": 1,
+  "displayTimeZone": "America/Chicago"
+}

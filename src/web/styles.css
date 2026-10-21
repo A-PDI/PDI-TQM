@@ -3,18 +3,18 @@
   --navy: #1e2d50;
   --navy-dark: #152440;
   --slate: #4b5563;
-  --muted: #6b7280;
+  --muted: #5f6673;
   --text: #1f2937;
   --border: #d8dde5;
   --section: #eceff3;
   --stripe: #f8f9fb;
   --bg: #f3f5f8;
   --surface: #ffffff;
-  --green: #229a61;
+  --green: #187a4a;
   --green-bg: #e7f5ee;
-  --amber: #bb8427;
+  --amber: #8a5f12;
   --amber-bg: #fbf3e4;
-  --red: #c63b33;
+  --red: #b3342d;
   --red-bg: #fbeceb;
   --focus: #2f6fde;
   --radius: 6px;
@@ -136,7 +136,7 @@ dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
 
 /* ---------- inspection workbench ---------- */
 .wb-header { position: sticky; top: 57px; z-index: 15; background: var(--navy); color: #fff; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
-.wb-header .wb-title { font-weight: 700; font-size: 15px; }
+.wb-header .wb-title { font-weight: 700; font-size: 15px; margin: 0; color: #fff; line-height: 1.3; }
 .wb-header .wb-meta { font-size: 12px; color: #c9d1e0; }
 .wb-header .wb-actions { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
 .wb-header .btn { min-height: 34px; }

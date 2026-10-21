@@ -174,7 +174,10 @@ export class EvidenceStorage {
   async readVerified(storageKey: string, sha256: string): Promise<Buffer> {
     const bytes = await fs.readFile(this.objectPath(storageKey));
     const actual = createHash('sha256').update(bytes).digest('hex');
-    if (actual !== sha256) throw new Error(`Evidence object ${storageKey} failed hash verification`);
+    if (actual !== sha256) throw new EvidenceIntegrityError(`Evidence object ${storageKey} failed hash verification`);
     return bytes;
   }
 }
+
+/** Stored bytes no longer match their recorded SHA-256; retrying cannot fix this. */
+export class EvidenceIntegrityError extends Error {}

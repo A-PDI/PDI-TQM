@@ -1,4 +1,4 @@
-# TQMS design baseline (Stages 0–4)
+# TQMS design baseline (Stages 0–5)
 
 Source: *PDI TQMS Zero-to-Production Construction Set* (20 Oct 2026). The authoritative requirements are copied verbatim in [`requirements/`](requirements) and the construction drawings in [`construction/`](construction). This file covers items (a)–(e) of the master prompt's Part XI response contract.
 
@@ -8,13 +8,13 @@ Status vocabulary (Drawing F1): **implemented** → **unit-tested** → **integr
 
 | Stage | Scope | AT cases | State |
 |---|---|---|---|
-| 0 Foundation | identity, grants, sessions, CSRF, audit, numbering, evidence disk, jobs, migrations, health/readiness, Docker | AT-19 (part), AT-21 (part), NEG-10/11/12/13/14* | **Built in this PR** (*NEG-14 needs backup tooling, Stage 6) |
+| 0 Foundation | identity, grants, sessions, CSRF, audit, numbering, evidence disk, jobs, migrations, health/readiness, Docker | AT-19 (part), AT-21 (part), NEG-10/11/12/13 | **Built in this PR** (backup tooling followed in Stage 5) |
 | 1 Inspector's room | Appendix A catalogue, launch, multi-unit workbench, all specialized patterns, photos, partial/complete, independent review, amendments, branded PDF, linked concern + triage | AT-01, AT-02 (part), AT-03 (part), AT-04, AT-06 (part) | **Built in this PR** |
 | 2 Supplier/engineering | site qualification, A/B/C sourcing, baseline release workflow and UI, FAI reject/resubmit, supplier acknowledgment, source approval with frozen manifest | AT-09–AT-13, AT-17, NEG-04, NEG-05 | **Built (Stage 2 PR)** |
 | 3 Quality/change | NCR scope/containment/disposition/verification/release, concession, SCAR/8D/effectiveness/recurrence, supplier commitments with reminders, change control, form-revision editor and one-off forms, OPS-03/04/05/06/07/08 PDFs | AT-02, AT-03, AT-06, AT-07, AT-08, AT-12 (concession gate), AT-14–AT-16, AT-18, NEG-01, NEG-06–08, NEG-17, NEG-18 | **Built (Stage 3 PR)** |
 | 4 Injector & management | serialized injectors, idempotent bench-file import (interim adapter), manual tests, repair cases with quick measurements, retest attribution, comparison, shipment evaluation, injector analytics; management overview with shared metric definitions, drill-down, CSV exports, issued management report PDF; traceability by part + lot or serial | AT-05, AT-20, NEG-09, NEG-22 | **Built (Stage 4 PR)** |
-| 5 Finishes | all 21 AT + adversarial cases, visual regression baselines, accessibility audit, performance | all | Not started |
-| 6 Inspection & occupancy | Render staging, PG + disk backup/restore drill, PDI sign-off, production go/no-go | AT-21 (restore), NEG-14 | Not started; needs owner approval |
+| 5 Finishes | authorization sweep over every route, adversarial cases (concurrency, tampering, corrupt evidence, mismatched identity), application-consistent backup + isolated restore verification, accessibility audit (axe, keyboard-only, empty/validation states), link crawler, screen + PDF visual baselines, performance at 3 and 15 years of volume, admin password reset | AT-19, AT-21, NEG-14, NEG-21 | **Built (Stage 5 PR)** |
+| 6 Inspection & occupancy | Render staging, backup/restore drill on Render with an approved off-site destination, PDI sign-off, production go/no-go | AT-21/NEG-14 on staging | Not started; needs owner approval |
 
 ## (b) Technology choices
 
@@ -48,7 +48,7 @@ Seeded into the `policy_decision` table and shown in the app (*Policy register*)
 | POL-06 | Change effectivity, old lots, requalification | Impact assessment before decision; a site change always requires requalification; effectivity needs the new baseline revision released (optional first lot); implementation is verified by a completed, passing inspection of an affected source on or after the effective date under the changed revision; earlier lots keep their recorded revision |
 | POL-07 | Signature format, brand artwork/fonts/colors, numbering, retention | Reference logo extract + suggested navy tokens; `IR-`/`QE-`/`NCR-`/`DEV-`/`SCAR-`/`COM-`/`CHG-`/`BI-`/`REP-`/`SHP-`/`CMP-`/`MR-YYYY-NNNNN`; the management report uses the uncatalogued code `TQMS-MR`; controlled record PDFs issued as numbered editions; nothing destructively deleted |
 | POL-08 | Injector bench formats and rules | Interim synthetic layout `TQMS-BENCH-CSV-1` (one row per measured value; labelled *not a CarbonZapp format*). No bench integration. A PDI verdict is calculated only from released FUNCTIONAL baseline characteristics referenced `injector:<condition>__<parameter>`, compared exactly and only in the same unit; otherwise the result is NO_CRITERIA / PARTIAL_CRITERIA and the machine verdict is shown separately, never as a PDI verdict. Must be validated against real bench files before production |
-| POL-09 | Render budget/sizing, monitoring owner, RPO/RTO, off-site backup, MFA, launch gate | Local + template only; nothing provisioned |
+| POL-09 | Render budget/sizing, monitoring owner, RPO/RTO, off-site backup, MFA, launch gate | Local + template only; nothing provisioned. Backup tooling exists (`backup:create` / `backup:verify`); its schedule, encrypted off-site destination, RPO/RTO and owner are open. The database must allow the trusted `pg_trgm` extension (migration 0008) |
 | POL-10 | Whether historical sample reports/photos may be imported | Nothing imported; all fixtures fabricated |
 | POL-11 | Authority/timing for Accepted results (FR-050) | Requires reviewer holding `inspection.review_accepted` |
 | POL-12 | Validation of Appendix A form texts/revisions | Loaded as released, marked "PDI owner validation pending" |
@@ -84,10 +84,17 @@ Seeded into the `policy_decision` table and shown in the app (*Policy register*)
 23. **Exports.** CSV exports require `reports.export`, are audited (denials too), and neutralize spreadsheet formula triggers while keeping plain numbers numeric.
 24. **Traceability (AT-20, FR-010).** For part + lot or a serial, the trace lists inspections with the exact form revision and spec snapshot, FAI history with nonconforming characteristics, quality events, NCR material scopes and dispositions, concessions, changes and bench history. "What applied on this date" is computed from the decision history at the end of that date: latest released requirement revision per baseline, latest source approval and its validity, restrictions and site qualification then in force, concessions and changes in effect — separately from the source's current status.
 25. **Notifications.** In-app only: the work queue and the hourly reminder sweep (Stage 3). E-mail delivery remains disabled pending owner approval.
+26. **Authorization sweep (F1).** The application records its own route inventory at startup (`onRoute`), and a test sends every route an unauthenticated request (401), a request without the CSRF token (403) and a read-only user's request (403 on every write, export and administration route). Handlers check authority before validating the request body, so denials are audited even for malformed requests. Writes whose authority depends on the record (owner, requester, evidence type) check that record first.
+27. **Concurrency.** "Only one open X" rules (open repair case, assessment under review, draft revision, pending acknowledgment, open FAI, open concern per row, sourcing request per source) are partial unique indexes (migration 0007), so simultaneous requests cannot both pass a check-then-insert; the loser gets a plain 409 message.
+28. **Corrupt evidence.** A stored object whose bytes no longer match its SHA-256 stops report rendering as a permanent, administrator-visible job failure that names the remedy (restore from backup); it is never retried as if transient.
+29. **Backup format `TQMS-BACKUP-1` (D2, AT-21, NEG-14).** One exported snapshot drives both `pg_dump --snapshot` and the evidence file list, so database and files are coordinated; every object is hash-checked while copied; a manifest (with its own SHA-256) records counts, schema version and volume. `backup:verify` restores into a new isolated database and storage root and checks counts, schema, every evidence link and report edition, volume pairing and application readiness. A database-only, altered or mixed set is reported INCOMPLETE (exit 2), never success, and so is a restore target older than the tools that wrote the dump (PostgreSQL does not guarantee that). Verified in the production image against PostgreSQL 17. Off-site encrypted copy is an operator step pending POL-09.
+30. **Accessibility.** Every destination is scanned with axe-core (WCAG 2.0/2.1 A and AA) at desktop and phone width; serious/critical findings fail the build. Theme tokens were adjusted to meet 4.5:1 text contrast on every surface. Dialogs move focus to their first field; the launch dialog states what is still needed and marks invalid item counts.
+31. **Visual regression.** Screen baselines and page-by-page PDF baselines (piston, 12-unit liner, accepted head, accepted crankshaft, failed bearing, image-heavy turbo, NCR, SCAR) render with a pinned font set (`tests/fixtures/fonts.conf`) so results do not depend on the machine; PDFs render from frozen snapshots captured from real API runs (`scripts/capture-pdf-fixtures.ts`). Deliberate colour and 3 pt layout changes were confirmed to fail.
+32. **Performance.** Serial lookups use an expression index on the same normalization as the queries; substring searches use pg_trgm indexes with one query per column; optional filters are built only when supplied. Budgets are engineering targets for the test machine, not policy.
 
 ## (d) Acceptance matrix (current state)
 
-Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspection.test.ts`, `R` = `tests/integration/reports.test.ts`, `S` = `tests/integration/sourcing.test.ts`, `Q` = `tests/integration/quality.test.ts`, `E` = `tests/e2e/inspection.spec.ts`, `E2` = `tests/e2e/sourcing.spec.ts`, `E3` = `tests/e2e/quality.spec.ts`, `J` = `tests/integration/injectors.test.ts`, `M` = `tests/integration/management.test.ts`, `UJ` = `tests/unit/injectors.test.ts`, `E4` = `tests/e2e/injectors.spec.ts`, `E5` = `tests/e2e/reports.spec.ts`.
+Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspection.test.ts`, `R` = `tests/integration/reports.test.ts`, `S` = `tests/integration/sourcing.test.ts`, `Q` = `tests/integration/quality.test.ts`, `E` = `tests/e2e/inspection.spec.ts`, `E2` = `tests/e2e/sourcing.spec.ts`, `E3` = `tests/e2e/quality.spec.ts`, `J` = `tests/integration/injectors.test.ts`, `M` = `tests/integration/management.test.ts`, `UJ` = `tests/unit/injectors.test.ts`, `E4` = `tests/e2e/injectors.spec.ts`, `E5` = `tests/e2e/reports.spec.ts`, `A` = `tests/integration/authorization.test.ts`, `X` = `tests/integration/adversarial.test.ts`, `B` = `tests/integration/backup.test.ts`, `P` = `tests/integration/performance.test.ts`, `E6` = `tests/e2e/accessibility.spec.ts`, `E7` = `tests/e2e/pdf-visual.spec.ts` + `visual.spec.ts`, `E8` = `tests/e2e/walk-links.spec.ts`.
 
 | Case | State | Evidence |
 |---|---|---|
@@ -109,79 +116,93 @@ Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspecti
 | AT-16 change control | Integration-tested: before/after diff, impact, independent decision, requalification actions with objective evidence, effectivity, first-lot verification, per-lot revision history | Q "AT-16 / NEG-17…", E3 (proposal + impact) |
 | AT-18 ownership | Integration-tested: overdue reminders and severity escalation (idempotent), My Work overdue flag, verification with evidence, supplier history | Q "AT-18…", E3 (record from supplier hub), U |
 | AT-17 documents/PPAP | Integration-tested: HIGH-risk checklist with PPAP elements satisfied or waived; LOW-risk list stays short; approval record PDF lists exact revisions and files | S, `var/report-samples/source-approval-record.pdf` |
-| AT-19 roles | Partial | I, S independence; Q: inspector cannot disposition (NEG-01), nobody approves their own concession/change/form, release ≠ decider, effectiveness ≠ implementation verifier; J/M: only `injector.test` imports, only `injector.evaluate` freezes shipment evaluations, only `reports.export` exports or issues reports (denials audited) |
+| AT-19 roles | Integration-tested: an inspector cannot release a drawing, amend finalized results, decide their own concession or approve a source; a cross-functional manager inspects and decides others' requests but not their own | I, S independence; Q: inspector cannot disposition (NEG-01), nobody approves their own concession/change/form, release ≠ decider, effectiveness ≠ implementation verifier; J/M: only `injector.test` imports, only `injector.evaluate` freezes shipment evaluations, only `reports.export` exports or issues reports (denials audited); A: AT-19 role walkthrough and the full-route sweep |
 | AT-20 traceability | UI-tested: part + lot or serial returns inspections (form/spec revision, photos, flagged rows), FAI defects, NCR/disposition/concession/change history, bench history, and what applied on a chosen date; search also finds injectors, bench imports and documents by file name | M "AT-20…", J search, E4 trace |
-| AT-21 failure recovery | Partial: unsaved-entry restore, upload failure message, report-job reclaim, redeploy persistence; **backup/restore not built** | E "AT-21", I "report job recovery", Docker redeploy check |
+| AT-21 failure recovery | Integration-tested locally: unsaved-entry restore, upload failure message, report-job reclaim, redeploy persistence, corrupt evidence stops rendering visibly, application-consistent backup restored into an isolated environment with every evidence link and report edition validated. Not yet run on Render (Stage 6) | E "AT-21", I "report job recovery", X, B, Docker redeploy check |
 | NEG-01 | Integration-tested: inspector calling the disposition API is denied and audited; no decision recorded | Q |
 | NEG-02, NEG-03 | Integration-tested | I |
 | NEG-10, NEG-11, NEG-12 | Integration-tested (NEG-12 also in Docker) | I, U |
 | NEG-13 | Manually verified in Docker (container replaced; PDF/photo hashes and draft unchanged) | milestone report |
-| NEG-15 | UI-tested (390 px, 100 items) | E phone test |
+| NEG-15 | UI-tested (390 px, 100 items; axe at phone width) | E phone test, E6 |
 | NEG-16, NEG-23, NEG-24 | Integration + unit tested | I, U |
 | NEG-18 | Integration-tested: no generic close/status endpoint; SCAR/NCR guarded by triggers | I, Q |
 | NEG-19 | Integration-tested | I |
 | NEG-20 | By construction: no reference reports or photos in repo/fixtures | `tests/fixtures/images.ts` |
-| NEG-21 | UI-tested for built navigation | E navigation test |
+| NEG-21 | UI-tested: link crawler follows every visible in-app link for a manager and an inspector (no Page not found, missing heading, browser error or failed API call) | E8, E navigation test |
 | NEG-04 | Integration-tested: sibling site not approved; inspection records the effective state | S Path B |
 | NEG-05 | Integration-tested: explicit gate failures with links, no partial approval | S Path A, Path C |
 | NEG-06, NEG-07, NEG-08 | Integration-tested | Q |
 | NEG-17 | Integration-tested: approved source shows REQUALIFICATION_REQUIRED and the CHANGE_CONTROL gate fails until implementation is verified | Q "AT-16 / NEG-17…" |
 | NEG-09 | Integration-tested: same file → DUPLICATE_FILE, nothing added; changed value under the same key → conflict, original unchanged | J |
 | NEG-22 | Integration-tested: an import interrupted after the second test leaves every table and the storage object unchanged; re-running imports each test once | J |
-| NEG-14 | Not built (Stage 6) | — |
+| NEG-14 | Integration-tested locally: a database-only, altered or mixed backup set is reported INCOMPLETE and nothing is restored; Render drill pending (Stage 6) | B |
 
-### Functional requirement traceability (Stage 1 scope)
+### Functional requirement status (all 89 requirements)
 
-| FR | Where |
-|---|---|
-| FR-001, FR-111, FR-112 | `src/shared/capabilities.ts`, `src/server/auth.ts`, `audit.ts`, migration 0001 |
-| FR-040, FR-041 | `src/web/pages/Inspections.tsx`, `POST /api/inspections` |
-| FR-042 | Released catalogue in Stage 1; editor and one-off builder delivered in Stage 3 (see below) |
-| FR-043 – FR-051 | `src/web/pages/Workbench.tsx`, `src/shared/inspection.ts`, `src/server/inspections/service.ts` |
-| FR-052, FR-053 | `src/server/pdf/inspection-report.ts`, `report-snapshot.ts`, `report-job.ts` |
-| FR-054 | `POST /api/inspections/:id/concerns` (`src/server/quality.ts`) |
-| FR-055 | form/baseline snapshots + triggers (migration 0003) |
-| FR-056 | list status counts share one query definition with the filters |
-| FR-011, FR-012, FR-100, FR-101 | `/api/home`, `/api/search`, `QuickCapture.tsx` |
-| FR-110 | local accounts, lockout, session revocation; invitation/reset email deferred (email disabled until approved) |
-| FR-113 – FR-115 | storage, job worker, readiness, Docker, CI; backup/restore deferred to Stage 6 |
+State is **Built**, **Partial** (the missing part is named) or **Not built**. Test letters refer to the legend in (d).
 
-### Functional requirement traceability (Stage 2 scope)
-
-| FR | Where |
-|---|---|
-| FR-020, FR-021 | `src/server/sourcing/suppliers.ts`, `src/web/pages/Suppliers.tsx`, migration 0004 (`supplier_qualification`, `supplier_certificate`) |
-| FR-022 | `supplier_restriction`, `src/server/sourcing/status.ts` (POL-13 interim) |
-| FR-023 [P1] | Not built (certificate expiry is stored and shown; no reminders or performance trends) |
-| FR-024 – FR-027 | `src/shared/sourcing.ts`, `src/server/sourcing/requests.ts`, `src/web/pages/Sourcing.tsx` |
-| FR-028, FR-029 | `src/server/sourcing/baselines.ts`, `src/web/pages/Baseline.tsx` |
-| FR-030 | acknowledgments in `src/server/sourcing/sources.ts`, `src/web/pages/Source.tsx` |
-| FR-031 | A newer supplier base is flagged on the source; reassessment runs through change control (Stage 3) |
-| FR-032 – FR-034 | `source`, `fai_sample`, `fai_result`; `src/server/sourcing/sources.ts` |
-| FR-035 | Partial: FAI measured values and results with independent decision; separate test procedures/validation plans are Stage 4 |
-| FR-036, FR-037 | `src/server/sourcing/gates.ts`, `source_approval_decision`, `approval-report.ts`, `src/server/pdf/record-report.ts` |
-| FR-038 [P1] | Partial: the approval record PDF lists the evidence package; no combined PPAP package export |
-
-### Functional requirement traceability (Stage 3 scope)
-
-| FR | Where |
-|---|---|
-| FR-007, FR-015 | concern → NCR confirmation (`src/server/quality/ncr.ts`), linked evidence, SCAR, concessions, commitments, changes |
-| FR-012 – FR-014 | `src/server/quality/commitments.ts`, `src/web/pages/Commitments.tsx`; reminders via the `reminder_sweep` job |
-| FR-016, FR-076 | `src/server/quality/context.ts`; quality/change/commitment card on part, source and supplier hubs; concession shown on inspections |
-| FR-042, FR-058 | `src/server/forms/forms.ts`, `src/web/pages/Forms.tsx`; one-off launch in `Inspections.tsx` |
-| FR-070 – FR-075 | `src/server/quality/ncr.ts`, `concessions.ts`, `scars.ts`; migration 0005 |
-| FR-080 – FR-084 | `src/server/changes/changes.ts`, `src/web/pages/Changes.tsx`; `REQUALIFICATION_REQUIRED` overlay in `sourcing/status.ts` |
-| FR-090 – FR-093 | Partial: OPS-03/04/05/06/07/08 controlled PDFs (`src/server/quality/reports.ts`) as numbered editions; no administrative document-type catalogue editor yet |
-
-### Functional requirement traceability (Stage 4 scope)
-
-| FR | Where |
-|---|---|
-| FR-010, FR-101 | `src/server/reports/trace.ts`, `src/web/pages/Reports.tsx` (Trace); search additions in `routes-core.ts` |
-| FR-060 – FR-064 | `src/server/injectors/bench.ts`, `routes.ts`, `reports.ts`; `src/web/pages/Injectors.tsx`; migration 0006 |
-| FR-102 – FR-104 | `src/server/reports/metrics.ts`, `routes.ts`, `management-report.ts`; `src/shared/reports.ts`; recurrence by part/supplier/characteristic/failure mode and repeated rejected-FAI defects |
-| FR-114 | Partial: imports and report rendering use the monitored job queue; e-mail notifications not enabled |
+| FR | State | What exists | Tests |
+|---|---|---|---|
+| FR-001 | Built | Per-person capability grants (`src/shared/capabilities.ts`, `auth.ts`); every action audited with actor and time | U, I, A |
+| FR-002 | Partial | Supplier, sites, category, status, notes, certificates, qualification history (`sourcing/suppliers.ts`). **No supplier contacts or agreements register** | S |
+| FR-003 | Built | Part, aliases/OE cross-references, supplier part, site, configuration, governing revision (`source` identity, migration 0002) | S, I |
+| FR-004 | Built | Revision-specific baselines with characteristics/limits, special characteristics, methods (`sourcing/baselines.ts`) | S, I |
+| FR-005 | Built | Sourcing intake, rationale, owner/dates, pathway, risk, evidence, FAI, decision history, approval package | S, E2 |
+| FR-006 | Built | Inspection header: PO, supplier/site, part, received date, lot, quantities, serials, revision and approval state at start | I, E |
+| FR-007 | Built | Concern → NCR → containment/disposition → concession → SCAR → change, linked (`quality/*`, `changes/changes.ts`) | Q, E3 |
+| FR-008 | Partial | Controlled record numbers, editions, hashes, evidence links. **No generic document register (owner/lifecycle/retention class per document)** | Q, R |
+| FR-009 | Partial | Per-record history from the audit trail; commitment events record supplier positions. **No free-form comment threads** | Q |
+| FR-010 | Built | Hubs + `/api/trace` (part + lot or serial; what applied on a date) | M, E4 |
+| FR-011 | Built | Unified work queue; team view for `work.view_team`; overdue flags (`/api/home`) | I, Q |
+| FR-012 | Built | Quick Capture from any page (`QuickCapture.tsx`) | I |
+| FR-013 | Built | Owner, due date or reason, reminders/escalation by severity (`quality/commitments.ts`, REMINDER-INTERIM-1) | Q AT-18 |
+| FR-014 | Built | Representative, channel, promise, due date, product/revision link, verification | Q AT-07 |
+| FR-015 | Built | Confirming an NCR prompts scope, containment and disposition; the quick-capture record stays linked | Q AT-06 |
+| FR-016 | Built | Quality context cards on part, source and supplier hubs (`quality/context.ts`) | Q |
+| FR-020 | Partial | Prospective suppliers/sites, capabilities, certificates with expiry, restrictions, reasoned transitions. **No contacts** | S |
+| FR-021 | Built | Qualification per supplier or named site, decided by someone other than the assessor | S |
+| FR-022 | Built (interim) | Suspension/expiry overlays on sources, blocks new approvals (POL-13 open) | S AT-13 |
+| FR-023 [P1] | Partial | Certificate/qualification expiry listed in Reports (`reports/metrics.ts`); supplier fail rates from inspections. **No renewal reminders, no delivery performance** | M |
+| FR-024 – FR-027 | Built | Pathways A/B/C, risk method RISK-INTERIM-1, proportionate checklist with waivers | S |
+| FR-028, FR-029 | Built | Baseline editor, draft vs released, effective dates | S |
+| FR-030 | Built | Supplier acknowledgment of the exact revision | S |
+| FR-031 | Partial | Newer supplier base flagged; reassessment through change control. **No automatic WIP/stock reassessment** | S, Q |
+| FR-032 – FR-034 | Built | Exact-source approval; FAI history with rejected sample kept | S |
+| FR-035 | Partial | FAI measured values with independent decision. **No validation plan / test-procedure records per source** | S |
+| FR-036, FR-037 | Built | Gates re-evaluated at decision; frozen hashed manifest and PDF | S |
+| FR-038 [P1] | Partial | Approval record lists the evidence package. **No combined PPAP package export** | S |
+| FR-040, FR-041 | Built | Inspections list (search, status, outcome, mine, report drill-down); compact launch dialog with validation messages | I, E, E6 |
+| FR-042 | Built | Form editor, release by another person, one-off inspections | Q, E3 |
+| FR-043 – FR-051 | Built | Workbench: sticky header, shared section once, item tabs, P/F/A/N, row photos, measurements, specialised patterns, outcomes, partial save | I, U, E, E6 |
+| FR-052, FR-053 | Built | Summary, print preview, branded PDF editions; inspections CSV export | R, E7 |
+| FR-054 | Built | Concern from a failed row carries identity and the same photos | I, Q |
+| FR-055 | Built | Frozen form/spec snapshots; triggers prevent changes | I, X |
+| FR-056 | Built | List counts and filters share definitions; reports drill into the same filters | I, M |
+| FR-057, FR-058 | Built | Walkthroughs automated | E, E3 |
+| FR-060 | Built (interim) | Idempotent bench import, manual tests (`injectors/bench.ts`); real formats POL-08 open | J, UJ, X |
+| FR-061 – FR-063 | Built | Search/filter, chronology, repair cases, quick measurements, comparison, shipment evaluation, analytics | J, E4 |
+| FR-064 | Partial | Exports restricted to `reports.export`. **No configurable external destinations or scheduled reporting** (POL-08) | J, A |
+| FR-070 – FR-074 | Built | NCR, scope, containment, disposition, verification, release, concession, SCAR/8D | Q, E3 |
+| FR-075 | Built (interim) | NCR-BLOCK-INTERIM-1 (POL-14 open) | Q |
+| FR-076 | Built | Concessions and open quality shown on inspections, sources and hubs | Q |
+| FR-080 – FR-084 | Built | Change control with impact, decision, effectivity, implementation verification, requalification overlay | Q AT-16 |
+| FR-090 | Not built | No administrative catalogue of document types; Appendix B records exist as specific screens/PDFs | — |
+| FR-091 | Partial | Draft → review → released → superseded for baselines and forms; controlled PDFs as editions. **Not for arbitrary documents** | S, Q |
+| FR-092 | Built | Structured records with PDI-branded PDFs; supplier files attached as evidence | Q, R |
+| FR-093 | Built | Checklist of required/conditional/waived evidence per source | S |
+| FR-094 | Built | Acknowledgment of exact revision, recipient, date, response | S |
+| FR-095 | Partial (policy open) | Nothing is deleted; decision chains are immutable. **Retention schedule not configurable** (POL-15) | X |
+| FR-100 | Built | My Work landing page | I |
+| FR-101 | Partial | Search across parts, suppliers, inspections, concerns, NCR/SCAR/concessions/changes/commitments, injectors, bench data, documents by file name. **No comments to search** | M, J, E4 |
+| FR-102, FR-103 | Built | Management overview, CSV exports, issued report PDF | M, E5 |
+| FR-104 [P1] | Built | Recurrence groups and repeated rejected-FAI defects | M |
+| FR-110 | Partial | Local accounts, lockout, session revocation, deactivation, administrator-set temporary password. **No e-mail invitations or self-service reset** (e-mail disabled until approved); SSO optional | I, A |
+| FR-111 | Built | Every route checked: unauthenticated, missing CSRF and read-only sweeps over the live route inventory | A |
+| FR-112 | Built | Append-only audit with reason, before/after where relevant; denials audited | I, A |
+| FR-113 | Built | Validated uploads, previews, captions, size limits, durable links, verified backup/restore | I, B |
+| FR-114 | Built | Job queue with permanent/retryable failures visible to administrators; search and lists measured at 3 and 15 years of volume | X, P |
+| FR-115 | Partial | Backup + isolated restore verification, logs, readiness, CI. **Staging/production separation and monitoring owner await Render provisioning** (POL-09) | B |
+| FR-116 | Partial | Policy register visible; interim rules are versioned in code. **Policy decisions are not configurable in the UI** | — |
 
 ## (e) First vertical transaction (delivered)
 
@@ -198,3 +219,8 @@ An inspector records an uncoated ring with a photo and raises a concern; quality
 ## (h) Stage 4 transaction (delivered)
 
 A technician uploads a bench file in the interim layout. The original is stored, each test is added once, and the import report explains every skipped, conflicting or excluded test; new serials are registered automatically. The injector's chronology shows the machine verdict next to the PDI evaluation against released criteria. A failing injector gets a repair case with an adjustment and quick measurements, a retest attributed to that action, and closure. Quality compares injectors (first → latest values, CSV or PDF), freezes a shipment evaluation that lists exceptions without releasing material, and reviews first-pass and post-repair yields with their denominators. Management opens Reports for a period: throughput and outcomes with drill-down to exactly the counted inspections, defect types, supplier quality, open and overdue corrective actions, expiring evidence, changes, approval decisions, recurrence and injector performance, then exports CSVs or issues a frozen management report PDF. Anyone with read access can trace a lot or serial and see what requirements and source approval applied on a given date.
+
+## (i) Stage 5 finishes (delivered)
+
+Every API route is exercised without a session, without the CSRF token and as a read-only user, and every refusal is audited. Simultaneous requests cannot create two open repair cases, concerns or drafts, a tampered completed record is refused by the database, and a corrupted photo stops its report with an actionable message. An administrator can take an application-consistent backup and prove it restores completely into an isolated database and disk; a database-only backup is reported incomplete. Every screen passes an automated WCAG A/AA audit at desktop and phone width, an inspection can be started and answered by keyboard alone, and a crawler follows every visible link. Screen and report baselines catch unintended visual changes, and the main read paths stay fast with fifteen years of fictional history.
+

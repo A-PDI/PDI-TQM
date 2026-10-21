@@ -1,0 +1,301 @@
+{
+  "kind": "RECORD_REPORT",
+  "meta": [
+    [
+      "Part",
+      "TQ-PRK-3003 — Piston ring kit, 3-ring"
+    ],
+    [
+      "Severity",
+      "HIGH"
+    ],
+    [
+      "Supplier / site",
+      "Northwind Precision Rings Ltd. (fictional) / Riverton Plant 1"
+    ],
+    [
+      "Lot / PO",
+      "LOT-Q1 / PO-77310"
+    ],
+    [
+      "Origin",
+      "QE-2026-00001 from inspection IR-2026-00001"
+    ],
+    [
+      "Owner",
+      "Casey Morgan"
+    ],
+    [
+      "Confirmed by",
+      "Casey Morgan, 10/21/2026 09:30 CDT"
+    ],
+    [
+      "Closed",
+      "Casey Morgan, 10/21/2026 09:30 CDT"
+    ]
+  ],
+  "title": "Nonconformance Report",
+  "number": "NCR-2026-00001",
+  "docCode": "OPS-06",
+  "edition": 1,
+  "outcome": {
+    "note": "Closed after verified material resolution. Linked SCAR remains open.",
+    "tone": "good",
+    "label": "CLOSED"
+  },
+  "sections": [
+    {
+      "kind": "text",
+      "title": "NONCONFORMANCE",
+      "paragraphs": [
+        "Title: TQ-PRK-3003: Running Face Coating (item 2)",
+        "Description: Raised from inspection IR-2026-00001.",
+        "Characteristic: Running Face Coating. Expected: Coating 100% intact and uniform; zero flaking, chipping, or bare patches of any size. Actual: Recorded Fail — Running face uncoated; base metal visible.",
+        "Failure mode: Missing running-face coating",
+        "Confirmation rationale: Coating absent on item 2; supplier process escape suspected"
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "Ring kits on receiving shelf R-4",
+          "LOT-Q1 / 3",
+          "SN-1001, SN-2002, SN-3003",
+          "Tag red and move to quarantine cage Q-2 — verified: Three kits tagged and caged in Q-2",
+          "released"
+        ]
+      ],
+      "title": "AFFECTED MATERIAL AND CONTAINMENT",
+      "columns": [
+        {
+          "width": 0.26,
+          "header": "Material"
+        },
+        {
+          "width": 0.16,
+          "header": "Lot / qty"
+        },
+        {
+          "width": 0.18,
+          "header": "Serials"
+        },
+        {
+          "width": 0.28,
+          "header": "Containment / segregation"
+        },
+        {
+          "width": 0.12,
+          "header": "State"
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "Use as is (under concession)",
+          "LOT-Q1 / 1",
+          "Riley Chen",
+          "Under DEV, rebuild kits only — under DEV-2026-00001",
+          "VERIFIED by Casey Morgan (Concession check)"
+        ],
+        [
+          "Rework",
+          "LOT-Q1 / 1",
+          "Riley Chen",
+          "Coating can be reapplied",
+          "VERIFIED by Casey Morgan (PDI reinspection)"
+        ],
+        [
+          "Return to supplier",
+          "LOT-Q1 / 1",
+          "Riley Chen",
+          "Supplier to replace",
+          "VERIFIED by Casey Morgan (Return shipment)"
+        ]
+      ],
+      "title": "DISPOSITION DECISIONS AND VERIFICATION",
+      "columns": [
+        {
+          "width": 0.2,
+          "header": "Disposition"
+        },
+        {
+          "width": 0.14,
+          "header": "Lot / qty"
+        },
+        {
+          "width": 0.16,
+          "header": "Decided by"
+        },
+        {
+          "width": 0.28,
+          "header": "Rationale / concession"
+        },
+        {
+          "width": 0.22,
+          "header": "Verification"
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "SCAR-2026-00001",
+          "origin",
+          "issued"
+        ]
+      ],
+      "title": "SUPPLIER CORRECTIVE ACTION",
+      "columns": [
+        {
+          "width": 0.3,
+          "header": "SCAR"
+        },
+        {
+          "width": 0.3,
+          "header": "Relation"
+        },
+        {
+          "width": 0.4,
+          "header": "Status"
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "coating-2.png",
+          "From IR-2026-00001",
+          "c4526077f3148f28d9564eed"
+        ]
+      ],
+      "title": "LINKED EVIDENCE (ORIGINAL FILES, SHA-256)",
+      "columns": [
+        {
+          "width": 0.4,
+          "header": "File"
+        },
+        {
+          "width": 0.25,
+          "header": "Caption"
+        },
+        {
+          "width": 0.35,
+          "header": "SHA-256 (first 24)"
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "NCR-2026-00001 confirmed from QE-2026-00001 (high) — Coating absent on item 2; supplier process escape suspected"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "Affected material recorded: Ring kits on receiving shelf R-4, lot LOT-Q1, quantity 3, serials SN-1001, SN-2002, SN-3003"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "Containment of Ring kits on receiving shelf R-4 authorized — Hold all three"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Sam Okafor",
+          "Physical segregation of Ring kits on receiving shelf R-4 verified (no ERP stock movement recorded) — Three kits tagged and caged in Q-2"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Jordan Rivera",
+          "Concession DEV-2026-00001 requested"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "Concession DEV-2026-00002 requested"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "Concession DEV-2026-00001 approved"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Jordan Rivera",
+          "Concession DEV-2026-00003 requested"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "Use as is (under concession): 1 of lot LOT-Q1 under DEV-2026-00001 — Under DEV, rebuild kits only"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "Rework: 1 of lot LOT-Q1 — Coating can be reapplied"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "Return to supplier: 1 of lot LOT-Q1 — Supplier to replace"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "[FAILED] Close refused: Dispositioned — awaiting verification"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "Rework of 1 verified (PDI reinspection) — Coating present and conforming"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "Use as is (under concession) of 1 verified (Concession check) — Conditions applied; serial on build sheet"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "Return to supplier of 1 verified (Return shipment) — RMA-5521 shipped with carrier receipt (fictional)"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "2 unit(s) of lot LOT-Q1 released from the TQMS hold (record only; no ERP stock movement) — Released verified kits back to stock shelf (record only)"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "NCR-2026-00001 closed after verified material resolution; SCAR-2026-00001 stays open — Material resolved and released"
+        ]
+      ],
+      "title": "RECORD HISTORY",
+      "columns": [
+        {
+          "width": 0.18,
+          "header": "When"
+        },
+        {
+          "width": 0.17,
+          "header": "Who"
+        },
+        {
+          "width": 0.65,
+          "header": "Event"
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2026-10-21T15:00:00.000Z",
+  "schemaVersion": 1,
+  "displayTimeZone": "America/Chicago"
+}

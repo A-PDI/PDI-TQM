@@ -108,7 +108,7 @@ test('Stage 4 walkthrough: bench import → repair → retest → compare → sh
   await expect(quality.getByRole('heading', { name: 'Injector analytics' })).toBeVisible();
   await expect(quality.getByText('First-pass yield, PDI criteria: 1 of 2')).toBeVisible();
   await expect(quality.getByText('Post-repair yield, PDI criteria: 1 of 1')).toBeVisible();
-  await expect(quality.getByRole('img', { name: /Bench tests per week/ })).toBeVisible();
+  await expect(quality.getByRole('group', { name: /Bench tests per week/ })).toBeVisible();
   await quality.screenshot({ path: `${SHOTS}/desktop-injector-analytics.png`, fullPage: true });
 
   // Traceability of the repaired serial.

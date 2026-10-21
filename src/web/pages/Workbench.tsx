@@ -433,9 +433,9 @@ export function Workbench() {
     <>
       <header className="wb-header" aria-label="Inspection header">
         <div>
-          <div className="wb-title">
+          <h1 className="wb-title">
             {detail.partNumber} — {detail.partDescription}
-          </div>
+          </h1>
           <div className="wb-meta">
             {formLabel(def)} · PO {detail.poNumber ?? '—'} · Received {fmtDate(detail.dateReceived)} · {detail.inspector.name} · {detail.number}
           </div>

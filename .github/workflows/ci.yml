@@ -27,7 +27,10 @@ jobs:
         with:
           node-version: 22.22.0
           cache: npm
-      - run: sudo apt-get update && sudo apt-get install -y poppler-utils postgresql-client
+      # pg_dump must match the PostgreSQL 17 server (backup tests); the PGDG repository provides client 17.
+      # Liberation and FreeFont are the pinned fonts for visual-regression rendering (tests/fixtures/fonts.conf).
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils postgresql-common fonts-liberation fonts-freefont-ttf
+      - run: sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && sudo apt-get install -y postgresql-client-17 && pg_dump --version
       - run: psql -h localhost -U tqms -d tqms_test -c 'CREATE DATABASE tqms_e2e'
       - run: npm ci
       - run: npm run typecheck

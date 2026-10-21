@@ -86,7 +86,11 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
     bodyLimit: 1024 * 1024,
     genReqId: () => crypto.randomUUID(),
   });
-  const svc: Services = { db, config, storage, logo: existsSync(logoPath) ? readFileSync(logoPath) : null, worker: null };
+  const svc: Services = { db, config, storage, logo: existsSync(logoPath) ? readFileSync(logoPath) : null, worker: null, routes: [] };
+  // Route inventory: lets the authorization sweep test cover every registered endpoint.
+  app.addHook('onRoute', (route) => {
+    for (const method of [route.method].flat()) if (method !== 'HEAD') svc.routes.push({ method, url: route.url });
+  });
   svc.worker = new JobWorker(
     db,
     { inspection_report: inspectionReportHandler(svc), record_report: recordReportHandler(svc), reminder_sweep: reminderSweepHandler(svc) },

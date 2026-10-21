@@ -260,6 +260,32 @@ function UsersAdmin({ selfId }: { selfId: string }) {
                       ))}
                     </select>
                   )}
+                  {u.id !== selfId && u.active && (
+                    <div className="row-actions" style={{ marginTop: 6 }}>
+                      <button
+                        type="button"
+                        className="btn btn-small"
+                        onClick={() => {
+                          const temporaryPassword = window.prompt(`Temporary password for ${u.displayName} (at least 12 characters; give it to them in person or by phone):`);
+                          if (!temporaryPassword) return;
+                          const reason = window.prompt('Reason for the reset?');
+                          if (reason) void act(() => api(`/api/admin/users/${u.id}/reset-password`, { body: { temporaryPassword, reason } }), `Temporary password set for ${u.displayName}; their sessions were ended`);
+                        }}
+                      >
+                        Reset password…
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-small btn-danger"
+                        onClick={() => {
+                          const reason = window.prompt(`Reason for deactivating ${u.displayName}? Their history is kept.`);
+                          if (reason) void act(() => api(`/api/admin/users/${u.id}/deactivate`, { body: { reason } }), `${u.displayName} deactivated`);
+                        }}
+                      >
+                        Deactivate…
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

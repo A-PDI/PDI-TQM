@@ -255,6 +255,8 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
   }, [part, forms.data]);
 
   const unitCount = Number(units);
+  const unitsOk = Number.isInteger(unitCount) && unitCount >= 1 && unitCount <= 100;
+  const missing = [!part && 'a part', !formId && !isOneOff && 'an inspection form', !unitsOk && 'a valid number of items', !received && 'the date received'].filter(Boolean);
   const valid =
     part &&
     formId &&
@@ -322,10 +324,15 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
       onClose={onClose}
       footer={
         <>
+          {missing.length > 0 && (
+            <span className="small muted" id="launch-missing" style={{ marginRight: 'auto' }}>
+              Still needed: {missing.join(', ')}.
+            </span>
+          )}
           <button type="button" className="btn" onClick={onClose}>
             Cancel
           </button>
-          <button type="button" className="btn btn-primary" disabled={!valid || busy} onClick={() => void start()}>
+          <button type="button" className="btn btn-primary" disabled={!valid || busy} aria-describedby={missing.length ? 'launch-missing' : undefined} onClick={() => void start()}>
             Start inspection
           </button>
         </>
@@ -388,7 +395,22 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         <div className="field">
           <label htmlFor="launch-units">Number of Items (1–100)</label>
-          <input id="launch-units" type="number" min={1} max={100} inputMode="numeric" value={units} onChange={(e) => setUnits(e.target.value)} />
+          <input
+            id="launch-units"
+            type="number"
+            min={1}
+            max={100}
+            inputMode="numeric"
+            value={units}
+            aria-invalid={!unitsOk}
+            aria-describedby={unitsOk ? undefined : 'launch-units-error'}
+            onChange={(e) => setUnits(e.target.value)}
+          />
+          {!unitsOk && (
+            <div className="field-error" id="launch-units-error" role="alert">
+              Enter a whole number of items from 1 to 100.
+            </div>
+          )}
         </div>
         <div className="field">
           <label htmlFor="launch-po">PO Number</label>

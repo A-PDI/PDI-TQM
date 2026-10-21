@@ -1,0 +1,737 @@
+{
+  "form": {
+    "sha256": "2c8f3a397e4cede47d8e9ea154de34cdc125d5cc0e5c54bcd7b86e35e35c2839",
+    "component": "Crankshaft",
+    "formNumber": "PDI-IQI-014",
+    "revisionLabel": null
+  },
+  "kind": "INSPECTION_REPORT",
+  "draft": false,
+  "units": [
+    {
+      "serial": null,
+      "outcome": "ACCEPTED",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "journal_surface_finish",
+              "note": "Small gash on journal surface",
+              "spec": null,
+              "label": "Journal Surface Finish",
+              "status": "A",
+              "location": null,
+              "readings": [],
+              "criterion": "All main and connecting rod journals ground to a mirror finish; zero evidence of linear scoring, micro-pitting, transit scratches, or heat discoloration.",
+              "photoNumbers": [
+                1
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "fillet_radii_transitions",
+              "note": null,
+              "spec": null,
+              "label": "Fillet Radii Transitions",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Journal fillet radii are perfectly smooth and continuous; free of machining steps, grinding burn marks, or sharp undercut transitions.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "oil_holes_chamfers",
+              "note": null,
+              "spec": null,
+              "label": "Oil Holes & Chamfers",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Lubrication cross-holes are fully open and deburred; chamfered edges are smooth with zero loose grinding fins or trapped debris inside the oil pathways.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "keyways_splines_snout",
+              "note": null,
+              "spec": null,
+              "label": "Keyways, Splines & Snout",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Front snout keyways, timing gear press-fit areas, and rear flange bolt holes are crisp, clean, and free of burrs or rolled-over metal edges.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "thrust_face_alignment",
+              "note": null,
+              "spec": null,
+              "label": "Thrust Face Alignment",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Machined thrust walls adjacent to the indexing main journal are clean and free of grinding tears or handling nicks.",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "main_journal_outer_diameter_od",
+              "note": null,
+              "spec": null,
+              "label": "Main Journal Outer Diameter (OD)",
+              "status": "P",
+              "location": "At the front, center, and rear sections of each main journal across 0° and 90° axes.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "crankpin_rod_journal_outer_diameter_od",
+              "note": null,
+              "spec": null,
+              "label": "Crankpin / Rod Journal Outer Diameter (OD)",
+              "status": "P",
+              "location": "At the center section of each rod journal across 0° and 90° axes.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "journal_taper_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Journal Taper & Out-of-Round",
+              "status": "P",
+              "location": "Calculated max-to-min diameter difference across the width and circumference of each individual journal.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "total_indicator_runout_crankshaft_straightness",
+              "note": null,
+              "spec": null,
+              "label": "Total Indicator Runout (Crankshaft Straightness)",
+              "status": "P",
+              "location": "Supported on V-blocks at the front and rear main journals; dial indicator on the center main journal through a 360° rotation.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 1,
+      "dispositionNote": "Small gash on crankshaft surface"
+    },
+    {
+      "serial": null,
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "journal_surface_finish",
+              "note": null,
+              "spec": null,
+              "label": "Journal Surface Finish",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "All main and connecting rod journals ground to a mirror finish; zero evidence of linear scoring, micro-pitting, transit scratches, or heat discoloration.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "fillet_radii_transitions",
+              "note": null,
+              "spec": null,
+              "label": "Fillet Radii Transitions",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Journal fillet radii are perfectly smooth and continuous; free of machining steps, grinding burn marks, or sharp undercut transitions.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "oil_holes_chamfers",
+              "note": null,
+              "spec": null,
+              "label": "Oil Holes & Chamfers",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Lubrication cross-holes are fully open and deburred; chamfered edges are smooth with zero loose grinding fins or trapped debris inside the oil pathways.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "keyways_splines_snout",
+              "note": null,
+              "spec": null,
+              "label": "Keyways, Splines & Snout",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Front snout keyways, timing gear press-fit areas, and rear flange bolt holes are crisp, clean, and free of burrs or rolled-over metal edges.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "thrust_face_alignment",
+              "note": null,
+              "spec": null,
+              "label": "Thrust Face Alignment",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Machined thrust walls adjacent to the indexing main journal are clean and free of grinding tears or handling nicks.",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "main_journal_outer_diameter_od",
+              "note": null,
+              "spec": null,
+              "label": "Main Journal Outer Diameter (OD)",
+              "status": "P",
+              "location": "At the front, center, and rear sections of each main journal across 0° and 90° axes.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "crankpin_rod_journal_outer_diameter_od",
+              "note": null,
+              "spec": null,
+              "label": "Crankpin / Rod Journal Outer Diameter (OD)",
+              "status": "P",
+              "location": "At the center section of each rod journal across 0° and 90° axes.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "journal_taper_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Journal Taper & Out-of-Round",
+              "status": "P",
+              "location": "Calculated max-to-min diameter difference across the width and circumference of each individual journal.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "total_indicator_runout_crankshaft_straightness",
+              "note": null,
+              "spec": null,
+              "label": "Total Indicator Runout (Crankshaft Straightness)",
+              "status": "P",
+              "location": "Supported on V-blocks at the front and rear main journals; dial indicator on the center main journal through a 360° rotation.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 2,
+      "dispositionNote": null
+    },
+    {
+      "serial": null,
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "journal_surface_finish",
+              "note": null,
+              "spec": null,
+              "label": "Journal Surface Finish",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "All main and connecting rod journals ground to a mirror finish; zero evidence of linear scoring, micro-pitting, transit scratches, or heat discoloration.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "fillet_radii_transitions",
+              "note": null,
+              "spec": null,
+              "label": "Fillet Radii Transitions",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Journal fillet radii are perfectly smooth and continuous; free of machining steps, grinding burn marks, or sharp undercut transitions.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "oil_holes_chamfers",
+              "note": null,
+              "spec": null,
+              "label": "Oil Holes & Chamfers",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Lubrication cross-holes are fully open and deburred; chamfered edges are smooth with zero loose grinding fins or trapped debris inside the oil pathways.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "keyways_splines_snout",
+              "note": null,
+              "spec": null,
+              "label": "Keyways, Splines & Snout",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Front snout keyways, timing gear press-fit areas, and rear flange bolt holes are crisp, clean, and free of burrs or rolled-over metal edges.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "thrust_face_alignment",
+              "note": null,
+              "spec": null,
+              "label": "Thrust Face Alignment",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Machined thrust walls adjacent to the indexing main journal are clean and free of grinding tears or handling nicks.",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "main_journal_outer_diameter_od",
+              "note": null,
+              "spec": null,
+              "label": "Main Journal Outer Diameter (OD)",
+              "status": "P",
+              "location": "At the front, center, and rear sections of each main journal across 0° and 90° axes.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "crankpin_rod_journal_outer_diameter_od",
+              "note": null,
+              "spec": null,
+              "label": "Crankpin / Rod Journal Outer Diameter (OD)",
+              "status": "P",
+              "location": "At the center section of each rod journal across 0° and 90° axes.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "journal_taper_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Journal Taper & Out-of-Round",
+              "status": "P",
+              "location": "Calculated max-to-min diameter difference across the width and circumference of each individual journal.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "total_indicator_runout_crankshaft_straightness",
+              "note": null,
+              "spec": null,
+              "label": "Total Indicator Runout (Crankshaft Straightness)",
+              "status": "P",
+              "location": "Supported on V-blocks at the front and rear main journals; dial indicator on the center main journal through a 360° rotation.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.1240",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 3,
+      "dispositionNote": null
+    }
+  ],
+  "photos": [
+    {
+      "mime": "image/png",
+      "fileId": "bfa5a6d9-a431-44f2-b475-1fe95e752d56",
+      "number": 1,
+      "sha256": "83809b9db011645d1e59bdfd0fec701c8ac4b1883e2daf50ddd0d1d006b7c106",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Journal Surface Finish",
+      "storageKey": "ec604e36-8a29-48b5-8223-7d6e1fb73fbe"
+    }
+  ],
+  "review": {
+    "comment": "Reviewed (synthetic)",
+    "reasons": [
+      "Item 1 → Visual → Journal Surface Finish: Accepted condition — authorized review required",
+      "Specification not released for 12 recorded measurement(s) — Main Journal Outer Diameter (OD), Crankpin / Rod Journal Outer Diameter (OD), Journal Taper & Out-of-Round, Total Indicator Runout (Crankshaft Straightness); readings reviewed as observations, not validated against limits"
+    ],
+    "decision": "CONFIRMED",
+    "reviewer": "Riley Chen",
+    "reviewedAt": "2026-10-21T14:30:33.474Z"
+  },
+  "shared": [
+    {
+      "key": "A",
+      "rows": [
+        {
+          "key": "outer_carton_condition",
+          "note": null,
+          "spec": null,
+          "label": "Outer Carton Condition",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "box_package_label",
+          "note": null,
+          "spec": null,
+          "label": "Box / Package Label",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Label present; part number, description, and quantity match purchase order exactly",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "part_marking",
+          "note": null,
+          "spec": null,
+          "label": "Part Marking",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "PDI logo and part number permanently marked on part; matches purchase order",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "quantity_verification",
+          "note": null,
+          "spec": null,
+          "label": "Quantity Verification",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "corrosion_contamination_protection",
+          "note": null,
+          "spec": null,
+          "label": "Corrosion / Contamination Protection",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival",
+          "photoNumbers": [],
+          "specReleased": false
+        }
+      ],
+      "title": "A. RECEIVING & DOCUMENTATION VERIFICATION",
+      "pattern": "pfn_checklist",
+      "limitSummary": null,
+      "readingLabels": []
+    }
+  ],
+  "edition": 1,
+  "baseline": null,
+  "amendment": null,
+  "inspection": {
+    "site": null,
+    "number": "IR-2026-00004",
+    "status": "COMPLETED",
+    "lotSize": null,
+    "outcome": "ACCEPTED",
+    "poNumber": "PO-60411",
+    "supplier": null,
+    "inspector": "Jordan Rivera",
+    "lotNumber": "LOT-2026-118",
+    "startedAt": "2026-10-21T14:30:33.187Z",
+    "unitCount": 3,
+    "partNumber": "TQ-CRK-6006",
+    "completedAt": "2026-10-21T14:30:33.474Z",
+    "sourceState": "NO_SOURCE",
+    "dateReceived": "2026-10-18",
+    "samplingNote": null,
+    "partDescription": "Crankshaft, forged"
+  },
+  "generatedAt": "2026-10-21T15:00:00.000Z",
+  "schemaVersion": 1,
+  "displayTimeZone": "America/Chicago"
+}
