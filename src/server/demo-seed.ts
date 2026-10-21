@@ -14,6 +14,7 @@ export const DEMO_USERS = [
   { key: 'inspector2', email: 'sam.okafor@example.com', name: 'Sam Okafor', bundles: ['inspector'] },
   { key: 'quality', email: 'casey.morgan@example.com', name: 'Casey Morgan', bundles: ['quality'] },
   { key: 'engineering', email: 'taylor.brooks@example.com', name: 'Taylor Brooks', bundles: ['engineering'] },
+  { key: 'purchasing', email: 'morgan.diaz@example.com', name: 'Morgan Diaz', bundles: ['purchasing'] },
   { key: 'manager', email: 'riley.chen@example.com', name: 'Riley Chen', bundles: ['manager', 'inspector'] },
   { key: 'admin', email: 'avery.patel@example.com', name: 'Avery Patel', bundles: ['administrator'] },
 ] as const;

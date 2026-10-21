@@ -223,3 +223,11 @@ describe('PDF text safety', () => {
     expect(pdfText('漢')).toBe('?');
   });
 });
+
+describe('canonical JSON', () => {
+  it('is key-order independent and keeps dates', async () => {
+    const { canonicalJson } = await import('../../src/shared/forms.js');
+    expect(canonicalJson({ b: 1, a: [{ d: 2, c: 3 }] })).toBe(canonicalJson({ a: [{ c: 3, d: 2 }], b: 1 }));
+    expect(canonicalJson({ at: new Date('2026-10-21T00:00:00Z') })).toBe('{"at":"2026-10-21T00:00:00.000Z"}');
+  });
+});

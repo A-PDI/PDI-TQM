@@ -52,3 +52,25 @@ export function sanitizeFilename(name: string | undefined): string {
   const cleaned = base.replace(/[\u0000-\u001f\u007f<>:"|?*]/g, '_').replace(/^\.+/, '').trim();
   return (cleaned || 'upload').slice(0, 120);
 }
+
+// Markers of active or embedded content that must never be accepted as evidence.
+const PDF_ACTIVE_MARKERS = ['/JavaScript', '/JS', '/Launch', '/EmbeddedFile', '/RichMedia', '/XFA', '/SubmitForm', '/ImportData'];
+
+export type DocumentValidation = { ok: true; mime: string; width?: number; height?: number } | { ok: false; reason: string };
+
+/** Accepts PDF documents (structurally plausible, no active content) or photographs. */
+export function validateDocument(bytes: Buffer): DocumentValidation {
+  if (bytes.length === 0) return { ok: false, reason: 'File is empty' };
+  if (bytes.subarray(0, 5).toString('latin1') === '%PDF-') {
+    const version = bytes.subarray(5, 8).toString('latin1');
+    if (!/^[12]\.\d$/.test(version)) return { ok: false, reason: 'PDF header is malformed' };
+    if (!bytes.subarray(Math.max(0, bytes.length - 2048)).toString('latin1').includes('%%EOF')) return { ok: false, reason: 'PDF is truncated or malformed' };
+    const text = bytes.toString('latin1');
+    const marker = PDF_ACTIVE_MARKERS.find((m) => new RegExp(`${m.replace('/', '\\/')}(?![A-Za-z])`).test(text));
+    if (marker) return { ok: false, reason: `PDF contains active or embedded content (${marker}) and cannot be stored as evidence` };
+    return { ok: true, mime: 'application/pdf' };
+  }
+  const photo = validatePhoto(bytes.subarray(0, 65536), bytes.length);
+  if (photo.ok) return { ok: true, mime: photo.mime, width: photo.width, height: photo.height };
+  return { ok: false, reason: 'Only PDF documents and JPEG/PNG/WebP images are accepted' };
+}

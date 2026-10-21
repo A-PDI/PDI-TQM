@@ -265,6 +265,8 @@ export function formLabel(def: Pick<FormDefinition, 'formNumber' | 'component' |
 /** Deterministic JSON (sorted object keys) so hashes survive jsonb storage round-trips. */
 export function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  const withToJson = value as { toJSON?: () => unknown };
+  if (typeof withToJson.toJSON === 'function') return canonicalJson(withToJson.toJSON());
   if (Array.isArray(value)) return `[${value.map((v) => canonicalJson(v === undefined ? null : v)).join(',')}]`;
   const entries = Object.entries(value as Record<string, unknown>)
     .filter(([, v]) => v !== undefined)
