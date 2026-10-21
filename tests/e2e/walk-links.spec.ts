@@ -38,8 +38,12 @@ async function crawl(browser: Browser, email: string) {
     visited += 1;
     await page.goto(current);
     await page.waitForLoadState('networkidle');
-    if (await page.getByText('Page not found').count()) problems.push(`${current} — Page not found`);
-    else if ((await page.getByRole('heading', { level: 1 }).count()) === 0) problems.push(`${current} — no page heading`);
+    const heading = page.getByRole('heading', { level: 1 });
+    const notFound = page.getByText('Page not found');
+    // A lazy route can still show its loading fallback once the network is quiet on a slow runner.
+    await heading.or(notFound).first().waitFor({ timeout: 10_000 }).catch(() => undefined);
+    if (await notFound.count()) problems.push(`${current} — Page not found`);
+    else if ((await heading.count()) === 0) problems.push(`${current} — no page heading`);
     const hrefs = await page.locator('main a[href^="/"], nav a[href^="/"]').evaluateAll((as) => as.map((a) => a.getAttribute('href')!));
     for (const href of hrefs) {
       if (href.startsWith('/api/') || seen.has(href)) continue;
