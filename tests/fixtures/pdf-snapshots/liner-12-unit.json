@@ -1,0 +1,2542 @@
+{
+  "form": {
+    "sha256": "47ec56150d7f2b1171328572ea54ab0f636af2464c49054224ef16941be6768d",
+    "component": "Cylinder Liner",
+    "formNumber": "PDI-IQI-002",
+    "revisionLabel": null
+  },
+  "kind": "INSPECTION_REPORT",
+  "draft": false,
+  "units": [
+    {
+      "serial": "LNR-0001",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.11",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.12",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.11",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.12",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.11",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.12",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.11",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.12",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 1,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0002",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.12",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.13",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.12",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.13",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.12",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.13",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.12",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.13",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 2,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0003",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.13",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.14",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.13",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.14",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.13",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.14",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.13",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.14",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 3,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0004",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.14",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.15",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.14",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.15",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.14",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.15",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.14",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.15",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 4,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0005",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.15",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.16",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.15",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.16",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.15",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.16",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.15",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.16",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 5,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0006",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.16",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.17",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.16",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.17",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.16",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.17",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.16",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.17",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 6,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0007",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.17",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.18",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.17",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.18",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.17",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.18",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.17",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.18",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 7,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0008",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.18",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.19",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.18",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.19",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.18",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.19",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.18",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.19",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 8,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0009",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.19",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.19",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.19",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.19",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 9,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0010",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.111",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.111",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.111",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.111",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 10,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0011",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.111",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.111",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.111",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.111",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 11,
+      "dispositionNote": null
+    },
+    {
+      "serial": "LNR-0012",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "bore_surface_cracks",
+              "note": null,
+              "spec": null,
+              "label": "Bore Surface — Cracks",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_honing_pattern",
+              "note": null,
+              "spec": null,
+              "label": "Bore Honing Pattern",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "o_ring_groove",
+              "note": null,
+              "spec": null,
+              "label": "O-Ring Groove",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_seating_face",
+              "note": null,
+              "spec": null,
+              "label": "Flange Seating Face",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number and size code permanently marked and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Bore Diameter",
+              "status": "P",
+              "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "5.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "5.113",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_out_of_round",
+              "note": null,
+              "spec": null,
+              "label": "Bore Out-of-Round",
+              "status": "P",
+              "location": "Max - min reading within each cross-sectional plane",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "6.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "6.113",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bore_taper",
+              "note": null,
+              "spec": null,
+              "label": "Bore Taper",
+              "status": "P",
+              "location": "Top bore diameter minus bottom bore diameter",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "7.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "7.113",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Flange Thickness",
+              "status": "P",
+              "location": "4 pts at 90° intervals around flange",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "8.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "8.113",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 12,
+      "dispositionNote": null
+    }
+  ],
+  "photos": [],
+  "review": {
+    "comment": "Reviewed (synthetic)",
+    "reasons": [
+      "Specification not released for 48 recorded measurement(s) — Bore Diameter, Bore Out-of-Round, Bore Taper, Flange Thickness; readings reviewed as observations, not validated against limits"
+    ],
+    "decision": "CONFIRMED",
+    "reviewer": "Casey Morgan",
+    "reviewedAt": "2026-10-21T14:30:32.503Z"
+  },
+  "shared": [
+    {
+      "key": "A",
+      "rows": [
+        {
+          "key": "outer_carton_condition",
+          "note": null,
+          "spec": null,
+          "label": "Outer Carton Condition",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "box_package_label",
+          "note": null,
+          "spec": null,
+          "label": "Box / Package Label",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Label present; part number, description, and quantity match purchase order exactly",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "part_marking",
+          "note": null,
+          "spec": null,
+          "label": "Part Marking",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "PDI logo and part number permanently marked on part; matches purchase order",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "quantity_verification",
+          "note": null,
+          "spec": null,
+          "label": "Quantity Verification",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "corrosion_contamination_protection",
+          "note": null,
+          "spec": null,
+          "label": "Corrosion / Contamination Protection",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival",
+          "photoNumbers": [],
+          "specReleased": false
+        }
+      ],
+      "title": "A. RECEIVING & DOCUMENTATION VERIFICATION",
+      "pattern": "pfn_checklist",
+      "limitSummary": null,
+      "readingLabels": []
+    }
+  ],
+  "edition": 1,
+  "baseline": null,
+  "amendment": null,
+  "inspection": {
+    "site": null,
+    "number": "IR-2026-00002",
+    "status": "COMPLETED",
+    "lotSize": null,
+    "outcome": "PASS",
+    "poNumber": "PO-60411",
+    "supplier": null,
+    "inspector": "Jordan Rivera",
+    "lotNumber": "LOT-2026-118",
+    "startedAt": "2026-10-21T14:30:31.643Z",
+    "unitCount": 12,
+    "partNumber": "TQ-LNR-2002",
+    "completedAt": "2026-10-21T14:30:32.503Z",
+    "sourceState": "NO_SOURCE",
+    "dateReceived": "2026-10-18",
+    "samplingNote": null,
+    "partDescription": "Cylinder liner, wet type"
+  },
+  "generatedAt": "2026-10-21T15:00:00.000Z",
+  "schemaVersion": 1,
+  "displayTimeZone": "America/Chicago"
+}

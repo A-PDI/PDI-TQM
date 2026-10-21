@@ -1,0 +1,268 @@
+{
+  "kind": "RECORD_REPORT",
+  "meta": [
+    [
+      "Supplier / site",
+      "Northwind Precision Rings Ltd. (fictional) / —"
+    ],
+    [
+      "Part",
+      "TQ-PRK-3003"
+    ],
+    [
+      "Issued",
+      "Morgan Diaz, 10/21/2026 09:30 CDT"
+    ],
+    [
+      "Sent to",
+      "Quality manager, Northwind (fictional) via email"
+    ],
+    [
+      "Response due",
+      "2026-10-31"
+    ],
+    [
+      "PDI owner",
+      "Casey Morgan"
+    ],
+    [
+      "Cycle",
+      "2"
+    ],
+    [
+      "Nonconformances",
+      "NCR-2026-00001 (origin), NCR-2026-00002 (recurrence)"
+    ]
+  ],
+  "title": "Supplier Corrective Action Request",
+  "number": "SCAR-2026-00001",
+  "docCode": "OPS-07 / OPS-08",
+  "edition": 1,
+  "outcome": {
+    "note": "Supplier statements are recorded as their position; only PDI verification advances this record.",
+    "tone": "bad",
+    "label": "ISSUED"
+  },
+  "sections": [
+    {
+      "kind": "text",
+      "title": "PROBLEM STATEMENT AND REQUESTED ACTIONS",
+      "paragraphs": [
+        "Lot LOT-Q1 item SN-2002 received without running-face coating; see NCR.",
+        "Requested: Containment of stock, root cause, corrective action and evidence"
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "1 / 1",
+          "Lee Example (Northwind QA), 10/21/2026 07:00 CDT",
+          "Sorted 400 kits in stock; 3 uncoated found",
+          "Masking fixture left on during PVD run",
+          "Fixture removal check added to PVD router; operator retrained",
+          "Yes (claim)"
+        ]
+      ],
+      "title": "SUPPLIER RESPONSES (8D-STYLE, AS STATED BY THE SUPPLIER)",
+      "columns": [
+        {
+          "width": 0.1,
+          "header": "Rev / cycle"
+        },
+        {
+          "width": 0.14,
+          "header": "From"
+        },
+        {
+          "width": 0.19,
+          "header": "Containment"
+        },
+        {
+          "width": 0.19,
+          "header": "Root cause"
+        },
+        {
+          "width": 0.28,
+          "header": "Corrective / preventive action"
+        },
+        {
+          "width": 0.1,
+          "header": "Claims done"
+        }
+      ]
+    },
+    {
+      "kind": "text",
+      "title": "EFFECTIVENESS VERIFICATION PLAN (OPS-08)",
+      "paragraphs": [
+        "Inspect the next three production lots for coating presence on every item"
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "implementation / 1",
+          "VERIFIED",
+          "Casey Morgan, 10/21/2026 09:30 CDT",
+          "Document review: Revised router reviewed; check step present",
+          "—"
+        ],
+        [
+          "effectiveness / 1",
+          "VERIFIED",
+          "Riley Chen, 10/21/2026 09:30 CDT",
+          "Receiving inspection of later production: LOT-Q2 coating present on all items Population: First of three planned lots (fictional)",
+          "IR-2026-00004"
+        ]
+      ],
+      "title": "PDI VERIFICATION",
+      "columns": [
+        {
+          "width": 0.16,
+          "header": "Kind / cycle"
+        },
+        {
+          "width": 0.12,
+          "header": "Result"
+        },
+        {
+          "width": 0.16,
+          "header": "Verifier"
+        },
+        {
+          "width": 0.4,
+          "header": "Method / evidence"
+        },
+        {
+          "width": 0.16,
+          "header": "Inspections"
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "router.pdf",
+          "—",
+          "ac0d3026fde031a110402127"
+        ]
+      ],
+      "title": "LINKED EVIDENCE (ORIGINAL FILES, SHA-256)",
+      "columns": [
+        {
+          "width": 0.4,
+          "header": "File"
+        },
+        {
+          "width": 0.25,
+          "header": "Caption"
+        },
+        {
+          "width": 0.35,
+          "header": "SHA-256 (first 24)"
+        }
+      ]
+    },
+    {
+      "kind": "table",
+      "rows": [
+        [
+          "10/21/2026 09:30 CDT",
+          "Morgan Diaz",
+          "SCAR-2026-00001 issued to Quality manager, Northwind (fictional) via email; response due 2026-11-04"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Morgan Diaz",
+          "NCR-2026-00001 linked — Issued from the nonconformance"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Morgan Diaz",
+          "Supplier response revision 1 from Lee Example (Northwind QA) (supplier states actions complete — not verified)"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "[DENIED] Denied: missing capability scar.close"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "[FAILED] Close refused: Supplier responded — PDI verification of implementation pending"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "[FAILED] Verification refused: Implementation needs objective PDI evidence: a completed inspection or an attached document. A supplier statement alone is not proof (NEG-07)."
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Morgan Diaz",
+          "Evidence router.pdf attached to scar"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "Implementation verified (Document review) — Revised router reviewed; check step present"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "[DENIED] Denied: Effectiveness must be verified independently of the implementation verifier"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "[FAILED] Verification refused: Record the effectiveness verification plan first"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Morgan Diaz",
+          "Effectiveness verification plan recorded"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "[FAILED] Verification refused: IR-2026-00002 predates the verified implementation; it is not later production evidence"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "Effectiveness verified (Receiving inspection of later production) — LOT-Q2 coating present on all items"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Riley Chen",
+          "SCAR-2026-00001 closed after verified effectiveness (cycle 1) — Effectiveness verified on later production"
+        ],
+        [
+          "10/21/2026 09:30 CDT",
+          "Casey Morgan",
+          "Recurrence NCR-2026-00002 linked; reopened as cycle 2 (earlier results kept) — Same failure mode as the closed SCAR — recurrence"
+        ]
+      ],
+      "title": "RECORD HISTORY",
+      "columns": [
+        {
+          "width": 0.18,
+          "header": "When"
+        },
+        {
+          "width": 0.17,
+          "header": "Who"
+        },
+        {
+          "width": 0.65,
+          "header": "Event"
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2026-10-21T15:00:00.000Z",
+  "schemaVersion": 1,
+  "displayTimeZone": "America/Chicago"
+}

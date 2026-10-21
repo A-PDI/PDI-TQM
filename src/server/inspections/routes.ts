@@ -1,3 +1,4 @@
+import { EFFECTIVE_OUTCOME_SQL, completedOn } from '../reports/metrics.js';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { has, requireCapability } from '../auth.js';
@@ -52,10 +53,22 @@ const listQuery = z.object({
   outcome: z.enum(['PASS', 'FAIL', 'ACCEPTED']).optional(),
   mine: z.enum(['1']).optional(),
   partId: z.string().uuid().optional(),
+  supplierId: z.string().uuid().optional(),
+  completedFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  completedTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   page: z.coerce.number().int().min(1).max(10_000).default(1),
 });
 
 const PAGE_SIZE = 50;
+
+/**
+ * Inspections whose number, part, description, PO, lot, item serial or part alias contains the term ($?).
+ * One SELECT per column lets each use its trigram index (migration 0008); an OR across columns does not.
+ */
+const INSPECTION_SEARCH_SQL = ['number', 'part_number', 'part_description', 'po_number', 'lot_number']
+  .map((c) => `SELECT x.id FROM inspection x WHERE x.${c} ILIKE $?`)
+  .concat(['SELECT iu.inspection_id FROM inspection_unit iu WHERE iu.serial_number ILIKE $?', 'SELECT x.id FROM inspection x JOIN part_alias pa ON pa.part_id = x.part_id WHERE pa.alias ILIKE $?'])
+  .join(' UNION ');
 
 export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
   const { db, config } = svc;
@@ -71,17 +84,24 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
     };
     if (q.q?.trim()) {
       add(
-        `(i.number ILIKE $? OR i.part_number ILIKE $? OR i.part_description ILIKE $? OR i.po_number ILIKE $? OR i.lot_number ILIKE $?
-          OR EXISTS (SELECT 1 FROM inspection_unit iu WHERE iu.inspection_id = i.id AND iu.serial_number ILIKE $?)
-          OR EXISTS (SELECT 1 FROM part_alias pa WHERE pa.part_id = i.part_id AND pa.alias ILIKE $?))`,
+        // A UNION of index-backed matches (trigram indexes, migration 0008) instead of correlated EXISTS inside an OR.
+        `i.id IN (${INSPECTION_SEARCH_SQL})`,
         `%${q.q.trim().replace(/[%_\\]/g, '\\$&')}%`,
       );
     }
     if (q.status === 'OPEN') where.push("i.status IN ('DRAFT', 'PARTIAL')");
     else if (q.status) add('i.status = $?', q.status);
-    if (q.outcome) add('i.outcome = $?', q.outcome);
+    // Same effective outcome and completion-date definitions as the reports (drill-down consistency).
+    if (q.outcome) add(`${EFFECTIVE_OUTCOME_SQL} = $?`, q.outcome);
     if (q.mine) add('i.inspector_id = $?', auth.userId);
     if (q.partId) add('i.part_id = $?', q.partId);
+    if (q.supplierId) add('i.supplier_id = $?', q.supplierId);
+    if (q.completedFrom || q.completedTo) {
+      params.push(config.displayTimeZone);
+      const tzRef = `$${params.length}`;
+      if (q.completedFrom) add(`${completedOn(tzRef)} >= $?::date`, q.completedFrom);
+      if (q.completedTo) add(`${completedOn(tzRef)} <= $?::date`, q.completedTo);
+    }
     const whereSql = where.join(' AND ');
     const total = await one<{ n: number }>(db, `SELECT count(*)::int AS n FROM inspection i WHERE ${whereSql}`, params);
     const items = await many(
@@ -105,6 +125,7 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
   });
 
   app.post('/api/inspections', async (req, reply) => {
+    await requireCapability(db, req, 'inspection.perform', { action: 'inspection.create' });
     const body = createBody.parse(req.body);
     const created = await createInspection(db, req, body);
     return reply.code(201).send(created);
@@ -227,6 +248,7 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
 
   app.patch('/api/inspections/:id/entries', async (req) => {
     const { id } = req.params as { id: string };
+    await requireCapability(db, req, 'inspection.perform', { action: 'inspection.edit', entityType: 'inspection', entityId: id });
     const body = z
       .object({ expectedVersion: z.number().int(), changes: z.array(entryChange).max(500), units: z.array(unitChange).max(100).optional() })
       .parse(req.body);
@@ -235,12 +257,14 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
 
   app.post('/api/inspections/:id/sections', async (req) => {
     const { id } = req.params as { id: string };
+    await requireCapability(db, req, 'inspection.perform', { action: 'inspection.edit', entityType: 'inspection', entityId: id });
     const body = z.object({ expectedVersion: z.number().int(), unitIndex: z.number().int(), sectionKey: z.string().max(64) }).parse(req.body);
     return activateSection(db, req, id, body);
   });
 
   app.post('/api/inspections/:id/pass-all', async (req) => {
     const { id } = req.params as { id: string };
+    await requireCapability(db, req, 'inspection.perform', { action: 'inspection.edit', entityType: 'inspection', entityId: id });
     const body = z
       .object({
         expectedVersion: z.number().int(),
@@ -254,18 +278,21 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
 
   app.post('/api/inspections/:id/save-partial', async (req) => {
     const { id } = req.params as { id: string };
+    await requireCapability(db, req, 'inspection.perform', { action: 'inspection.edit', entityType: 'inspection', entityId: id });
     const body = z.object({ expectedVersion: z.number().int() }).parse(req.body);
     return savePartial(db, req, id, body.expectedVersion);
   });
 
   app.post('/api/inspections/:id/complete', async (req) => {
     const { id } = req.params as { id: string };
+    await requireCapability(db, req, 'inspection.perform', { action: 'inspection.complete', entityType: 'inspection', entityId: id });
     const body = z.object({ expectedVersion: z.number().int() }).parse(req.body);
     return completeInspection(db, config, req, id, body.expectedVersion);
   });
 
   app.post('/api/inspections/:id/review', async (req) => {
     const { id } = req.params as { id: string };
+    await requireCapability(db, req, 'inspection.review', { action: 'inspection.review', entityType: 'inspection', entityId: id });
     const body = z
       .object({
         decision: z.enum(['CONFIRM', 'RETURN']),
@@ -279,6 +306,7 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
 
   app.post('/api/inspections/:id/amendments', async (req) => {
     const { id } = req.params as { id: string };
+    await requireCapability(db, req, 'inspection.amend', { action: 'inspection.amend', entityType: 'inspection', entityId: id });
     const body = z
       .object({ reason: z.string().max(2000), changes: z.array(entryChange).min(1).max(200), expectedVersion: z.number().int() })
       .parse(req.body);

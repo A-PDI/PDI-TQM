@@ -47,7 +47,12 @@ export function Dialog({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (open && !el.open) el.showModal();
+    if (open && !el.open) {
+      el.showModal();
+      // showModal() moves focus to the first focusable element (the close button); start on the first field instead.
+      const first = el.querySelector<HTMLElement>('[data-autofocus], .dialog-body :is(input, select, textarea):not([disabled]):not([type="hidden"])');
+      first?.focus();
+    }
     if (!open && el.open) el.close();
   }, [open]);
   return (
@@ -150,6 +155,7 @@ export function PartTypeahead({ value, onSelect, autoFocus }: { value: PartOptio
         aria-autocomplete="list"
         autoComplete="off"
         autoFocus={autoFocus}
+        data-autofocus={autoFocus || undefined}
         placeholder="Type part number, OE alias or description"
         value={text}
         onChange={(e) => {

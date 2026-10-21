@@ -86,6 +86,7 @@ export async function seedDemo(db: Db, password: string): Promise<{ users: Recor
       ['TQ-CRK-6006', 'Crankshaft, forged', 'Crankshafts', 'PDI-IQI-014', ['OE-CRK-55-6006']],
       ['TQ-WPM-7007', 'Water pump assembly', 'Cooling', 'PDI-IQI-024', ['OE-WPM-55-7007']],
       ['TQ-MBR-8008', 'Main bearing shell half, std', 'Bearings', 'PDI-IQI-027', ['OE-MBR-55-8008']],
+      ['TQ-INJ-9009', 'Fuel injector, common rail', 'Injectors', 'PDI-IQI-012', ['OE-INJ-55-9009']],
     ];
     const parts: Record<string, string> = {};
     for (const [pn, desc, family, form, aliases] of partsSpec) {
@@ -115,6 +116,13 @@ export async function seedDemo(db: Db, password: string): Promise<{ users: Recor
       ['valve_recession_intake', 'Valve recession — intake', 'valve_recession:intake', 'in', '0.030', '0.050'],
       ['valve_recession_exhaust', 'Valve recession — exhaust', 'valve_recession:exhaust', 'in', '0.030', '0.050'],
       ['head_height', 'Cylinder Head Height', 'general_measurements:cylinder_head_height', 'in', '4.795', '4.805'],
+    ]);
+
+    // Synthetic PDI bench criteria for the injector (FUNCTIONAL, referenced as injector:<condition>__<parameter>).
+    await releasedBaseline(tx, parts['TQ-INJ-9009']!, 'PDI injector test criteria TQ-INJ-9009 (synthetic)', 'PDI', 'A', users.engineering, [
+      ['rated_delivery', 'Rated condition — delivery', 'injector:rated__delivery', 'mm3/stroke', '95.0', '105.0', 'FUNCTIONAL'],
+      ['idle_delivery', 'Idle condition — delivery', 'injector:idle__delivery', 'mm3/stroke', '8.0', '12.0', 'FUNCTIONAL'],
+      ['rated_return', 'Rated condition — return flow', 'injector:rated__return_flow', 'mm3/stroke', '10.0', '30.0', 'FUNCTIONAL'],
     ]);
 
     const sources: Record<string, string> = {};
@@ -156,7 +164,7 @@ async function releasedBaseline(
   ownership: 'PDI' | 'SUPPLIER',
   label: string,
   releasedBy: string,
-  chars: Array<[string, string, string, string, string, string]>,
+  chars: Array<[string, string, string, string, string, string, ('DIMENSIONAL' | 'FUNCTIONAL')?]>,
 ): Promise<string> {
   const existing = await one<{ id: string }>(
     tx,
@@ -171,10 +179,10 @@ async function releasedBaseline(
      VALUES ($1,$2,true,'SYNTHETIC staging illustration — not a PDI-approved specification',$3) RETURNING id`,
     [baseline!.id, label, releasedBy],
   );
-  for (const [key, name, ref, unit, lower, upper] of chars) {
+  for (const [key, name, ref, unit, lower, upper, type = 'DIMENSIONAL'] of chars) {
     await tx.query(
-      `INSERT INTO baseline_characteristic (revision_id, char_key, name, form_row_ref, unit, lower_limit, upper_limit) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [rev!.id, key, name, ref, unit, lower, upper],
+      `INSERT INTO baseline_characteristic (revision_id, char_key, name, char_type, form_row_ref, unit, lower_limit, upper_limit) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [rev!.id, key, name, type, ref, unit, lower, upper],
     );
   }
   await tx.query(`UPDATE baseline_revision SET status = 'RELEASED', released_by = $2, released_at = now(), effective_from = current_date WHERE id = $1`, [

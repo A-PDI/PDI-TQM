@@ -22,6 +22,8 @@ import { registerNcrRoutes } from './quality/ncr.js';
 import { registerScarRoutes } from './quality/scars.js';
 import { registerChangeRoutes } from './changes/changes.js';
 import { registerFormRoutes } from './forms/forms.js';
+import { registerInjectorRoutes } from './injectors/routes.js';
+import { registerReportRoutes } from './reports/routes.js';
 import { registerCoreRoutes } from './routes-core.js';
 import { recordReportHandler } from './sourcing/approval-report.js';
 import { registerBaselineRoutes } from './sourcing/baselines.js';
@@ -84,7 +86,11 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
     bodyLimit: 1024 * 1024,
     genReqId: () => crypto.randomUUID(),
   });
-  const svc: Services = { db, config, storage, logo: existsSync(logoPath) ? readFileSync(logoPath) : null, worker: null };
+  const svc: Services = { db, config, storage, logo: existsSync(logoPath) ? readFileSync(logoPath) : null, worker: null, routes: [] };
+  // Route inventory: lets the authorization sweep test cover every registered endpoint.
+  app.addHook('onRoute', (route) => {
+    for (const method of [route.method].flat()) if (method !== 'HEAD') svc.routes.push({ method, url: route.url });
+  });
   svc.worker = new JobWorker(
     db,
     { inspection_report: inspectionReportHandler(svc), record_report: recordReportHandler(svc), reminder_sweep: reminderSweepHandler(svc) },
@@ -161,6 +167,8 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
   registerCommitmentRoutes(app, svc);
   registerChangeRoutes(app, svc);
   registerFormRoutes(app, svc);
+  registerInjectorRoutes(app, svc);
+  registerReportRoutes(app, svc);
 
   if (existsSync(path.join(config.webDistDir, 'index.html'))) {
     await app.register(fastifyStatic, { root: config.webDistDir, wildcard: false, index: false });

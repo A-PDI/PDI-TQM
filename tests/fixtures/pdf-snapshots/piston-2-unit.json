@@ -1,0 +1,625 @@
+{
+  "form": {
+    "sha256": "85aa7a0f4c57cbac1e52a93eee7e248d945e492645ce2e11e7bf2870bc0b7c39",
+    "component": "Piston",
+    "formNumber": "PDI-IQI-001",
+    "revisionLabel": null
+  },
+  "kind": "INSPECTION_REPORT",
+  "draft": false,
+  "units": [
+    {
+      "serial": "PST-0001",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "crown_combustion_bowl",
+              "note": null,
+              "spec": null,
+              "label": "Crown / Combustion Bowl",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks, porosity, or cold-shuts on crown face and bowl rim; surface as-cast/machined with no heat discoloration",
+              "photoNumbers": [
+                1
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "ring_grooves",
+              "note": null,
+              "spec": null,
+              "label": "Ring Grooves",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove sidewalls parallel and square as-machined; edges sharp, free of burrs, nicks, or machining tears; no debris in grooves",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "piston_skirt_coating",
+              "note": null,
+              "spec": null,
+              "label": "Piston Skirt Coating",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Friction-reducing coating 100% intact; zero bare metal patches, flaking, or handling abrasion on skirt surface",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "pin_bore",
+              "note": null,
+              "spec": null,
+              "label": "Pin Bore",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Bore surface smooth and as-machined; no corrosion from transit or storage; finish within drawing Ra specification",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "oil_drain_passages",
+              "note": null,
+              "spec": null,
+              "label": "Oil Drain Passages",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "All drain holes and slots clear of swarf, sealant, and preservative; verified with compressed-air probe",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number engraved or laser-marked on part body; permanent and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "skirt_od",
+              "note": null,
+              "spec": null,
+              "label": "Skirt OD",
+              "status": "P",
+              "location": "90° to pin axis, 15 mm from skirt bottom",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "127.952",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "127.948",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": "127.950",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "pin_bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Pin Bore Diameter",
+              "status": "P",
+              "location": "Center of bore — 0° and 90° axes",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "47.006",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "47.004",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "ring_groove_width_top_compression_no_1",
+              "note": null,
+              "spec": null,
+              "label": "Ring Groove Width — Top Compression (No. 1)",
+              "status": "P",
+              "location": "3 pts at 120° intervals",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "3.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": "3.114",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "ring_groove_width_oil_control_no_3",
+              "note": null,
+              "spec": null,
+              "label": "Ring Groove Width — Oil Control (No. 3)",
+              "status": "P",
+              "location": "3 pts at 120° intervals",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "4.031",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "4.029",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": "4.030",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "abutment_face_flatness_two_piece_only",
+              "note": null,
+              "spec": null,
+              "label": "Abutment Face Flatness (two-piece only)",
+              "status": "P",
+              "location": "4 pts across abutment mating face",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "0.008",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "0.006",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": "0.007",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 1,
+      "dispositionNote": null
+    },
+    {
+      "serial": "PST-0002",
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "crown_combustion_bowl",
+              "note": null,
+              "spec": null,
+              "label": "Crown / Combustion Bowl",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Zero cracks, porosity, or cold-shuts on crown face and bowl rim; surface as-cast/machined with no heat discoloration",
+              "photoNumbers": [
+                2
+              ],
+              "specReleased": false
+            },
+            {
+              "key": "ring_grooves",
+              "note": null,
+              "spec": null,
+              "label": "Ring Grooves",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Groove sidewalls parallel and square as-machined; edges sharp, free of burrs, nicks, or machining tears; no debris in grooves",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "piston_skirt_coating",
+              "note": null,
+              "spec": null,
+              "label": "Piston Skirt Coating",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Friction-reducing coating 100% intact; zero bare metal patches, flaking, or handling abrasion on skirt surface",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "pin_bore",
+              "note": null,
+              "spec": null,
+              "label": "Pin Bore",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Bore surface smooth and as-machined; no corrosion from transit or storage; finish within drawing Ra specification",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "oil_drain_passages",
+              "note": null,
+              "spec": null,
+              "label": "Oil Drain Passages",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "All drain holes and slots clear of swarf, sealant, and preservative; verified with compressed-air probe",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "part_identification_marking",
+              "note": null,
+              "spec": null,
+              "label": "Part Identification Marking",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Part number engraved or laser-marked on part body; permanent and legible; matches purchase order",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "skirt_od",
+              "note": null,
+              "spec": null,
+              "label": "Skirt OD",
+              "status": "P",
+              "location": "90° to pin axis, 15 mm from skirt bottom",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "127.952",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "127.948",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": "127.950",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "pin_bore_diameter",
+              "note": null,
+              "spec": null,
+              "label": "Pin Bore Diameter",
+              "status": "P",
+              "location": "Center of bore — 0° and 90° axes",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "47.006",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "47.004",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "ring_groove_width_top_compression_no_1",
+              "note": null,
+              "spec": null,
+              "label": "Ring Groove Width — Top Compression (No. 1)",
+              "status": "P",
+              "location": "3 pts at 120° intervals",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "3.112",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "3.110",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": "3.114",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "ring_groove_width_oil_control_no_3",
+              "note": null,
+              "spec": null,
+              "label": "Ring Groove Width — Oil Control (No. 3)",
+              "status": "P",
+              "location": "3 pts at 120° intervals",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "4.031",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "4.029",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": "4.030",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "abutment_face_flatness_two_piece_only",
+              "note": null,
+              "spec": null,
+              "label": "Abutment Face Flatness (two-piece only)",
+              "status": "P",
+              "location": "4 pts across abutment mating face",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "0.008",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": "0.006",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": "0.007",
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 2,
+      "dispositionNote": null
+    }
+  ],
+  "photos": [
+    {
+      "mime": "image/png",
+      "fileId": "96ae92c6-a3f7-4e16-b16e-e5df5fd1e09e",
+      "number": 1,
+      "sha256": "5c1a225dbff5f324816f7724a28f07f30349742d867cb17ff6c0c3f80ba09360",
+      "caption": "",
+      "context": "Item 1 · B. VISUAL INSPECTION · Crown / Combustion Bowl",
+      "storageKey": "5cb0564d-32d3-44c4-9c85-bdc344685058"
+    },
+    {
+      "mime": "image/png",
+      "fileId": "70425949-13f6-4016-8fdb-c68f202b348c",
+      "number": 2,
+      "sha256": "78455bd7b72f2cb0a3af07a75c747a6dba7abcedc66b66d7edd2ccef80f2380c",
+      "caption": "",
+      "context": "Item 2 · B. VISUAL INSPECTION · Crown / Combustion Bowl",
+      "storageKey": "74259437-37bb-4d07-8d2d-fcedf491588b"
+    }
+  ],
+  "review": {
+    "comment": "Reviewed (synthetic)",
+    "reasons": [
+      "Specification not released for 10 recorded measurement(s) — Skirt OD, Pin Bore Diameter, Ring Groove Width — Top Compression (No. 1), Ring Groove Width — Oil Control (No. 3), Abutment Face Flatness (two-piece only); readings reviewed as observations, not validated against limits"
+    ],
+    "decision": "CONFIRMED",
+    "reviewer": "Casey Morgan",
+    "reviewedAt": "2026-10-21T14:30:31.418Z"
+  },
+  "shared": [
+    {
+      "key": "A",
+      "rows": [
+        {
+          "key": "outer_carton_condition",
+          "note": null,
+          "spec": null,
+          "label": "Outer Carton Condition",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "box_package_label",
+          "note": null,
+          "spec": null,
+          "label": "Box / Package Label",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Label present; part number, description, and quantity match purchase order exactly",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "part_marking",
+          "note": null,
+          "spec": null,
+          "label": "Part Marking",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "PDI logo and part number permanently marked on part; matches purchase order",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "quantity_verification",
+          "note": null,
+          "spec": null,
+          "label": "Quantity Verification",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "corrosion_contamination_protection",
+          "note": null,
+          "spec": null,
+          "label": "Corrosion / Contamination Protection",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival",
+          "photoNumbers": [],
+          "specReleased": false
+        }
+      ],
+      "title": "A. RECEIVING & DOCUMENTATION VERIFICATION",
+      "pattern": "pfn_checklist",
+      "limitSummary": null,
+      "readingLabels": []
+    }
+  ],
+  "edition": 1,
+  "baseline": null,
+  "amendment": null,
+  "inspection": {
+    "site": null,
+    "number": "IR-2026-00001",
+    "status": "COMPLETED",
+    "lotSize": null,
+    "outcome": "PASS",
+    "poNumber": "PO-60411",
+    "supplier": null,
+    "inspector": "Jordan Rivera",
+    "lotNumber": "LOT-2026-118",
+    "startedAt": "2026-10-21T14:30:31.027Z",
+    "unitCount": 2,
+    "partNumber": "TQ-PST-1001",
+    "completedAt": "2026-10-21T14:30:31.418Z",
+    "sourceState": "NO_SOURCE",
+    "dateReceived": "2026-10-18",
+    "samplingNote": null,
+    "partDescription": "Piston, two-piece steel crown"
+  },
+  "generatedAt": "2026-10-21T15:00:00.000Z",
+  "schemaVersion": 1,
+  "displayTimeZone": "America/Chicago"
+}

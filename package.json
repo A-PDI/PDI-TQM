@@ -2,7 +2,7 @@
   "name": "pdi-tqms",
   "version": "0.1.0",
   "private": true,
-  "description": "PDI Total Quality Management System (TQMS) \u2014 modular monolith",
+  "description": "PDI Total Quality Management System (TQMS) — modular monolith",
   "type": "module",
   "engines": {
     "node": ">=22.12 <23"
@@ -24,7 +24,11 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "storage:init": "tsx src/server/cli/storage-init.ts",
-    "storage:init:prod": "node dist/server/server/cli/storage-init.js"
+    "storage:init:prod": "node dist/server/server/cli/storage-init.js",
+    "backup:create": "tsx src/server/cli/backup-create.ts",
+    "backup:verify": "tsx src/server/cli/backup-verify.ts",
+    "backup:create:prod": "node dist/server/server/cli/backup-create.js",
+    "backup:verify:prod": "node dist/server/server/cli/backup-verify.js"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",
@@ -39,6 +43,7 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@eslint/js": "9.39.5",
     "@playwright/test": "1.56.1",
     "@types/node": "22.20.5",

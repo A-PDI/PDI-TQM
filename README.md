@@ -1,14 +1,14 @@
 # PDI TQMS — Total Quality Management System
 
-Internal quality-management web application for PDI: receiving inspections, quality concerns and NCRs with containment and disposition, concessions, SCARs, supplier commitments, parts/sources/suppliers with A/B/C sourcing, change control, controlled forms and reports, and (in a later stage) injector testing.
+Internal quality-management web application for PDI: receiving inspections, quality concerns and NCRs with containment and disposition, concessions, SCARs, supplier commitments, parts/sources/suppliers with A/B/C sourcing, change control, controlled forms, injector bench testing and repair, management reports and traceability.
 
 One TypeScript modular monolith: React web app + Fastify (Node 22) API, PostgreSQL as the source of truth, a private persistent disk for original files and generated PDFs, and a database-backed job queue. Designed to run as a single Render web service.
 
-**Status: Stages 0–3 (foundation, receiving inspection, supplier qualification and sourcing, NCR/concession/SCAR, supplier commitments, change control and the form editor).** Not production-ready; see [docs/DESIGN_BASELINE.md](docs/DESIGN_BASELINE.md) for what is built, what is not, and the business decisions PDI must sign.
+**Status: Stages 0–5 (foundation, receiving inspection, supplier qualification and sourcing, NCR/concession/SCAR, supplier commitments, change control, the form editor, injector tests/repairs with an interim synthetic bench-file adapter, management reports/exports and traceability, plus the Stage 5 finishes: full-route authorization sweep, adversarial and concurrency tests, verified backup/restore, accessibility audit, visual baselines and volume performance checks).** Not production-ready; see [docs/DESIGN_BASELINE.md](docs/DESIGN_BASELINE.md) for what is built, what is not, and the business decisions PDI must sign.
 
 ## Local development
 
-Prerequisites: Node 22.12+, PostgreSQL 16 or 17, `pdftotext`/`pdfinfo` (poppler-utils) for the PDF tests.
+Prerequisites: Node 22.12+, PostgreSQL 16 or 17 with `pg_dump`/`pg_restore` of the same major version as the server (backup tests), `pdftotext`/`pdfinfo`/`pdftoppm` (poppler-utils) for the PDF tests, and `fonts-liberation` + `fonts-freefont-ttf` for the visual baselines.
 
 ```bash
 npm ci
@@ -37,12 +37,24 @@ TQMS_BOOTSTRAP_PASSWORD='…' npm run bootstrap:admin -- --email admin@pdi.examp
 npm run typecheck
 npm run lint
 npm test                        # unit + API integration + PDF tests (needs TEST_DATABASE_URL)
-npm run build && npm run test:e2e   # Playwright desktop (1440) and phone (390) tests (needs an e2e database)
+npm run build && npm run test:e2e   # Playwright desktop (1440), phone (390) and visual-baseline projects (needs an e2e database)
+PERF_SCALE=5 npx vitest run tests/integration/performance.test.ts   # optional: ~15 years of fictional volume
 ```
+
+- Visual baselines live in `tests/e2e/*-snapshots/` and render with the pinned fonts in `tests/fixtures/fonts.conf`. After an intended UI or report change: `npm test`, `npx tsx scripts/capture-pdf-fixtures.ts`, then `npx playwright test --project=visual --update-snapshots`, and review the image diffs before committing.
 
 - `TEST_DATABASE_URL` (default `postgres://tqms:tqms_local_dev@localhost:5432/tqms_test`) is **dropped and recreated** by the tests.
 - `E2E_DATABASE_URL` (default `…/tqms_e2e`) is reset by `scripts/e2e-server.sh`.
 - Sample PDFs land in `var/report-samples/`, screenshots in `var/screenshots/`.
+
+## Backup and restore verification
+
+```bash
+npm run backup:create -- --out /path/to/backups      # database + evidence files, one consistent snapshot
+npm run backup:verify -- --from /path/to/backups/<id> # restores into a NEW isolated database and folder, validates, then removes them
+```
+
+Use `pg_dump`/`pg_restore` of the same major version as the server (the production image ships PostgreSQL 17 client tools); a dump can only be restored into a server at least as new as the tools that wrote it, and `backup:verify` reports a mismatch instead of attempting it. `backup:create` uses `DATABASE_URL` and `STORAGE_ROOT`; `backup:verify` creates its scratch database on the server in `DATABASE_URL` (needs CREATEDB) and exits 0 only when every check passes (anything else is INCOMPLETE). Copying backups to an encrypted off-site destination, the schedule and the RPO/RTO are PDI decisions (POL-09). In the production image use `backup:create:prod` / `backup:verify:prod`.
 
 ## Environment variables
 
@@ -76,7 +88,7 @@ npm run build && npm run test:e2e   # Playwright desktop (1440) and phone (390) 
 ## Repository layout
 
 ```
-src/shared/     domain rules shared by server and browser (forms, measurement, completion, sourcing, quality/change rules)
+src/shared/     domain rules shared by server and browser (forms, measurement, completion, sourcing, quality/change rules, bench CSV, metric definitions)
 src/server/     Fastify API, auth, audit, storage, jobs, PDF rendering, CLIs
 src/web/        React application
 migrations/     forward-only SQL migrations

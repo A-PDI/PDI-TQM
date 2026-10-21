@@ -3,13 +3,19 @@ import { one, withTransaction } from '../db.js';
 import { type JobRow, PermanentJobError } from '../jobs.js';
 import { renderInspectionReport } from '../pdf/inspection-report.js';
 import type { Services } from '../services.js';
+import { EvidenceIntegrityError } from '../storage.js';
 import { type InspectionReportSnapshot, snapshotHash } from './report-snapshot.js';
 
 export async function loadPhotoBytes(svc: Services, snapshot: InspectionReportSnapshot): Promise<Map<string, Buffer>> {
   const bytes = new Map<string, Buffer>();
   for (const p of snapshot.photos) {
     // Hash-verified: a corrupted or substituted evidence object fails the job visibly.
-    bytes.set(p.fileId, await svc.storage.readVerified(p.storageKey, p.sha256));
+    try {
+      bytes.set(p.fileId, await svc.storage.readVerified(p.storageKey, p.sha256));
+    } catch (err) {
+      if (err instanceof EvidenceIntegrityError) throw new PermanentJobError(`Photo ${p.fileId} failed hash verification; the report was not rendered. Restore the original evidence object from backup.`);
+      throw err;
+    }
   }
   return bytes;
 }
