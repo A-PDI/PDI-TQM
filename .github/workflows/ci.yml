@@ -16,7 +16,7 @@ jobs:
           POSTGRES_DB: tqms_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U tqms" --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U tqms -d tqms_test" --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       TEST_DATABASE_URL: postgres://tqms:ci_only_password@localhost:5432/tqms_test
       E2E_DATABASE_URL: postgres://tqms:ci_only_password@localhost:5432/tqms_e2e
@@ -28,9 +28,10 @@ jobs:
           node-version: 22.22.0
           cache: npm
       # pg_dump must match the PostgreSQL 17 server (backup tests); the PGDG repository provides client 17.
+      # The runner also ships PostgreSQL 16, so the backup code picks /usr/lib/postgresql/<server major>/bin.
       # Liberation and FreeFont are the pinned fonts for visual-regression rendering (tests/fixtures/fonts.conf).
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils postgresql-common fonts-liberation fonts-freefont-ttf
-      - run: sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && sudo apt-get install -y postgresql-client-17 && pg_dump --version
+      - run: sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && sudo apt-get install -y postgresql-client-17 && /usr/lib/postgresql/17/bin/pg_dump --version
       - run: psql -h localhost -U tqms -d tqms_test -c 'CREATE DATABASE tqms_e2e'
       - run: npm ci
       - run: npm run typecheck

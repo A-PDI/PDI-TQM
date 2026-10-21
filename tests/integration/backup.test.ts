@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import pg from 'pg';
@@ -169,11 +169,13 @@ describe('application-consistent backup and isolated restore (AT-21)', () => {
     const key = (await h.pool.query(`SELECT storage_key FROM file_object WHERE kind = 'IMPORT' AND status = 'AVAILABLE' LIMIT 1`)).rows[0].storage_key as string;
     const object = path.join(h.storageRoot, 'objects', key.slice(0, 2), key);
     const original = readFileSync(object);
+    chmodSync(object, 0o640); // stored objects are read-only (0440)
     writeFileSync(object, 'corrupted');
     try {
       await expect(backup()).rejects.toThrow(/is incomplete: object .* does not match its recorded hash/);
     } finally {
       writeFileSync(object, original);
+      chmodSync(object, 0o440);
     }
     const dirs = (await import('node:fs')).readdirSync(path.join(work, 'backups'));
     expect(dirs.some((d) => existsSync(path.join(work, 'backups', d, 'INCOMPLETE')))).toBe(true);
