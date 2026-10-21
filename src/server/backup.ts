@@ -120,7 +120,18 @@ async function tableCounts(client: pg.ClientBase): Promise<Record<string, number
 
 const serverMajor = async (client: pg.ClientBase) => Math.floor(Number((await client.query<{ v: string }>("SELECT current_setting('server_version_num') AS v")).rows[0]!.v) / 10000);
 
-async function toolMajor(tool: 'pg_dump' | 'pg_restore'): Promise<number> {
+/**
+ * The PostgreSQL client tool to use with a server of the given major version: PG_BIN_DIR when set,
+ * else the matching Debian/Ubuntu install (/usr/lib/postgresql/<major>/bin), else whatever is on PATH.
+ * Machines often carry several client versions and pg_dump refuses to dump a newer server.
+ */
+export function pgTool(tool: 'pg_dump' | 'pg_restore', major: number): string {
+  if (process.env.PG_BIN_DIR) return path.join(process.env.PG_BIN_DIR, tool);
+  const versioned = `/usr/lib/postgresql/${major}/bin/${tool}`;
+  return existsSync(versioned) ? versioned : tool;
+}
+
+async function toolMajor(tool: string): Promise<number> {
   const { stdout } = await run(tool, ['--version']);
   const m = /(\d+)(?:\.\d+)?/.exec(stdout.replace(/^[^0-9]*/, ''));
   if (!m) throw new Error(`Cannot read the ${tool} version from "${stdout.trim()}"`);
@@ -154,11 +165,12 @@ export async function createBackup(opts: { databaseUrl: string; ssl?: boolean; s
     const counts = await tableCounts(client);
     const migrations = await migrationsOf(client);
     const sourceMajor = await serverMajor(client);
-    const dumpMajor = await toolMajor('pg_dump');
+    const pgDump = pgTool('pg_dump', sourceMajor);
+    const dumpMajor = await toolMajor(pgDump);
     const dumpFile = path.join(dir, 'database.dump');
     const { dbname, env } = pgArgs(opts.databaseUrl);
     log(`Dumping database (snapshot ${snapshot})…`);
-    await run('pg_dump', ['--format=custom', '--no-owner', `--snapshot=${snapshot}`, `--file=${dumpFile}`, `--dbname=${dbname}`], { env, maxBuffer: 16 * 1024 * 1024 });
+    await run(pgDump, ['--format=custom', '--no-owner', `--snapshot=${snapshot}`, `--file=${dumpFile}`, `--dbname=${dbname}`], { env, maxBuffer: 16 * 1024 * 1024 });
     await client.query('COMMIT');
 
     log(`Copying ${files.length} evidence objects…`);
@@ -301,7 +313,7 @@ export async function verifyBackup(opts: {
     created = true;
     const { dbname, env } = pgArgs(targetUrl.toString());
     try {
-      await run('pg_restore', ['--no-owner', '--exit-on-error', '--single-transaction', `--dbname=${dbname}`, dumpFile], { env, maxBuffer: 16 * 1024 * 1024 });
+      await run(pgTool('pg_restore', targetMajor), ['--no-owner', '--exit-on-error', '--single-transaction', `--dbname=${dbname}`, dumpFile], { env, maxBuffer: 16 * 1024 * 1024 });
       check('database restore', true, `restored into isolated database ${dbName}`);
     } catch (err) {
       check('database restore', false, `pg_restore failed: ${String((err as { stderr?: string }).stderr ?? err).slice(0, 400)}`);

@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { chmodSync, writeFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { GOOD_ROWS, benchCsv } from '../fixtures/bench.js';
 import { makePng } from '../fixtures/images.js';
@@ -128,7 +128,10 @@ describe('corrupt evidence', () => {
       `SELECT f.storage_key FROM evidence_link l JOIN file_object f ON f.id = l.file_id WHERE l.inspection_id = $1 AND l.unlinked_at IS NULL`,
       [id],
     )).rows[0];
-    writeFileSync(h.svc.storage.objectPath(photo.storage_key), Buffer.from('tampered bytes'));
+    // Stored objects are read-only (0440); tampering first needs write access, as an attacker on the disk would.
+    const object = h.svc.storage.objectPath(photo.storage_key);
+    chmodSync(object, 0o640);
+    writeFileSync(object, Buffer.from('tampered bytes'));
     await h.svc.worker!.drain();
     const job = (await h.pool.query(`SELECT status, attempts, last_error FROM job WHERE kind = 'inspection_report' AND payload::text LIKE $1 ORDER BY id DESC LIMIT 1`, [`%`])).rows[0];
     expect(job).toMatchObject({ status: 'FAILED_PERMANENT', attempts: 1 });

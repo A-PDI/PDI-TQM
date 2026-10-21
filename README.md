@@ -54,7 +54,7 @@ npm run backup:create -- --out /path/to/backups      # database + evidence files
 npm run backup:verify -- --from /path/to/backups/<id> # restores into a NEW isolated database and folder, validates, then removes them
 ```
 
-Use `pg_dump`/`pg_restore` of the same major version as the server (the production image ships PostgreSQL 17 client tools); a dump can only be restored into a server at least as new as the tools that wrote it, and `backup:verify` reports a mismatch instead of attempting it. `backup:create` uses `DATABASE_URL` and `STORAGE_ROOT`; `backup:verify` creates its scratch database on the server in `DATABASE_URL` (needs CREATEDB) and exits 0 only when every check passes (anything else is INCOMPLETE). Copying backups to an encrypted off-site destination, the schedule and the RPO/RTO are PDI decisions (POL-09). In the production image use `backup:create:prod` / `backup:verify:prod`.
+Use `pg_dump`/`pg_restore` of the same major version as the server (the production image ships PostgreSQL 17 client tools); a dump can only be restored into a server at least as new as the tools that wrote it, and `backup:verify` reports a mismatch instead of attempting it. The tools are taken from `PG_BIN_DIR` when set, otherwise from `/usr/lib/postgresql/<server major>/bin` when present (Debian/Ubuntu), otherwise from `PATH`. `backup:create` uses `DATABASE_URL` and `STORAGE_ROOT`; `backup:verify` creates its scratch database on the server in `DATABASE_URL` (needs CREATEDB) and exits 0 only when every check passes (anything else is INCOMPLETE). Copying backups to an encrypted off-site destination, the schedule and the RPO/RTO are PDI decisions (POL-09). In the production image use `backup:create:prod` / `backup:verify:prod`.
 
 ## Environment variables
 
