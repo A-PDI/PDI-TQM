@@ -16,6 +16,7 @@ import { type Db, type DbClient, many, one, withTransaction } from '../db.js';
 import { badRequest, conflict, forbidden, unprocessable } from '../errors.js';
 import { enqueueJob } from '../jobs.js';
 import { nextRecordNumber } from '../numbering.js';
+import { effectiveSourceStatuses } from '../sourcing/status.js';
 import { buildReportSnapshot, snapshotHash } from './report-snapshot.js';
 import { type BaselineSnapshot, type LoadedInspection, loadInspection } from './state.js';
 
@@ -88,6 +89,8 @@ export async function createInspection(
         part.id,
       ]);
       if (!source) throw unprocessable('The selected source does not belong to this part');
+      // Record the effective status (restrictions/expiry overlaid) at receipt; another site's approval never carries over.
+      source.approval_state = (await effectiveSourceStatuses(tx, [source.id])).get(source.id)!.status;
     }
 
     const baseline = await resolveBaseline(tx, part.id, source?.baseline_revision_id ?? null, Boolean(source));
@@ -176,8 +179,9 @@ async function resolveBaseline(tx: DbClient, partId: string, sourceBaselineId: s
       WHERE r.id = $1 FOR SHARE OF r`,
     [revisionId],
   );
-  // Only a released revision may govern; drafts never masquerade as limits.
-  if (!rev || rev.status !== 'RELEASED') return null;
+  // Only released content may govern; drafts never masquerade as limits. A source keeps the exact
+  // revision it was approved against even after a newer revision supersedes it (change control re-points it).
+  if (!rev || !(rev.status === 'RELEASED' || (hasSource && rev.status === 'SUPERSEDED'))) return null;
   const chars = await many<{
     char_key: string;
     name: string;

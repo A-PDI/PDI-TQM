@@ -139,25 +139,26 @@ export async function loadInspection(db: Queryable, id: string, opts: { lock?: b
   );
   if (!row) throw notFound('Inspection');
 
-  const [units, activations, responseRows, measurementRows, photos, amendments] = await Promise.all([
-    many<LoadedInspection['units'][number]>(
+  // Sequential on purpose: `db` may be a transaction client, which must not run concurrent queries.
+  const [units, activations, responseRows, measurementRows, photos, amendments] = [
+    await many<LoadedInspection['units'][number]>(
       db,
       'SELECT unit_index, serial_number, disposition_note FROM inspection_unit WHERE inspection_id = $1 ORDER BY unit_index',
       [id],
     ),
-    many<{ unit_index: number; section_key: string }>(
+    await many<{ unit_index: number; section_key: string }>(
       db,
       'SELECT unit_index, section_key FROM inspection_section_activation WHERE inspection_id = $1',
       [id],
     ),
-    many<{ unit_index: number; section_key: string; row_key: string; status: ResponseStatus | null; note: string | null; amendment_no: number }>(
+    await many<{ unit_index: number; section_key: string; row_key: string; status: ResponseStatus | null; note: string | null; amendment_no: number }>(
       db,
       `SELECT DISTINCT ON (unit_index, section_key, row_key) unit_index, section_key, row_key, status, note, amendment_no
          FROM inspection_response WHERE inspection_id = $1
         ORDER BY unit_index, section_key, row_key, amendment_no DESC`,
       [id],
     ),
-    many<{ unit_index: number; section_key: string; row_key: string; reading_key: string; value_text: string | null; amendment_no: number }>(
+    await many<{ unit_index: number; section_key: string; row_key: string; reading_key: string; value_text: string | null; amendment_no: number }>(
       db,
       `SELECT DISTINCT ON (unit_index, section_key, row_key, reading_key)
               unit_index, section_key, row_key, reading_key, value_text, amendment_no
@@ -165,7 +166,7 @@ export async function loadInspection(db: Queryable, id: string, opts: { lock?: b
         ORDER BY unit_index, section_key, row_key, reading_key, amendment_no DESC`,
       [id],
     ),
-    many<PhotoRow>(
+    await many<PhotoRow>(
       db,
       `SELECT l.id AS link_id, f.id AS file_id, l.unit_index, l.section_key, l.row_key, l.caption, f.mime_type, f.sha256,
               f.storage_key, f.width, f.height, f.byte_size, f.original_name, l.linked_at, u.display_name AS linked_by_name
@@ -174,12 +175,12 @@ export async function loadInspection(db: Queryable, id: string, opts: { lock?: b
         ORDER BY l.linked_at, l.id`,
       [id],
     ),
-    many<{ resulting_outcome: Outcome }>(
+    await many<{ resulting_outcome: Outcome }>(
       db,
       'SELECT resulting_outcome FROM inspection_amendment WHERE inspection_id = $1 ORDER BY amendment_no DESC LIMIT 1',
       [id],
     ),
-  ]);
+  ];
 
   const responses: LoadedInspection['responses'] = {};
   for (const r of responseRows) {

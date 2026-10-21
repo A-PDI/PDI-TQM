@@ -17,6 +17,12 @@ import { registerInspectionRoutes } from './inspections/routes.js';
 import { JobWorker } from './jobs.js';
 import { registerQualityRoutes } from './quality.js';
 import { registerCoreRoutes } from './routes-core.js';
+import { recordReportHandler } from './sourcing/approval-report.js';
+import { registerBaselineRoutes } from './sourcing/baselines.js';
+import { registerDocumentRoutes } from './sourcing/documents.js';
+import { registerSourcingRoutes } from './sourcing/requests.js';
+import { registerSourceRoutes } from './sourcing/sources.js';
+import { registerSupplierRoutes } from './sourcing/suppliers.js';
 import type { Services } from './services.js';
 import { EvidenceStorage } from './storage.js';
 
@@ -73,7 +79,7 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
     genReqId: () => crypto.randomUUID(),
   });
   const svc: Services = { db, config, storage, logo: existsSync(logoPath) ? readFileSync(logoPath) : null, worker: null };
-  svc.worker = new JobWorker(db, { inspection_report: inspectionReportHandler(svc) }, app.log);
+  svc.worker = new JobWorker(db, { inspection_report: inspectionReportHandler(svc), record_report: recordReportHandler(svc) }, app.log);
 
   await app.register(cookie);
   await app.register(helmet, {
@@ -134,6 +140,11 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
   registerInspectionRoutes(app, svc);
   registerEvidenceRoutes(app, svc);
   registerQualityRoutes(app, svc);
+  registerSupplierRoutes(app, svc);
+  registerBaselineRoutes(app, svc);
+  registerSourcingRoutes(app, svc);
+  registerSourceRoutes(app, svc);
+  registerDocumentRoutes(app, svc);
 
   if (existsSync(path.join(config.webDistDir, 'index.html'))) {
     await app.register(fastifyStatic, { root: config.webDistDir, wildcard: false, index: false });

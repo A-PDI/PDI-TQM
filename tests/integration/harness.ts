@@ -28,7 +28,7 @@ export interface Session {
   cookie: string;
   csrf: string;
   get: (url: string) => Promise<Res>;
-  send: (method: 'POST' | 'PATCH' | 'DELETE', url: string, body?: unknown) => Promise<Res>;
+  send: (method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, body?: unknown) => Promise<Res>;
   upload: (url: string, bytes: Buffer, filename: string, contentType: string) => Promise<Res>;
 }
 

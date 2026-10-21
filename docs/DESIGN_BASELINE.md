@@ -1,4 +1,4 @@
-# TQMS design baseline and Stage 0–1 milestone
+# TQMS design baseline (Stages 0–2)
 
 Source: *PDI TQMS Zero-to-Production Construction Set* (20 Oct 2026). The authoritative requirements are copied verbatim in [`requirements/`](requirements) and the construction drawings in [`construction/`](construction). This file covers items (a)–(e) of the master prompt's Part XI response contract.
 
@@ -10,7 +10,7 @@ Status vocabulary (Drawing F1): **implemented** → **unit-tested** → **integr
 |---|---|---|---|
 | 0 Foundation | identity, grants, sessions, CSRF, audit, numbering, evidence disk, jobs, migrations, health/readiness, Docker | AT-19 (part), AT-21 (part), NEG-10/11/12/13/14* | **Built in this PR** (*NEG-14 needs backup tooling, Stage 6) |
 | 1 Inspector's room | Appendix A catalogue, launch, multi-unit workbench, all specialized patterns, photos, partial/complete, independent review, amendments, branded PDF, linked concern + triage | AT-01, AT-02 (part), AT-03 (part), AT-04, AT-06 (part) | **Built in this PR** |
-| 2 Supplier/engineering | site qualification, A/B/C sourcing, baseline release workflow and UI, FAI reject/resubmit, supplier acknowledgment, source approval with frozen manifest | AT-07–AT-13, AT-17 | Not started |
+| 2 Supplier/engineering | site qualification, A/B/C sourcing, baseline release workflow and UI, FAI reject/resubmit, supplier acknowledgment, source approval with frozen manifest | AT-09–AT-13, AT-17, AT-08 (part), NEG-04, NEG-05 | **Built (Stage 2 PR)**; AT-07 needs supplier commitments (Stage 3) |
 | 3 Quality/change | NCR scope/containment/disposition, concession, SCAR/8D/effectiveness/recurrence, change control, form-revision editor, ENG/OPS PDFs | AT-02, AT-03, AT-06, AT-08, AT-14–AT-16, AT-18 | Not started |
 | 4 Injector & management | serialized tests/repairs, import adapters, comparison reports, dashboards/reports, exports | AT-05, AT-20 | Not started |
 | 5 Finishes | all 21 AT + adversarial cases, visual regression baselines, accessibility audit, performance | all | Not started |
@@ -40,10 +40,10 @@ Seeded into the `policy_decision` table and shown in the app (*Policy register*)
 
 | Code | Decision PDI must sign | Interim behavior in the software |
 |---|---|---|
-| POL-01 | Authority grants and independence exceptions | Capabilities granted per person; a reviewer must not be the inspector; no exception path |
+| POL-01 | Authority grants and independence exceptions | Capabilities granted per person. Inspection reviewer ≠ inspector; baseline releaser ≠ author/submitter; qualification decider ≠ assessor; FAI decider ≠ recorder/measurer; source approver ≠ sourcing request owner; no exception path |
 | POL-02 | Acceptance limits, units, methods, CTQ, effectivity | Without a released baseline limit, readings are observations and need Engineering review; no PASS is calculated |
 | POL-03 | Sampling/AQL, lot handling, release with missing baseline | Sample size is entered by hand; completing an inspection never releases material |
-| POL-04 | Risk method, assessment/FAI/PPAP triggers, SCAR/suspension criteria | Not used yet |
+| POL-04 | Risk method, assessment/FAI/PPAP triggers, SCAR/suspension criteria | `RISK-INTERIM-1`: seven factors scored 1–3; ≥15 or criticality 3 + severity 3 = HIGH, ≥10 = MEDIUM. `CHECKLIST-INTERIM-1`: pathway/risk document checklist, PPAP elements (VAL-06–09) only at HIGH. FAI required for paths A and C, and B at MEDIUM/HIGH; supplier acknowledgment for A and C, and B at HIGH. Rule version is stored on every assessment |
 | POL-05 | Concessions, containment, partial release, physical verification | Material always shown as *not authorized* |
 | POL-06 | Change effectivity, old lots, requalification | Not used yet |
 | POL-07 | Signature format, brand artwork/fonts/colors, numbering, retention | Reference logo extract + suggested navy tokens; `IR-`/`QE-YYYY-NNNNN`; nothing destructively deleted |
@@ -52,7 +52,7 @@ Seeded into the `policy_decision` table and shown in the app (*Policy register*)
 | POL-10 | Whether historical sample reports/photos may be imported | Nothing imported; all fixtures fabricated |
 | POL-11 | Authority/timing for Accepted results (FR-050) | Requires reviewer holding `inspection.review_accepted` |
 | POL-12 | Validation of Appendix A form texts/revisions | Loaded as released, marked "PDI owner validation pending" |
-| POL-13 | Suspension propagation (FR-022) | Not used yet |
+| POL-13 | Suspension propagation (FR-022) | Conservative: an active supplier or site restriction shows every affected approved source as SUSPENDED (decision records unchanged), blocks new approvals and flags new inspections; reinstatement is a separate, reasoned decision |
 | POL-14 | NCR closure with open SCAR (FR-075) | Not used yet |
 | POL-15 | Retention schedule (FR-095) | Retain everything |
 | POL-16 | Display time zone | `DISPLAY_TIMEZONE` setting |
@@ -65,13 +65,18 @@ Seeded into the `policy_decision` table and shown in the app (*Policy register*)
 4. **N/A outside the receiving checklist.** Appendix A lists P/F/A for item rows, but several rows are conditional ("two-piece only", "combination bearings only"). N/A is allowed on every row and needs a reason outside the receiving checklist, so it is never a silent skip (NEG-24).
 5. **Unit and overall outcomes** are derived, never typed: worst of FAIL > ACCEPTED > PASS across the shared receiving section and every item. Inspection outcome, review status and material authorization are separate fields and are labelled separately on screen and in the PDF.
 6. **Review routing.** Completion goes straight to COMPLETED only when everything passes against released limits. FAIL, ACCEPTED, or unreleased-limit readings go to READY_FOR_REVIEW, locked, until a different person with `inspection.review` confirms it or returns it with a reason. Accepted results also need `inspection.review_accepted`.
-7. **Immutability is enforced by database triggers**, not only by the service layer. Covered: released form and baseline revisions, completed inspections and their entries, available files, report snapshots and renditions, reviews, amendments, and the append-only audit table. Corrections are amendment layers (`amendment_no > 0`) that produce a new report edition; earlier editions stay downloadable with their original hash.
+7. **Immutability is enforced by database triggers**, not only by the service layer. Covered: released form and baseline revisions, completed inspections and their entries, available files, report snapshots and renditions, reviews, amendments, decided qualifications and FAIs, risk assessments, supplier responses, lifted restrictions, source approval decisions, the identity of any once-approved source, and the append-only audit table. Corrections are amendment layers (`amendment_no > 0`) that produce a new report edition; earlier editions stay downloadable with their original hash.
 8. **Reports** are rendered by a background job from a frozen JSON snapshot (canonical-JSON SHA-256). Photo bytes are hash-verified when rendered. A job abandoned by a crashed worker is reclaimed, and rendering is idempotent per snapshot.
-9. **Unbuilt destinations** (Injectors, Changes, Reports) are shown disabled with their stage label, not as dead links. Formal NCR, disposition and SCAR are also clearly marked as Stage 3.
+9. **Exact-source approval (FR-032, FR-036, FR-037).** Approval is for one part + supplier + manufacturing site + supplier part/configuration + governing baseline revision. Gates are re-evaluated inside the decision transaction: released baseline with ownership matching the pathway (A→PDI, B→supplier, C→supplier base + released PDI delta), supplier not restricted, *that* site qualified and current, supplier acknowledgment of the exact revision, accepted FAI, risk assessed, required evidence satisfied (with files) or waived with authority, and no open quality concern on the source. A failing gate refuses the decision and is audited; a warning allows only a conditional approval. The decision stores a canonical-JSON manifest with SHA-256 and is immutable; a background job renders the *Product & Supplier Approval Record* PDF from it.
+10. **Effective source status** (SUSPENDED / EXPIRED / AT RISK) is computed over the immutable decision from restrictions and qualification validity, so suspension never edits history and reinstatement restores the source without a new approval. A sibling site never inherits approval (NEG-04): an inspection against it records the effective state at start.
+11. **Sourcing pathways.** The pathway is locked once risk is assessed. A preliminary (draft or reverse-engineered) baseline revision cannot govern a source. Path C copies the supplier base characteristics and marks PDI-specific rows as delta; a later supplier base revision is reported but does not replace the governing configuration.
+12. **FAI history (FR-033, FR-034).** Decided samples are immutable. After a rejection the next sample must be registered as a resubmission with a corrective rationale, and the rejection stays visible next to the acceptance.
+13. **Document evidence** accepts PDFs (header/trailer checked; active content such as JavaScript, launch actions, embedded files, XFA and form submission is refused) and images, up to `MAX_DOCUMENT_MB`.
+14. **Unbuilt destinations** (Injectors, Changes, Reports) are shown disabled with their stage label, not as dead links. Formal NCR, disposition and SCAR are also clearly marked as Stage 3.
 
 ## (d) Acceptance matrix (current state)
 
-Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspection.test.ts`, `R` = `tests/integration/reports.test.ts`, `E` = `tests/e2e/inspection.spec.ts`.
+Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspection.test.ts`, `R` = `tests/integration/reports.test.ts`, `S` = `tests/integration/sourcing.test.ts`, `E` = `tests/e2e/inspection.spec.ts`, `E2` = `tests/e2e/sourcing.spec.ts`.
 
 | Case | State | Evidence |
 |---|---|---|
@@ -81,8 +86,16 @@ Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspecti
 | AT-04 special measurements | Integration + PDF tested | R six-cylinder head, I/U ring end-gap limits, U vacuum/valve rules |
 | AT-05 injector | Not built | — |
 | AT-06 concern → NCR | Partial: concern from row with evidence + triage; NCR/disposition/closure Stage 3 | I "quality concern linkage" |
-| AT-07 – AT-18 | Not built | — |
-| AT-19 roles | Partial | I "NEG-19", "NEG-01 style", self-grant denial |
+| AT-07 supplier coating | Not built: acknowledgment exists; supplier commitments and failed verification are Stage 3 | — |
+| AT-08 FAI recurrence | Partial: rejected FAI kept, resubmission with corrective rationale, exact-source conditional approval; NCR retrieval of both FAIs is Stage 3 | S "FAI: rejected first article…" |
+| AT-09 sourcing A | Integration-tested | S Path A chain (intake → preliminary draft cannot govern → independent release → site qualification → FAI → acknowledgment → approval) |
+| AT-10 sourcing B | UI-tested | S "needs only proportionate evidence…", E2 walkthrough |
+| AT-11 sourcing C | Integration-tested | S "keeps the PDI delta on the exact supplier base…" |
+| AT-12 approval gates | Integration-tested, except the expired-concession gate (concessions are Stage 3) | S "frozen evidence cannot change…", Path A/B gate failures |
+| AT-13 supplier suspension | Integration-tested | S "AT-13: suspending the site…" |
+| AT-14 – AT-16, AT-18 | Not built (Stage 3) | — |
+| AT-17 documents/PPAP | Integration-tested: HIGH-risk checklist with PPAP elements satisfied or waived; LOW-risk list stays short; approval record PDF lists exact revisions and files | S, `var/report-samples/source-approval-record.pdf` |
+| AT-19 roles | Partial | I "NEG-19", "NEG-01 style", self-grant denial; S independence (release, qualification, FAI, approval) |
 | AT-20 traceability | Partial: search by part/alias/PO/lot/serial/record | API `/api/search`, part/supplier hubs |
 | AT-21 failure recovery | Partial: unsaved-entry restore, upload failure message, report-job reclaim, redeploy persistence; **backup/restore not built** | E "AT-21", I "report job recovery", Docker redeploy check |
 | NEG-01 | Integration-tested (review/grant APIs; disposition API doesn't exist yet) | I |
@@ -95,7 +108,9 @@ Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspecti
 | NEG-19 | Integration-tested | I |
 | NEG-20 | By construction: no reference reports or photos in repo/fixtures | `tests/fixtures/images.ts` |
 | NEG-21 | UI-tested for built navigation | E navigation test |
-| NEG-04–09, 14, 17, 22 | Not built (Stages 2–4, 6) | — |
+| NEG-04 | Integration-tested: sibling site not approved; inspection records the effective state | S Path B |
+| NEG-05 | Integration-tested: explicit gate failures with links, no partial approval | S Path A, Path C |
+| NEG-06–09, 14, 17, 22 | Not built (Stages 3–4, 6) | — |
 
 ### Functional requirement traceability (Stage 1 scope)
 
@@ -113,6 +128,26 @@ Test files: `U` = `tests/unit/domain.test.ts`, `I` = `tests/integration/inspecti
 | FR-110 | local accounts, lockout, session revocation; invitation/reset email deferred (email disabled until approved) |
 | FR-113 – FR-115 | storage, job worker, readiness, Docker, CI; backup/restore deferred to Stage 6 |
 
+### Functional requirement traceability (Stage 2 scope)
+
+| FR | Where |
+|---|---|
+| FR-020, FR-021 | `src/server/sourcing/suppliers.ts`, `src/web/pages/Suppliers.tsx`, migration 0004 (`supplier_qualification`, `supplier_certificate`) |
+| FR-022 | `supplier_restriction`, `src/server/sourcing/status.ts` (POL-13 interim) |
+| FR-023 [P1] | Not built (certificate expiry is stored and shown; no reminders or performance trends) |
+| FR-024 – FR-027 | `src/shared/sourcing.ts`, `src/server/sourcing/requests.ts`, `src/web/pages/Sourcing.tsx` |
+| FR-028, FR-029 | `src/server/sourcing/baselines.ts`, `src/web/pages/Baseline.tsx` |
+| FR-030 | acknowledgments in `src/server/sourcing/sources.ts`, `src/web/pages/Source.tsx` |
+| FR-031 | Partial: a newer supplier base is flagged on the source; reassessment workflow is change control (Stage 3) |
+| FR-032 – FR-034 | `source`, `fai_sample`, `fai_result`; `src/server/sourcing/sources.ts` |
+| FR-035 | Partial: FAI measured values and results with independent decision; separate test procedures/validation plans are Stage 3–4 |
+| FR-036, FR-037 | `src/server/sourcing/gates.ts`, `source_approval_decision`, `approval-report.ts`, `src/server/pdf/record-report.ts` |
+| FR-038 [P1] | Partial: the approval record PDF lists the evidence package; no combined PPAP package export |
+
 ## (e) First vertical transaction (delivered)
 
 An inspector searches a part (including by OE alias) and launches the suggested released form against an exact source. They answer the shared receiving section once, complete serialized items with checklist answers, measurements (compared against the released synthetic baseline) and row photos, then save, reload and resume. Completion is blocked with exact-path messages until required evidence is present. A failed result goes to an independent reviewer; confirmation freezes the record and a background job renders the branded PDF edition with a stored SHA-256. An authorized amendment adds a new edition and leaves the original untouched. A concern raised from a failed row carries the identity, expected/actual values and the *same* photo files into the quality queue for triage by someone other than the reporter.
+
+## (f) Stage 2 transaction (delivered)
+
+Purchasing starts a sourcing request, picks pathway A, B or C, and records a risk assessment; the system generates a proportionate checklist that is satisfied with files or waived with authority. Engineering authors a baseline revision (company drawing, supplier specification, or supplier base + PDI delta) and a different person releases it. Quality decides a site qualification recorded by someone else. The exact source (part + supplier + site + supplier part + governing revision) collects supplier acknowledgment and FAI samples; a rejected first article stays on record and the resubmission needs a corrective rationale. Management sees every gate with a plain explanation and a link to fix it, and can approve only when none fails. The decision freezes a hashed manifest and produces the approval record PDF. Suspending the supplier or site later marks the source SUSPENDED without touching the decision, and a reasoned reinstatement restores it.

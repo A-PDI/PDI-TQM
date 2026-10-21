@@ -4,7 +4,7 @@ import { useAuth } from '../auth';
 import { LoadState, StatusBadge, useLoad } from '../components/ui';
 
 interface HomeData {
-  work: Array<{ id: string; kind: string; title: string; subjectType: string; subjectId: string; createdAt: string; assignee: string | null }>;
+  work: Array<{ id: string; kind: string; title: string; subjectType: string; subjectId: string; createdAt: string; assignee: string | null; link: string | null }>;
   drafts: Array<{ id: string; number: string; partNumber: string; partDescription: string; status: string; updatedAt: string; unitCount: number }>;
   counts: { awaiting_review: number; open_concerns: number; open_inspections: number };
   recent: Array<{ entityType: string; entityId: string; summary: string; occurredAt: string }>;
@@ -16,6 +16,12 @@ const KIND_LABEL: Record<string, string> = {
   INSPECTION_REVIEW: 'Review',
   CONCERN_TRIAGE: 'Triage',
   CONCERN_FOLLOW_UP: 'Follow-up',
+  QUALIFICATION_DECISION: 'Qualification',
+  BASELINE_RELEASE: 'Release review',
+  FAI_DECISION: 'FAI decision',
+  SOURCE_APPROVAL: 'Source approval',
+  SUPPLIER_RESPONSE: 'Supplier response',
+  SOURCING_REQUEST: 'Sourcing',
 };
 
 const subjectLink = (type: string, id: string) => (type === 'INSPECTION' || type === 'inspection' ? `/inspections/${id}` : `/quality/${id}`);
@@ -86,7 +92,7 @@ export function Home() {
                           <span className="badge">{KIND_LABEL[w.kind] ?? w.kind}</span>
                         </td>
                         <td>
-                          <Link to={subjectLink(w.subjectType, w.subjectId)}>{w.title}</Link>
+                          <Link to={w.link ?? subjectLink(w.subjectType, w.subjectId)}>{w.title}</Link>
                         </td>
                         <td>{w.assignee ?? <span className="muted">Role queue</span>}</td>
                         <td className="small">{fmtDateTime(w.createdAt)}</td>

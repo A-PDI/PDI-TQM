@@ -11,7 +11,9 @@ export interface Config {
   storageRoot: string;
   storageMinFreeBytes: number;
   maxPhotoBytes: number;
+  maxDocumentBytes: number;
   sessionTtlHours: number;
+  loginRateLimitPerMinute: number;
   secureCookies: boolean;
   displayTimeZone: string;
   jobsEnabled: boolean;
@@ -58,7 +60,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     storageRoot,
     storageMinFreeBytes: intEnv(env, 'STORAGE_MIN_FREE_MB', 256) * 1024 * 1024,
     maxPhotoBytes: intEnv(env, 'MAX_PHOTO_MB', 15) * 1024 * 1024,
+    maxDocumentBytes: intEnv(env, 'MAX_DOCUMENT_MB', 25) * 1024 * 1024,
     sessionTtlHours: intEnv(env, 'SESSION_TTL_HOURS', 12),
+    loginRateLimitPerMinute: intEnv(env, 'LOGIN_RATE_LIMIT_PER_MIN', 10),
     secureCookies: env.SECURE_COOKIES ? env.SECURE_COOKIES === 'true' : appEnv === 'staging' || appEnv === 'production',
     displayTimeZone: timeZone,
     jobsEnabled: env.JOBS_ENABLED !== 'false',

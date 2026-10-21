@@ -17,6 +17,7 @@ import {
 import { many, one, withTransaction } from './db.js';
 import { AppError, badRequest, forbidden, notFound, unprocessable } from './errors.js';
 import type { Services } from './services.js';
+import { effectiveSourceStatuses } from './sourcing/status.js';
 
 const uuid = z.string().uuid();
 const like = (s: string) => `%${s.trim().replace(/[%_\\]/g, '\\$&')}%`;
@@ -26,7 +27,7 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
   const { db, config } = svc;
 
   // ---------------------------------------------------------------- authentication
-  app.post('/api/auth/login', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req, reply) => {
+  app.post('/api/auth/login', { config: { rateLimit: { max: config.loginRateLimitPerMinute, timeWindow: '1 minute' } } }, async (req, reply) => {
     const body = z.object({ email: z.string().email().max(200), password: z.string().min(1).max(256) }).parse(req.body);
     const result = await attemptLogin(db, body.email, body.password);
     if (!result.ok) {
@@ -85,7 +86,15 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
     const work = await many(
       db,
       `SELECT w.id, w.kind, w.title, w.subject_type AS "subjectType", w.subject_id AS "subjectId", w.due_at AS "dueAt",
-              w.created_at AS "createdAt", a.display_name AS assignee, w.required_capability AS "requiredCapability"
+              w.created_at AS "createdAt", a.display_name AS assignee, w.required_capability AS "requiredCapability",
+              CASE w.subject_type
+                WHEN 'INSPECTION' THEN '/inspections/' || w.subject_id
+                WHEN 'QUALITY_EVENT' THEN '/quality/' || w.subject_id
+                WHEN 'SOURCE' THEN '/sources/' || w.subject_id
+                WHEN 'SOURCING_REQUEST' THEN '/sourcing/' || w.subject_id
+                WHEN 'BASELINE_REVISION' THEN '/baselines/' || w.subject_id
+                WHEN 'QUALIFICATION' THEN '/suppliers/' || (SELECT q.supplier_id FROM supplier_qualification q WHERE q.id = w.subject_id)
+              END AS link
          FROM work_item w LEFT JOIN app_user a ON a.id = w.assignee_id
         WHERE w.status = 'OPEN' AND ($3 OR w.assignee_id = $1 OR (w.assignee_id IS NULL AND w.required_capability = ANY($2::text[])))
         ORDER BY w.due_at NULLS LAST, w.created_at`,
@@ -251,7 +260,13 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
       ),
       many(db, `SELECT id, number, title, status FROM quality_event WHERE part_id = $1 ORDER BY reported_at DESC LIMIT 20`, [id]),
     ]);
-    return { part, aliases, sources, baselines, inspections, concerns };
+    const statuses = await effectiveSourceStatuses(db, sources.map((s) => (s as { id: string }).id));
+    const sourcing = await many(
+      db,
+      `SELECT id, number, title, pathway, status FROM sourcing_request WHERE part_id = $1 ORDER BY created_at DESC`,
+      [id],
+    );
+    return { part, aliases, sources: sources.map((s) => ({ ...s, effective: statuses.get((s as { id: string }).id) })), baselines, inspections, concerns, sourcing };
   });
 
   app.get('/api/parts/:id/launch-options', async (req) => {
@@ -272,7 +287,8 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
         WHERE s.part_id = $1 ORDER BY sup.legal_name`,
       [id],
     );
-    return { suggestedFormNumber: part.default_form_number, sources };
+    const statuses = await effectiveSourceStatuses(db, sources.map((s) => (s as { id: string }).id));
+    return { suggestedFormNumber: part.default_form_number, sources: sources.map((s) => ({ ...s, effective: statuses.get((s as { id: string }).id) })) };
   });
 
   app.get('/api/forms', async (req) => {
@@ -302,48 +318,6 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
     );
     if (!rev) throw notFound('Form revision');
     return rev;
-  });
-
-  app.get('/api/suppliers', async (req) => {
-    await requireCapability(db, req, 'records.read', { action: 'suppliers.list', consequential: false });
-    return many(
-      db,
-      `SELECT s.id, s.code, s.legal_name AS "legalName", s.trading_name AS "tradingName", s.status, s.category, s.is_synthetic AS "isSynthetic",
-              (SELECT count(*)::int FROM supplier_site ss WHERE ss.supplier_id = s.id) AS "siteCount",
-              (SELECT count(*)::int FROM source x WHERE x.supplier_id = s.id) AS "sourceCount"
-         FROM supplier s ORDER BY s.legal_name`,
-    );
-  });
-
-  app.get('/api/suppliers/:id', async (req) => {
-    await requireCapability(db, req, 'records.read', { action: 'suppliers.read', consequential: false });
-    const { id } = req.params as { id: string };
-    if (!uuid.safeParse(id).success) throw notFound('Supplier');
-    const supplier = await one(
-      db,
-      `SELECT id, code, legal_name AS "legalName", trading_name AS "tradingName", status, category, notes, is_synthetic AS "isSynthetic" FROM supplier WHERE id = $1`,
-      [id],
-    );
-    if (!supplier) throw notFound('Supplier');
-    const [sites, sources, inspections, concerns] = await Promise.all([
-      many(db, `SELECT id, code, name, address, country, status FROM supplier_site WHERE supplier_id = $1 ORDER BY name`, [id]),
-      many(
-        db,
-        `SELECT s.id, p.id AS "partId", p.part_number AS "partNumber", p.description, ss.name AS site, sp.supplier_part_number AS "supplierPartNumber",
-                s.pathway, s.approval_state AS "approvalState", s.configuration
-           FROM source s JOIN company_part p ON p.id = s.part_id JOIN supplier_site ss ON ss.id = s.site_id JOIN supplier_part sp ON sp.id = s.supplier_part_id
-          WHERE s.supplier_id = $1 ORDER BY p.part_number`,
-        [id],
-      ),
-      many(
-        db,
-        `SELECT id, number, part_number AS "partNumber", status, outcome, date_received AS "dateReceived" FROM inspection
-          WHERE supplier_id = $1 ORDER BY created_at DESC LIMIT 20`,
-        [id],
-      ),
-      many(db, `SELECT id, number, title, status FROM quality_event WHERE supplier_id = $1 ORDER BY reported_at DESC LIMIT 20`, [id]),
-    ]);
-    return { supplier, sites, sources, inspections, concerns };
   });
 
   // ---------------------------------------------------------------- administration
