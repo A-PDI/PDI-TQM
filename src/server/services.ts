@@ -9,4 +9,6 @@ export interface Services {
   storage: EvidenceStorage;
   logo: Buffer | null;
   worker: JobWorker | null;
+  /** Every registered route (method + URL pattern), collected at startup. */
+  routes: Array<{ method: string; url: string }>;
 }

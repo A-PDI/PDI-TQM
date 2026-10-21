@@ -9,6 +9,12 @@ RUN npm run build && npm prune --omit=dev
 
 FROM node:22.22.0-bookworm-slim
 ENV NODE_ENV=production
+# PostgreSQL 17 client tools for the application-consistent backup (npm run backup:create:prod).
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates postgresql-common \
+ && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
+ && apt-get install -y --no-install-recommends postgresql-client-17 \
+ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist

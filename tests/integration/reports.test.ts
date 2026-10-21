@@ -49,15 +49,20 @@ async function finish(id: string, reviewer: Session | null) {
     expect(r.status, JSON.stringify(r.json)).toBe(200);
   }
   await h.svc.worker!.drain();
+  // Keep the exact snapshot the PDF was rendered from (source for the visual-regression fixtures).
+  lastSnapshot = (await h.pool.query(`SELECT snapshot FROM report_snapshot WHERE subject_id = $1 ORDER BY edition DESC LIMIT 1`, [id])).rows[0]?.snapshot ?? null;
   const d = (await inspector.get(`/api/inspections/${id}`)).json;
   expect(d.reports).toHaveLength(1);
   const pdf = (await inspector.get(`/api/files/${d.reports[0].fileId}`)).raw;
   return { detail: d, pdf };
 }
 
+let lastSnapshot: unknown = null;
+
 function inspectPdf(name: string, pdf: Buffer) {
   const file = path.join(OUT, `${name}.pdf`);
   writeFileSync(file, pdf);
+  if (lastSnapshot) writeFileSync(path.join(OUT, `${name}.snapshot.json`), JSON.stringify(lastSnapshot, null, 2));
   const text = execFileSync('pdftotext', ['-layout', file, '-'], { encoding: 'utf8' });
   const pages = Number(/Pages:\s+(\d+)/.exec(execFileSync('pdfinfo', [file], { encoding: 'utf8' }))![1]);
   return { text, pages };
@@ -66,6 +71,33 @@ function inspectPdf(name: string, pdf: Buffer) {
 const photo = (seed: number) => makePng(160, 120, [(seed * 53) % 200, (seed * 97) % 200, (seed * 31) % 200]);
 
 describe('representative inspection reports', () => {
+  it('two-item piston: crown photos, dimensional readings without released limits, independent review', async () => {
+    const id = await start('TQ-PST-1001', 'PDI-IQI-001', 2);
+    await passAll(inspector, id, 0, 'A');
+    const rows = ['skirt_od', 'pin_bore_diameter', 'ring_groove_width_top_compression_no_1', 'ring_groove_width_oil_control_no_3', 'abutment_face_flatness_two_piece_only'];
+    const values = [['127.952', '127.948', '127.950'], ['47.006', '47.004', ''], ['3.112', '3.110', '3.114'], ['4.031', '4.029', '4.030'], ['0.008', '0.006', '0.007']];
+    for (let u = 1; u <= 2; u += 1) {
+      await passAll(inspector, id, u, 'B');
+      const r = await save(
+        inspector,
+        id,
+        rows.map((rowKey, i) => ({ unitIndex: u, sectionKey: 'C', rowKey, status: 'P', readings: Object.fromEntries(values[i]!.map((v, k) => [`a${k + 1}`, v]).filter(([, v]) => v)) })),
+        [{ unitIndex: u, serialNumber: `PST-${String(u).padStart(4, '0')}` }],
+      );
+      expect(r.status).toBe(200);
+      const up = await inspector.upload(`/api/inspections/${id}/photos?unitIndex=${u}&sectionKey=B&rowKey=crown_combustion_bowl`, photo(u + 40), `crown-${u}.png`, 'image/png');
+      expect(up.status).toBe(201);
+    }
+    const { detail, pdf } = await finish(id, quality);
+    expect(detail.outcome).toBe('PASS');
+    const { text, pages } = inspectPdf('piston-2-unit', pdf);
+    expect(pages).toBeGreaterThanOrEqual(2);
+    for (const serial of ['PST-0001', 'PST-0002']) expect(text).toContain(serial);
+    expect(text).toContain('127.952');
+    expect(text).toContain('Specification not released');
+    expect(text).toMatch(/Crown \/ Combustion Bowl/i);
+  });
+
   it('12-unit cylinder liner: every unit and reading present across pages', async () => {
     const id = await start('TQ-LNR-2002', 'PDI-IQI-002', 12);
     await passAll(inspector, id, 0, 'A');

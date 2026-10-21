@@ -149,7 +149,9 @@ test('navigation: every visible destination works, list filters survive Back', a
   await expect(page).toHaveURL(/status=OPEN/);
   await expect(page.getByLabel('Search inspections')).toHaveValue('TQ-PRK');
   await page.getByRole('link', { name: 'Parts & Sources', exact: true }).click();
-  await page.getByRole('link', { name: 'TQ-PRK-3003' }).click();
+  // Wait for the parts list itself; the previous page (open TQ-PRK inspections) also has matching links.
+  await expect(page).toHaveURL(/\/parts$/);
+  await page.getByRole('main').getByRole('link', { name: 'TQ-PRK-3003', exact: true }).click();
   await expect(page.getByText('synthetic — not PDI-approved')).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/desktop-part-hub.png` });
 });

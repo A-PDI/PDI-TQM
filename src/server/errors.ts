@@ -17,10 +17,24 @@ export const conflict = (message: string, details?: unknown) => new AppError(409
 export const unprocessable = (message: string, details?: unknown) => new AppError(422, 'UNPROCESSABLE', message, details);
 
 /** Maps PostgreSQL integrity-trigger rejections (P0001) to a 409 rather than a 500. */
+/** Plain explanations for "only one at a time" rules enforced by unique indexes (migration 0007 and earlier). */
+const UNIQUE_MESSAGES: Record<string, string> = {
+  repair_case_one_open: 'This injector already has an open repair case',
+  supplier_qualification_one_under_review: 'An assessment for this subject is already under review',
+  baseline_revision_one_draft: 'A draft or in-review revision already exists for this baseline',
+  form_revision_one_draft: 'This form already has a draft or in-review revision',
+  supplier_acknowledgment_one_pending: 'An acknowledgment request is already awaiting the supplier response',
+  fai_sample_one_open: 'Decide the open sample before registering another',
+  quality_event_one_open_per_row: 'An open concern already exists for this characteristic',
+  sourcing_request_one_per_source: 'This exact source is already being qualified under another sourcing request',
+  injector_test_source_key_key: 'This test is already recorded (same machine, serial, time and sequence)',
+  injector_part_id_normalized_serial_key: 'This serial is already registered for the part',
+};
+
 export function fromDbError(err: unknown): AppError | null {
   const e = err as { code?: string; message?: string; constraint?: string };
   if (e?.code === 'P0001') return conflict(e.message ?? 'Integrity rule rejected the change');
-  if (e?.code === '23505') return conflict('A record with the same identity already exists', { constraint: e.constraint });
+  if (e?.code === '23505') return conflict(UNIQUE_MESSAGES[e.constraint ?? ''] ?? 'A record with the same identity already exists', { constraint: e.constraint });
   if (e?.code === '23503') return unprocessable('A referenced record does not exist', { constraint: e.constraint });
   return null;
 }

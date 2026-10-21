@@ -241,11 +241,15 @@ export function registerConcessionRoutes(app: FastifyInstance, svc: Services) {
   app.post('/api/concessions/:id/withdraw', async (req) => {
     const { id } = req.params as { id: string };
     const auth = await requireCapability(db, req, 'records.read', { action: 'concession.withdraw', entityType: 'concession', entityId: id });
+    // Authority depends on who requested it, so it is checked before the request body is validated.
+    const requester = await loadConcession(db, id);
+    if (requester.requested_by !== auth.userId && !has(auth, 'concession.approve')) {
+      throw await auditedDenial(db, req, auth.userId, 'concession.withdraw', 'concession', id, 'Only the requester or an approver can withdraw a request');
+    }
     const body = z.object({ reason: z.string().trim().min(5).max(2000) }).parse(req.body);
     return withTransaction(db, async (tx) => {
       const c = await loadConcession(tx, id, true);
       if (c.status !== 'REQUESTED') throw conflict(`${c.number} is already ${c.status.toLowerCase()}`);
-      if (c.requested_by !== auth.userId && !has(auth, 'concession.approve')) throw forbidden('Only the requester or an approver can withdraw a request');
       await tx.query(`UPDATE concession SET status = 'WITHDRAWN', version = version + 1 WHERE id = $1`, [id]);
       await closeWork(tx, ['CONCESSION_DECISION'], 'CONCESSION', id, auth.userId, 'Withdrawn');
       await audit(tx, { actorId: auth.userId, action: 'concession.withdraw', entityType: 'concession', entityId: id, summary: `${c.number} withdrawn`, reason: body.reason, requestId: req.id });

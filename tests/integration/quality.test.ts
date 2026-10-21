@@ -95,6 +95,8 @@ async function pdfText(subjectType: string, subjectId: string, sample: string) {
   expect(file.status).toBe(200);
   const out = path.join(OUT, sample);
   writeFileSync(out, file.raw);
+  const snap = (await h.pool.query(`SELECT snapshot FROM report_snapshot WHERE subject_type = $1 AND subject_id = $2 ORDER BY edition DESC LIMIT 1`, [subjectType, subjectId])).rows[0];
+  if (snap) writeFileSync(out.replace(/\.pdf$/, '.snapshot.json'), JSON.stringify(snap.snapshot, null, 2));
   return execFileSync('pdftotext', ['-layout', out, '-']).toString();
 }
 

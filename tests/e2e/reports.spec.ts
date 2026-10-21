@@ -25,7 +25,7 @@ test('management overview: drill-down, CSV export and an issued report PDF', asy
   await expect(quality.getByRole('heading', { name: 'Inspection throughput and outcomes' })).toBeVisible();
   const completed = Number(await quality.getByRole('listitem').filter({ hasText: 'completed in period' }).locator('strong').innerText());
   if (completed > 0) {
-    await expect(quality.getByRole('img', { name: /Completed inspections per week/ })).toBeVisible();
+    await expect(quality.getByRole('group', { name: /Completed inspections per week/ })).toBeVisible();
     // The figure drills into exactly the inspections it counts.
     await quality.getByRole('listitem').filter({ hasText: 'completed in period' }).click();
     await expect(quality.getByText(`· ${completed} inspection${completed === 1 ? '' : 's'}`)).toBeVisible();

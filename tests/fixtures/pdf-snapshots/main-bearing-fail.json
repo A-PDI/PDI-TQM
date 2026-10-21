@@ -1,0 +1,333 @@
+{
+  "form": {
+    "sha256": "9c4e17efdfa6ef164b7345db3ed2e07248c6ca8d292fb10870699e644208a439",
+    "component": "Main Bearing (Shell Half)",
+    "formNumber": "PDI-IQI-027",
+    "revisionLabel": null
+  },
+  "kind": "INSPECTION_REPORT",
+  "draft": false,
+  "units": [
+    {
+      "serial": null,
+      "outcome": "PASS",
+      "sections": [
+        {
+          "key": "B",
+          "rows": [
+            {
+              "key": "antifriction_lining_overlay",
+              "note": null,
+              "spec": null,
+              "label": "Antifriction Lining Overlay",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Interior bearing lining surface is 100% uniform; zero scratches, scuffs, layer blistering, exposed mid-layers, or embedded foreign matter.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "steel_backing_condition",
+              "note": null,
+              "spec": null,
+              "label": "Steel Backing Condition",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Rear steel shell face is smooth, clean, and uniform; zero rust stains, pitting, fretting shadows, or deep stamping indentations.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "locating_tangs_parting_lines",
+              "note": null,
+              "spec": null,
+              "label": "Locating Tangs & Parting Lines",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Anti-rotation locating tangs are sharp, crisp, and completely unbent; parting line mating faces are flat and free of upset metal or handling burrs.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "oil_grooves_holes",
+              "note": null,
+              "spec": null,
+              "label": "Oil Grooves & Holes",
+              "status": "P",
+              "location": null,
+              "readings": [],
+              "criterion": "Oil supply channels and cross-holes are cleanly punched/machined with smoothly chamfered edges; no loose backing burrs.",
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "thrust_flanges_for_combination_main_thrust_beari",
+              "note": "Plain shell, no thrust flange",
+              "spec": null,
+              "label": "Thrust Flanges (for combination main/thrust bearings only)",
+              "status": "N",
+              "location": null,
+              "readings": [],
+              "criterion": "Flange lateral faces are smooth and free of machining tears, edge scoring, or handling nicks.",
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "B. VISUAL INSPECTION",
+          "pattern": "pass_fail_checklist",
+          "limitSummary": null,
+          "readingLabels": []
+        },
+        {
+          "key": "C",
+          "rows": [
+            {
+              "key": "bearing_shell_wall_thickness",
+              "note": null,
+              "spec": null,
+              "label": "Bearing Shell Wall Thickness",
+              "status": "P",
+              "location": "Measured at the exact center apex of the bearing half using a specialized ball-anvil micrometer.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "2.5",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "overall_shell_width",
+              "note": null,
+              "spec": null,
+              "label": "Overall Shell Width",
+              "status": "P",
+              "location": "Measured parallel to the bearing centerline across the parting line edges.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "2.5",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "bearing_free_spread",
+              "note": null,
+              "spec": null,
+              "label": "Bearing Free Spread",
+              "status": "P",
+              "location": "Measured distance across the extreme outer tips of the bearing shell parting lines in its relaxed state.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": "2.5",
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            },
+            {
+              "key": "flange_thickness_total_width_for_combination_mai",
+              "note": "Plain shell, no thrust flange",
+              "spec": null,
+              "label": "Flange Thickness / Total Width (for combination main/thrust bearings only)",
+              "status": "N",
+              "location": "Measured from thrust face to thrust face parallel to the crankshaft axis.",
+              "readings": [
+                {
+                  "label": "Actual 1",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 2",
+                  "value": null,
+                  "outside": false
+                },
+                {
+                  "label": "Actual 3",
+                  "value": null,
+                  "outside": false
+                }
+              ],
+              "criterion": null,
+              "photoNumbers": [],
+              "specReleased": false
+            }
+          ],
+          "title": "C. DIMENSIONAL INSPECTION",
+          "pattern": "dimensional",
+          "limitSummary": null,
+          "readingLabels": [
+            "Actual 1",
+            "Actual 2",
+            "Actual 3"
+          ]
+        }
+      ],
+      "unitIndex": 1,
+      "dispositionNote": null
+    }
+  ],
+  "photos": [
+    {
+      "mime": "image/png",
+      "fileId": "00c50d4c-388d-46ab-865d-f8302504003a",
+      "number": 1,
+      "sha256": "d83966b7a2701cd6f41da954880020efc6ee9910d07e4e6c51b8b314cdc53f19",
+      "caption": "",
+      "context": "Receiving · A. RECEIVING & DOCUMENTATION VERIFICATION · Outer Carton Condition",
+      "storageKey": "c7ee62e3-6491-4caf-8ff0-f9c3de6c2557"
+    }
+  ],
+  "review": {
+    "comment": "Reviewed (synthetic)",
+    "reasons": [
+      "Outcome FAIL — independent review required",
+      "Specification not released for 3 recorded measurement(s) — Bearing Shell Wall Thickness, Overall Shell Width, Bearing Free Spread; readings reviewed as observations, not validated against limits"
+    ],
+    "decision": "CONFIRMED",
+    "reviewer": "Casey Morgan",
+    "reviewedAt": "2026-10-21T14:30:33.803Z"
+  },
+  "shared": [
+    {
+      "key": "A",
+      "rows": [
+        {
+          "key": "outer_carton_condition",
+          "note": "Carton crushed on one corner; shells exposed",
+          "spec": null,
+          "label": "Outer Carton Condition",
+          "status": "F",
+          "location": null,
+          "readings": [],
+          "criterion": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents",
+          "photoNumbers": [
+            1
+          ],
+          "specReleased": false
+        },
+        {
+          "key": "box_package_label",
+          "note": null,
+          "spec": null,
+          "label": "Box / Package Label",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Label present; part number, description, and quantity match purchase order exactly",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "part_marking",
+          "note": null,
+          "spec": null,
+          "label": "Part Marking",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "PDI logo and part number permanently marked on part; matches purchase order",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "quantity_verification",
+          "note": null,
+          "spec": null,
+          "label": "Quantity Verification",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts",
+          "photoNumbers": [],
+          "specReleased": false
+        },
+        {
+          "key": "corrosion_contamination_protection",
+          "note": null,
+          "spec": null,
+          "label": "Corrosion / Contamination Protection",
+          "status": "P",
+          "location": null,
+          "readings": [],
+          "criterion": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival",
+          "photoNumbers": [],
+          "specReleased": false
+        }
+      ],
+      "title": "A. RECEIVING & DOCUMENTATION VERIFICATION",
+      "pattern": "pfn_checklist",
+      "limitSummary": null,
+      "readingLabels": []
+    }
+  ],
+  "edition": 1,
+  "baseline": null,
+  "amendment": null,
+  "inspection": {
+    "site": "Main plant",
+    "number": "IR-2026-00005",
+    "status": "COMPLETED",
+    "lotSize": null,
+    "outcome": "FAIL",
+    "poNumber": "PO-60411",
+    "supplier": "Meridian Bearings Inc. (fictional)",
+    "inspector": "Jordan Rivera",
+    "lotNumber": "LOT-2026-118",
+    "startedAt": "2026-10-21T14:30:33.636Z",
+    "unitCount": 1,
+    "partNumber": "TQ-MBR-8008",
+    "completedAt": "2026-10-21T14:30:33.803Z",
+    "sourceState": "NOT_APPROVED",
+    "dateReceived": "2026-10-18",
+    "samplingNote": null,
+    "partDescription": "Main bearing shell half, std"
+  },
+  "generatedAt": "2026-10-21T15:00:00.000Z",
+  "schemaVersion": 1,
+  "displayTimeZone": "America/Chicago"
+}

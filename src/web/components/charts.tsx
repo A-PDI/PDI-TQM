@@ -89,7 +89,7 @@ export function ColumnChart({ title, categories, series, formatCategory = (c) =>
           <div className="empty small">No data in this period.</div>
         ) : (
           width > 0 && (
-            <svg width={width} height={height} role="img" aria-label={`${title}: ${categories.length} periods, total ${totals.reduce((a, b) => a + b, 0)}`}>
+            <svg width={width} height={height} role="group" aria-label={`${title}: ${categories.length} periods, total ${totals.reduce((a, b) => a + b, 0)}`}>
               {ticks.map((t) => (
                 <g key={t}>
                   <line x1={m.l} x2={width - m.r} y1={y(t)} y2={y(t)} stroke={VIZ.grid} strokeWidth={1} />
@@ -130,6 +130,7 @@ export function ColumnChart({ title, categories, series, formatCategory = (c) =>
                       height={innerH}
                       fill="transparent"
                       tabIndex={0}
+                      role="img"
                       aria-label={`${formatCategory(c)}: ${series.map((s) => `${s.label} ${s.values[i] ?? 0}`).join(', ')}`}
                       onMouseEnter={() => setActive(i)}
                       onFocus={() => setActive(i)}

@@ -33,6 +33,13 @@ export async function trace(db: Queryable, raw: unknown, timeZone: string) {
 
   if (q.partId && !(await one(db, 'SELECT 1 FROM company_part WHERE id = $1', [q.partId]))) throw notFound('Part');
 
+  // Only the filters supplied are applied, so the serial lookup is an index-backed semi-join
+  // (inspection_unit_serial_norm_idx) instead of a per-inspection subquery.
+  const params: unknown[] = [];
+  const filters = ["i.status <> 'VOID'"];
+  if (q.partId) filters.push(`i.part_id = $${params.push(q.partId)}`);
+  if (lot) filters.push(`lower(i.lot_number) = lower($${params.push(lot)})`);
+  if (serial) filters.push(`i.id IN (SELECT u.inspection_id FROM inspection_unit u WHERE ${norm('u.serial_number')} = $${params.push(serial)})`);
   const inspections = await many<{
     id: string;
     number: string;
@@ -67,12 +74,9 @@ export async function trace(db: Queryable, raw: unknown, timeZone: string) {
             (SELECT count(*)::int FROM (SELECT DISTINCT ON (r.unit_index, r.section_key, r.row_key) r.status FROM inspection_response r WHERE r.inspection_id = i.id
                 ORDER BY r.unit_index, r.section_key, r.row_key, r.amendment_no DESC) x WHERE x.status IN ('F', 'A')) AS flagged_rows
        FROM inspection i JOIN form_revision fr ON fr.id = i.form_revision_id LEFT JOIN supplier s ON s.id = i.supplier_id LEFT JOIN supplier_site ss ON ss.id = i.site_id
-      WHERE i.status <> 'VOID'
-        AND ($1::uuid IS NULL OR i.part_id = $1)
-        AND ($2::text IS NULL OR lower(i.lot_number) = lower($2))
-        AND ($3::text IS NULL OR EXISTS (SELECT 1 FROM inspection_unit u WHERE u.inspection_id = i.id AND ${norm('u.serial_number')} = $3))
+      WHERE ${filters.join(' AND ')}
       ORDER BY i.date_received, i.created_at`,
-    [q.partId ?? null, lot, serial],
+    params,
   );
 
   const injectors = serial

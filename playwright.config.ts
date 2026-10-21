@@ -1,6 +1,9 @@
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
+const VISUAL = /visual\.spec\.ts$/;
+const VISUAL_FONTS = path.resolve(import.meta.dirname, 'tests/fixtures/fonts.conf');
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -13,8 +16,14 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'mobile', use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } } },
+    { name: 'desktop', testIgnore: VISUAL, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    { name: 'mobile', testIgnore: VISUAL, use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } } },
+    // Visual-regression baselines render with a pinned font set so they do not depend on the machine's fonts.
+    {
+      name: 'visual',
+      testMatch: VISUAL,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, launchOptions: { env: { ...process.env, FONTCONFIG_FILE: VISUAL_FONTS } } },
+    },
   ],
   webServer: {
     command: 'bash scripts/e2e-server.sh',

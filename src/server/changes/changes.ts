@@ -400,11 +400,16 @@ export function registerChangeRoutes(app: FastifyInstance, svc: Services) {
     const { id } = req.params as { id: string };
     if (!uuid.safeParse(id).success) throw notFound('Action');
     const auth = await requireCapability(db, req, 'records.read', { action: 'change.action_complete', entityType: 'change_action', entityId: id });
+    // Authority depends on the action's owner, so it is checked before the request body is validated.
+    const owner = await one<{ owner_id: string }>(db, 'SELECT owner_id FROM change_action WHERE id = $1', [id]);
+    if (!owner) throw notFound('Action');
+    if (owner.owner_id !== auth.userId && !has(auth, 'change.manage')) {
+      throw await auditedDenial(db, req, auth.userId, 'change.action_complete', 'change_action', id, 'Only the action owner or a change manager can complete it');
+    }
     const body = z.object({ note: z.string().trim().min(5).max(2000) }).parse(req.body);
     return withTransaction(db, async (tx) => {
       const a = await one<{ change_id: string; kind: string; title: string; status: string; owner_id: string }>(tx, 'SELECT change_id, kind, title, status, owner_id FROM change_action WHERE id = $1 FOR UPDATE', [id]);
       if (!a) throw notFound('Action');
-      if (a.owner_id !== auth.userId && !has(auth, 'change.manage')) throw forbidden('Only the action owner or a change manager can complete it');
       const c = await loadChange(tx, a.change_id, true);
       if (a.status !== 'OPEN') throw conflict('This action is already resolved');
       const missing = await actionEvidence(tx, a.kind, c);

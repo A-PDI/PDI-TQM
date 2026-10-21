@@ -146,8 +146,10 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
       many(
         db,
         `SELECT i.id, i.number, i.part_number AS "partNumber", i.po_number AS "poNumber", i.lot_number AS "lotNumber", i.status
-           FROM inspection i WHERE i.number ILIKE $1 OR i.po_number ILIKE $1 OR i.lot_number ILIKE $1 OR i.part_number ILIKE $1
-              OR EXISTS (SELECT 1 FROM inspection_unit u WHERE u.inspection_id = i.id AND u.serial_number ILIKE $1)
+           FROM inspection i
+          WHERE i.id IN (SELECT x.id FROM inspection x WHERE x.number ILIKE $1 UNION SELECT x.id FROM inspection x WHERE x.po_number ILIKE $1
+                         UNION SELECT x.id FROM inspection x WHERE x.lot_number ILIKE $1 UNION SELECT x.id FROM inspection x WHERE x.part_number ILIKE $1
+                         UNION SELECT u.inspection_id FROM inspection_unit u WHERE u.serial_number ILIKE $1)
           ORDER BY i.created_at DESC LIMIT 10`,
         [p],
       ),
@@ -474,6 +476,28 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
       if (!res.rowCount) throw notFound('Active user');
       await tx.query('UPDATE user_session SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL', [id]);
       await audit(tx, { actorId: auth.userId, action: 'admin.deactivate', entityType: 'app_user', entityId: id, summary: 'User deactivated; sessions revoked', reason: body.reason, requestId: req.id });
+      return { ok: true };
+    });
+  });
+
+  // Administrator-set temporary password (no e-mail delivery yet, FR-110): clears a lockout and ends the user's sessions.
+  app.post('/api/admin/users/:id/reset-password', async (req) => {
+    const { id } = req.params as { id: string };
+    const auth = await requireCapability(db, req, 'admin.users', { action: 'admin.reset_password', entityType: 'app_user', entityId: id });
+    const body = z.object({ temporaryPassword: z.string().max(256), reason: z.string().trim().min(3).max(500) }).parse(req.body);
+    if (!uuid.safeParse(id).success) throw notFound('User');
+    if (id === auth.userId) throw forbidden('Use Change password for your own account');
+    const problem = passwordProblem(body.temporaryPassword);
+    if (problem) throw unprocessable(problem);
+    const hash = await hashPassword(body.temporaryPassword);
+    return withTransaction(db, async (tx) => {
+      const res = await tx.query(
+        `UPDATE app_user SET password_hash = $2, failed_login_count = 0, locked_until = NULL WHERE id = $1 AND active AND identity_type = 'LOCAL'`,
+        [id, hash],
+      );
+      if (!res.rowCount) throw notFound('Active user');
+      await tx.query('UPDATE user_session SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL', [id]);
+      await audit(tx, { actorId: auth.userId, action: 'admin.reset_password', entityType: 'app_user', entityId: id, summary: 'Temporary password set; lockout cleared; sessions revoked', reason: body.reason, requestId: req.id });
       return { ok: true };
     });
   });
