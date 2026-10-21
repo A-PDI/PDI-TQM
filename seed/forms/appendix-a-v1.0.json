@@ -1,0 +1,3503 @@
+{
+  "source": {
+    "file": "docs/requirements/PDI_TQMS_Appendix_A_Inspection_Forms_and_Interaction_Rules_v1.0.md",
+    "sha256": "033a99905812e6456c71c2bf06fd4f35c61521200c54e128c9bf0f8e8cbcc63c",
+    "release": "Appendix A v1.0 (17 October 2026)"
+  },
+  "entries": [
+    {
+      "formNumber": "PDI-IQI-001",
+      "component": "Piston",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-001",
+        "component": "Piston",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "crown_combustion_bowl",
+                "name": "Crown / Combustion Bowl",
+                "acceptance": "Zero cracks, porosity, or cold-shuts on crown face and bowl rim; surface as-cast/machined with no heat discoloration"
+              },
+              {
+                "key": "ring_grooves",
+                "name": "Ring Grooves",
+                "acceptance": "Groove sidewalls parallel and square as-machined; edges sharp, free of burrs, nicks, or machining tears; no debris in grooves"
+              },
+              {
+                "key": "piston_skirt_coating",
+                "name": "Piston Skirt Coating",
+                "acceptance": "Friction-reducing coating 100% intact; zero bare metal patches, flaking, or handling abrasion on skirt surface"
+              },
+              {
+                "key": "pin_bore",
+                "name": "Pin Bore",
+                "acceptance": "Bore surface smooth and as-machined; no corrosion from transit or storage; finish within drawing Ra specification"
+              },
+              {
+                "key": "oil_drain_passages",
+                "name": "Oil Drain Passages",
+                "acceptance": "All drain holes and slots clear of swarf, sealant, and preservative; verified with compressed-air probe"
+              },
+              {
+                "key": "part_identification_marking",
+                "name": "Part Identification Marking",
+                "acceptance": "Part number engraved or laser-marked on part body; permanent and legible; matches purchase order"
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "skirt_od",
+                "name": "Skirt OD",
+                "location": "90° to pin axis, 15 mm from skirt bottom",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "pin_bore_diameter",
+                "name": "Pin Bore Diameter",
+                "location": "Center of bore — 0° and 90° axes",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "ring_groove_width_top_compression_no_1",
+                "name": "Ring Groove Width — Top Compression (No. 1)",
+                "location": "3 pts at 120° intervals",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "ring_groove_width_oil_control_no_3",
+                "name": "Ring Groove Width — Oil Control (No. 3)",
+                "location": "3 pts at 120° intervals",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "abutment_face_flatness_two_piece_only",
+                "name": "Abutment Face Flatness (two-piece only)",
+                "location": "4 pts across abutment mating face",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-002",
+      "component": "Cylinder Liner",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-002",
+        "component": "Cylinder Liner",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "bore_surface_cracks",
+                "name": "Bore Surface — Cracks",
+                "acceptance": "Zero cracks anywhere on bore surface; any crack indication = immediate rejection"
+              },
+              {
+                "key": "bore_honing_pattern",
+                "name": "Bore Honing Pattern",
+                "acceptance": "Cross-hatch present, uniform, and undamaged as-machined; angle 25–35°; no burnished or polished areas from machining error; no smearing or torn metal from mishandling"
+              },
+              {
+                "key": "o_ring_groove",
+                "name": "O-Ring Groove",
+                "acceptance": "Groove walls sharp and smooth as-machined; no burrs, nicks, or pitting; free of all preservative and debris"
+              },
+              {
+                "key": "flange_seating_face",
+                "name": "Flange Seating Face",
+                "acceptance": "Seating face flat and undamaged as-machined; no cracks, chips, or impact marks from handling"
+              },
+              {
+                "key": "part_identification_marking",
+                "name": "Part Identification Marking",
+                "acceptance": "Part number and size code permanently marked and legible; matches purchase order"
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "bore_diameter",
+                "name": "Bore Diameter",
+                "location": "Top / mid / bottom — 2 axes 90° at each plane (6 total readings)",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "bore_out_of_round",
+                "name": "Bore Out-of-Round",
+                "location": "Max - min reading within each cross-sectional plane",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "bore_taper",
+                "name": "Bore Taper",
+                "location": "Top bore diameter minus bottom bore diameter",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "flange_thickness",
+                "name": "Flange Thickness",
+                "location": "4 pts at 90° intervals around flange",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-003",
+      "component": "Piston Pin",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-003",
+        "component": "Piston Pin",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "od_surface_spalling_flaking",
+                "name": "OD Surface — Spalling / Flaking",
+                "acceptance": "OD surface mirror-smooth as ground; zero spalling, flaking, or pitting of any size — immediate rejection"
+              },
+              {
+                "key": "od_surface_scoring",
+                "name": "OD Surface — Scoring",
+                "acceptance": "No longitudinal scratch marks or galling; surface as-manufactured with no handling damage"
+              },
+              {
+                "key": "straightness",
+                "name": "Straightness",
+                "acceptance": "No visible bow; max 0.013 mm deviation on V-block surface-plate check"
+              },
+              {
+                "key": "snap_ring_groove_end_faces",
+                "name": "Snap Ring Groove / End Faces",
+                "acceptance": "Groove edges sharp and undamaged as-machined; end faces free of burrs and handling nicks"
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "pin_od",
+                "name": "Pin OD",
+                "location": "Center + 25 mm from each end — 0° and 90° axes (6 total readings)",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "od_taper",
+                "name": "OD Taper",
+                "location": "Center reading minus end reading",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "od_out_of_round",
+                "name": "OD Out-of-Round",
+                "location": "Max - min at any single cross-section",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "overall_length",
+                "name": "Overall Length",
+                "location": "Parallel to pin axis",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-004",
+      "component": "Piston Ring",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-004",
+        "component": "Piston Ring",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "running_face_coating",
+                "name": "Running Face Coating",
+                "acceptance": "Coating 100% intact and uniform; zero flaking, chipping, or bare patches of any size"
+              },
+              {
+                "key": "gap_end_faces",
+                "name": "Gap End Faces",
+                "acceptance": "End faces square, smooth, and as-manufactured; no chips, burrs, or deformation at gap ends"
+              },
+              {
+                "key": "orientation_mark",
+                "name": "Orientation Mark",
+                "acceptance": "'TOP', dot, or pip mark present on all rings, clearly legible; per approved specification"
+              },
+              {
+                "key": "ring_body",
+                "name": "Ring Body",
+                "acceptance": "Ring body flat with no visible twist, kink, or corrosion; free of storage damage and preservative residue"
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "free_end_gap_relaxed",
+                "name": "Free End Gap (relaxed)",
+                "location": "Ring uncompressed; measure gap opening with calipers or feeler gauge",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "installed_end_gap",
+                "name": "Installed End Gap",
+                "location": "Ring squared in calibrated reference bore at 25 mm depth; feeler gauge",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "axial_width_ring_height",
+                "name": "Axial Width (ring height)",
+                "location": "Micrometer at 3 pts 120° apart on ring body",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "radial_wall_thickness",
+                "name": "Radial Wall Thickness",
+                "location": "Micrometer at 3 pts 120° apart",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-005",
+      "component": "Cylinder Head",
+      "revisionLabel": "A",
+      "sequence": 1,
+      "availability": "HISTORICAL",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-005",
+        "component": "Cylinder Head",
+        "revisionLabel": "A",
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "check_for_visible_cracks_casting_voids_or_porosi",
+                "name": "Check for visible cracks, casting voids, or porosity"
+              },
+              {
+                "key": "inspect_all_machined_surfaces_for_finish_quality",
+                "name": "Inspect all machined surfaces for finish quality and damage"
+              },
+              {
+                "key": "verify_proper_placement_of_all_casting_identific",
+                "name": "Verify proper placement of all casting identification marks"
+              },
+              {
+                "key": "ensure_no_rust_oxidation_or_excessive_contaminan",
+                "name": "Ensure no rust, oxidation, or excessive contaminants"
+              },
+              {
+                "key": "confirm_correct_thread_condition_on_all_bolt_hol",
+                "name": "Confirm correct thread condition on all bolt holes"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "PORT & GALLEY INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "inspect_intake_ports_for_proper_casting_and_mach",
+                "name": "Inspect intake ports for proper casting and machining"
+              },
+              {
+                "key": "inspect_exhaust_ports_for_proper_casting_and_mac",
+                "name": "Inspect exhaust ports for proper casting and machining"
+              },
+              {
+                "key": "check_coolant_galleries_for_cleanliness",
+                "name": "Check coolant galleries for cleanliness"
+              },
+              {
+                "key": "check_oil_galleries_for_cleanliness",
+                "name": "Check oil galleries for cleanliness"
+              },
+              {
+                "key": "confirm_oil_drain_passages_are_properly_sized_an",
+                "name": "Confirm oil drain passages are properly sized and free from flaws"
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "INJECTOR BORE INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "verify_that_injector_bores_are_properly_machined",
+                "name": "Verify that injector bores are properly machined"
+              },
+              {
+                "key": "ensure_injector_cups_are_installed_correctly",
+                "name": "Ensure injector cups are installed correctly"
+              },
+              {
+                "key": "check_for_o_rings_in_injector_bores_and_ensure_p",
+                "name": "Check for o-rings in injector bores and ensure proper fitment"
+              },
+              {
+                "key": "inspect_sealing_surfaces_for_machining_issues",
+                "name": "Inspect sealing surfaces for machining issues"
+              }
+            ]
+          },
+          {
+            "key": "D",
+            "letter": "D",
+            "title": "VALVETRAIN INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "inspect_valve_springs_for_visible_damage_corrosi",
+                "name": "Inspect valve springs for visible damage, corrosion, or uneven seating"
+              },
+              {
+                "key": "check_spring_seats_retainers_for_cracks_wear_or",
+                "name": "Check spring seats/retainers for cracks, wear, or improper installation"
+              },
+              {
+                "key": "verify_valve_stem_seals_are_properly_seated_and",
+                "name": "Verify valve stem seals are properly seated and free from visible damage"
+              },
+              {
+                "key": "inspect_valve_stems_for_proper_alignment_check_f",
+                "name": "Inspect valve stems for proper alignment — check for bent or misaligned valves"
+              },
+              {
+                "key": "confirm_all_valve_keepers_are_fully_engaged_and",
+                "name": "Confirm all valve keepers are fully engaged and properly seated"
+              }
+            ]
+          },
+          {
+            "key": "E",
+            "letter": "E",
+            "title": "PACKAGING",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "verify_proper_rust_prevention_measures_applied",
+                "name": "Verify proper rust prevention measures applied"
+              },
+              {
+                "key": "ensure_packaging_prevents_shipping_damage",
+                "name": "Ensure packaging prevents shipping damage"
+              },
+              {
+                "key": "all_required_documentation_included",
+                "name": "All required documentation included"
+              },
+              {
+                "key": "shipping_labels_correct_and_legible",
+                "name": "Shipping labels correct and legible"
+              }
+            ]
+          },
+          {
+            "key": "F",
+            "letter": "F",
+            "title": "GENERAL MEASUREMENTS",
+            "pattern": "general_measurements",
+            "scope": "unit",
+            "optional": true,
+            "rows": [
+              {
+                "key": "cylinder_head_height",
+                "name": "Cylinder Head Height"
+              },
+              {
+                "key": "surface_finish_ra",
+                "name": "Surface Finish (Ra)"
+              },
+              {
+                "key": "flatness",
+                "name": "Flatness"
+              },
+              {
+                "key": "valve_stem_height",
+                "name": "Valve Stem Height"
+              }
+            ]
+          },
+          {
+            "key": "G",
+            "letter": "G",
+            "title": "CAMSHAFT BORE DIMENSION",
+            "pattern": "camshaft_bore",
+            "scope": "unit",
+            "optional": true,
+            "rows": [],
+            "params": {
+              "boreCount": 7
+            }
+          },
+          {
+            "key": "H",
+            "letter": "H",
+            "title": "FIRE RING PROTRUSION",
+            "pattern": "fire_ring_protrusion",
+            "scope": "unit",
+            "optional": true,
+            "rows": [],
+            "params": {
+              "cylinderCount": 6
+            }
+          },
+          {
+            "key": "I",
+            "letter": "I",
+            "title": "VALVE RECESSION",
+            "pattern": "valve_recession",
+            "scope": "unit",
+            "optional": true,
+            "rows": [],
+            "params": {
+              "cylinderCount": 6,
+              "intakeCount": 2,
+              "exhaustCount": 2
+            }
+          },
+          {
+            "key": "J",
+            "letter": "J",
+            "title": "VACUUM TEST",
+            "pattern": "vacuum_test",
+            "scope": "unit",
+            "optional": true,
+            "rows": [],
+            "params": {
+              "cylinderCount": 6,
+              "intakeCount": 2,
+              "exhaustCount": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-005",
+      "component": "Cylinder Head",
+      "revisionLabel": "B",
+      "sequence": 2,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-005",
+        "component": "Cylinder Head",
+        "revisionLabel": "B",
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pfn_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "oxidation_markings",
+                "name": "Oxidation / Markings",
+                "acceptance": "Should be free of rust, pitting, or other material oxidation"
+              },
+              {
+                "key": "edge_debur",
+                "name": "Edge Debur",
+                "acceptance": "Check machined edges for sharp edges"
+              },
+              {
+                "key": "block_off_plugs",
+                "name": "Block-off Plugs",
+                "acceptance": "Confirm all required plugs are in place and torqued to spec"
+              },
+              {
+                "key": "heat_tab",
+                "name": "Heat Tab",
+                "acceptance": "Confirm Heat Tab in installed appropriately"
+              },
+              {
+                "key": "casting_quality",
+                "name": "Casting Quality",
+                "acceptance": "Using bore-scope verify casting quality in all intake and exhaust ports"
+              },
+              {
+                "key": "finish",
+                "name": "Finish",
+                "acceptance": "Confirm machining finish and casting quality"
+              },
+              {
+                "key": "machining_quality",
+                "name": "Machining Quality",
+                "acceptance": "Verify machining quality in all intake and exhaust ports if applicable"
+              },
+              {
+                "key": "material_type",
+                "name": "Material Type",
+                "acceptance": "Confirm injector cup material type"
+              },
+              {
+                "key": "pass_through_bore_cummins",
+                "name": "Pass-through bore (Cummins)",
+                "acceptance": "Confirm pass through tube fits bore"
+              },
+              {
+                "key": "correct_valves",
+                "name": "Correct Valves",
+                "acceptance": "Confirm intake/exhaust in correct locations"
+              },
+              {
+                "key": "springs_retainers_keepers",
+                "name": "Springs / Retainers / Keepers",
+                "acceptance": "Confirm correct spring assemblies and everything assembled properly"
+              }
+            ]
+          },
+          {
+            "key": "C_general",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION — General",
+            "pattern": "general_measurements",
+            "scope": "unit",
+            "optional": true,
+            "rows": [
+              {
+                "key": "cylinder_head_height",
+                "name": "Cylinder Head Height"
+              },
+              {
+                "key": "surface_finish_ra",
+                "name": "Surface Finish (Ra)"
+              },
+              {
+                "key": "flatness",
+                "name": "Flatness"
+              },
+              {
+                "key": "valve_stem_height",
+                "name": "Valve Stem Height"
+              }
+            ]
+          },
+          {
+            "key": "C_fire_ring",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION — Fire Ring",
+            "pattern": "groove_specs",
+            "scope": "unit",
+            "optional": true,
+            "rows": [
+              {
+                "key": "groove_diameter",
+                "name": "Groove Diameter",
+                "specText": "6.300\" Groove OD for CAT, 5.990\" Groove OD for Cummins",
+                "unit": "inch (\")"
+              },
+              {
+                "key": "groove_depth",
+                "name": "Groove Depth",
+                "specText": ".029-.031\"",
+                "unit": "inch (\")"
+              },
+              {
+                "key": "wire_protrusion",
+                "name": "Wire Protrusion",
+                "specText": ".008-.010\"",
+                "unit": "inch (\")"
+              }
+            ]
+          },
+          {
+            "key": "C_valve_recession",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION — Valve Recession",
+            "pattern": "valve_recession",
+            "scope": "unit",
+            "optional": true,
+            "rows": [],
+            "params": {
+              "cylinderCount": 6,
+              "intakeCount": 2,
+              "exhaustCount": 2
+            }
+          },
+          {
+            "key": "C_vacuum_test",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION — Vacuum Test",
+            "pattern": "vacuum_test",
+            "scope": "unit",
+            "optional": true,
+            "rows": [],
+            "params": {
+              "cylinderCount": 6,
+              "intakeCount": 2,
+              "exhaustCount": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-006",
+      "component": "Cylinder Head",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "HISTORICAL",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-006",
+        "component": "Cylinder Head",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "general_measurements",
+            "letter": "",
+            "title": "GENERAL MEASUREMENTS",
+            "pattern": "general_measurements",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "cylinder_head_height",
+                "name": "Cylinder Head Height"
+              },
+              {
+                "key": "surface_finish_ra",
+                "name": "Surface Finish (Ra)"
+              },
+              {
+                "key": "flatness",
+                "name": "Flatness"
+              },
+              {
+                "key": "valve_stem_height",
+                "name": "Valve Stem Height"
+              }
+            ]
+          },
+          {
+            "key": "camshaft_bore_dimension",
+            "letter": "",
+            "title": "CAMSHAFT BORE DIMENSION",
+            "pattern": "camshaft_bore",
+            "scope": "unit",
+            "optional": false,
+            "rows": [],
+            "params": {
+              "boreCount": 7
+            }
+          },
+          {
+            "key": "fire_ring_protrusion",
+            "letter": "",
+            "title": "FIRE RING PROTRUSION",
+            "pattern": "fire_ring_protrusion",
+            "scope": "unit",
+            "optional": false,
+            "rows": [],
+            "params": {
+              "cylinderCount": 6
+            }
+          },
+          {
+            "key": "valve_recession",
+            "letter": "",
+            "title": "VALVE RECESSION",
+            "pattern": "valve_recession",
+            "scope": "unit",
+            "optional": false,
+            "rows": []
+          },
+          {
+            "key": "vacuum_test",
+            "letter": "",
+            "title": "VACUUM TEST",
+            "pattern": "vacuum_test",
+            "scope": "unit",
+            "optional": false,
+            "rows": [],
+            "params": {
+              "cylinderCount": 6,
+              "intakeCount": 2,
+              "exhaustCount": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-007",
+      "component": "Camshaft",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-007",
+        "component": "Camshaft",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "cam_lobes",
+                "name": "Cam Lobes",
+                "acceptance": "Cam lobes are free from chips, dents, scratches, scoring, pitting, rust, or discoloration."
+              },
+              {
+                "key": "bearing_journals",
+                "name": "Bearing Journals",
+                "acceptance": "Bearing journals have a smooth, uniform finish with no nicks, bruising, or corrosion."
+              },
+              {
+                "key": "thrust_faces",
+                "name": "Thrust Faces",
+                "acceptance": "Thrust faces are clean and undamaged, with no burrs or gouges."
+              },
+              {
+                "key": "gear_keyway_timing_features",
+                "name": "Gear / Keyway / Timing Features",
+                "acceptance": "Gear, keyway, dowel, or timing-feature areas are free from cracks, chips, and burrs."
+              },
+              {
+                "key": "oil_passages",
+                "name": "Oil Passages",
+                "acceptance": "Oil holes/passages visible from the outside are open and free from burrs, metal chips, or debris."
+              },
+              {
+                "key": "shaft_straightness",
+                "name": "Shaft Straightness",
+                "acceptance": "Shaft is visually straight with no obvious bending or handling damage."
+              },
+              {
+                "key": "edges_machined_transitions",
+                "name": "Edges & Machined Transitions",
+                "acceptance": "Edges and machined transitions are clean, with no sharp burrs or loose material."
+              },
+              {
+                "key": "surface_cleanliness",
+                "name": "Surface Cleanliness",
+                "acceptance": "Overall surface is free from contamination such as dirt, grinding residue, preservative buildup, or foreign material."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-008",
+      "component": "Radiator",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-008",
+        "component": "Radiator",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "cooling_fins",
+                "name": "Cooling Fins",
+                "acceptance": "Cooling fins are straight, evenly spaced, and not crushed, folded, torn, or missing."
+              },
+              {
+                "key": "tubes",
+                "name": "Tubes",
+                "acceptance": "Tubes are free from dents, punctures, cracks, or visible deformation."
+              },
+              {
+                "key": "header_plates_tank_joints",
+                "name": "Header Plates & Tank Joints",
+                "acceptance": "Header plates and tank-to-core joints show uniform brazing/crimping with no gaps, cracks, or separation."
+              },
+              {
+                "key": "tanks",
+                "name": "Tanks",
+                "acceptance": "Tanks are free from cracks, dents, warping, or molding/casting defects."
+              },
+              {
+                "key": "inlet_outlet_necks",
+                "name": "Inlet & Outlet Necks",
+                "acceptance": "Inlet and outlet necks are round, clean, and free from dents, cracks, burrs, or deformation."
+              },
+              {
+                "key": "mounting_brackets_frames",
+                "name": "Mounting Brackets & Frames",
+                "acceptance": "Mounting brackets, side plates, and support frames are not bent, cracked, or loose."
+              },
+              {
+                "key": "core_alignment",
+                "name": "Core Alignment",
+                "acceptance": "Core is visually square and not twisted, bowed, or misaligned."
+              },
+              {
+                "key": "surface_cleanliness",
+                "name": "Surface Cleanliness",
+                "acceptance": "External surfaces are free from corrosion, loose flux, debris, oil, or other contamination."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-009",
+      "component": "Clutch",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-009",
+        "component": "Clutch",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "friction_facings",
+                "name": "Friction Facings",
+                "acceptance": "Friction facings are clean and free from cracks, chips, glazing, oil, grease, or foreign material."
+              },
+              {
+                "key": "rivets_fasteners",
+                "name": "Rivets & Fasteners",
+                "acceptance": "Rivets or fasteners are fully seated and show no looseness, distortion, or damage."
+              },
+              {
+                "key": "hub_splines",
+                "name": "Hub Splines",
+                "acceptance": "Hub splines are clean and free from burrs, dents, corrosion, or damaged teeth."
+              },
+              {
+                "key": "damper_springs",
+                "name": "Damper Springs",
+                "acceptance": "Damper springs are correctly seated, intact, and not cracked, broken, or displaced."
+              },
+              {
+                "key": "pressure_plate_surface",
+                "name": "Pressure Plate Surface",
+                "acceptance": "Pressure plate contact surface is smooth and free from scratches, scoring, rust, dents, or contamination."
+              },
+              {
+                "key": "diaphragm_fingers",
+                "name": "Diaphragm Fingers",
+                "acceptance": "Diaphragm fingers or release levers are uniform in position and not bent, cracked, or damaged."
+              },
+              {
+                "key": "clutch_cover_housing",
+                "name": "Clutch Cover / Housing",
+                "acceptance": "Clutch cover/housing is free from cracks, dents, distortion, or damaged mounting holes."
+              },
+              {
+                "key": "edges_machined_surfaces",
+                "name": "Edges & Machined Surfaces",
+                "acceptance": "Edges, stamped areas, and machined surfaces are free from loose burrs, sharp damage, or metal debris."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-010",
+      "component": "Oil Cooler",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-010",
+        "component": "Oil Cooler",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "cooling_fins_core",
+                "name": "Cooling Fins / Core",
+                "acceptance": "Cooling fins, plates, or core surfaces are straight and free from crushed, torn, or missing sections."
+              },
+              {
+                "key": "body_integrity",
+                "name": "Body Integrity",
+                "acceptance": "Tubes, plates, or cooler body are free from dents, cracks, punctures, or deformation."
+              },
+              {
+                "key": "brazed_welded_joints",
+                "name": "Brazed / Welded Joints",
+                "acceptance": "Brazed, welded, or bonded joints appear continuous with no visible gaps, cracks, voids, or separation."
+              },
+              {
+                "key": "oil_coolant_ports",
+                "name": "Oil & Coolant Ports",
+                "acceptance": "Oil and coolant ports are clean, round, and free from burrs, dents, thread damage, or contamination."
+              },
+              {
+                "key": "sealing_faces",
+                "name": "Sealing Faces",
+                "acceptance": "Sealing faces are smooth and free from scratches, gouges, corrosion, or embedded debris."
+              },
+              {
+                "key": "mounting_tabs_brackets",
+                "name": "Mounting Tabs & Brackets",
+                "acceptance": "Mounting tabs, brackets, and bosses are intact and not cracked, bent, or broken."
+              },
+              {
+                "key": "exterior_surfaces",
+                "name": "Exterior Surfaces",
+                "acceptance": "Exterior surfaces are free from rust, oxidation, loose scale, oil residue, or foreign material."
+              },
+              {
+                "key": "internal_port_areas",
+                "name": "Internal Port Areas",
+                "acceptance": "Visible internal port areas are free from metal chips, casting sand, loose particles, or blockage."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-011",
+      "component": "Turbocharger",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-011",
+        "component": "Turbocharger",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "compressor_wheel_blades",
+                "name": "Compressor Wheel Blades",
+                "acceptance": "Compressor wheel blades are free from chips, cracks, bends, nicks, or foreign-object damage."
+              },
+              {
+                "key": "turbine_wheel_blades",
+                "name": "Turbine Wheel Blades",
+                "acceptance": "Turbine wheel blades are free from cracks, missing material, bends, or visible impact damage."
+              },
+              {
+                "key": "compressor_turbine_housings",
+                "name": "Compressor & Turbine Housings",
+                "acceptance": "Compressor and turbine housings are free from cracks, dents, casting defects, or broken flanges."
+              },
+              {
+                "key": "inlet_outlet_openings",
+                "name": "Inlet & Outlet Openings",
+                "acceptance": "Inlet and outlet openings are clean and free from debris, metal chips, or loose material."
+              },
+              {
+                "key": "mounting_flanges",
+                "name": "Mounting Flanges",
+                "acceptance": "Mounting flanges and gasket faces are smooth and free from scratches, gouges, dents, or corrosion."
+              },
+              {
+                "key": "studs_threaded_holes",
+                "name": "Studs & Threaded Holes",
+                "acceptance": "Studs, threaded holes, and fastener areas are visually undamaged and free from burrs or deformation."
+              },
+              {
+                "key": "actuator_wastegate",
+                "name": "Actuator & Wastegate",
+                "acceptance": "Actuator, linkage, and wastegate/VGT external components are intact, correctly seated, and not bent or damaged."
+              },
+              {
+                "key": "oil_coolant_connections",
+                "name": "Oil & Coolant Connections",
+                "acceptance": "Oil and coolant connection areas are clean and free from cracks, damaged threads, or sealing-surface defects."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-012",
+      "component": "Fuel Injector",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-012",
+        "component": "Fuel Injector",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "injector_body",
+                "name": "Injector Body",
+                "acceptance": "Injector body is free from cracks, dents, corrosion, scratches, or handling damage."
+              },
+              {
+                "key": "nozzle_tip",
+                "name": "Nozzle Tip",
+                "acceptance": "Nozzle tip is clean and free from dents, cracks, burrs, contamination, or blocked visible spray holes."
+              },
+              {
+                "key": "sealing_cone_seat",
+                "name": "Sealing Cone / Seat",
+                "acceptance": "Sealing cone, seat, or sealing washer contact areas are smooth and free from gouges, nicks, or debris."
+              },
+              {
+                "key": "threads_fuel_ports",
+                "name": "Threads & Fuel Ports",
+                "acceptance": "Threads and fuel connection ports are clean and free from burrs, dents, cross-threading, or deformation."
+              },
+              {
+                "key": "electrical_connector",
+                "name": "Electrical Connector",
+                "acceptance": "Electrical connector body and pins, if applicable, are straight, clean, intact, and free from cracks or bent terminals."
+              },
+              {
+                "key": "o_rings_seals",
+                "name": "O-Rings & Seals",
+                "acceptance": "O-rings, seals, or visible sealing elements are present, seated correctly, and free from cuts, twists, flattening, or contamination."
+              },
+              {
+                "key": "filter_screen_inlet",
+                "name": "Filter Screen / Inlet",
+                "acceptance": "Filter screen or inlet area, where visible, is clean and free from metal chips, dirt, or obstruction."
+              },
+              {
+                "key": "external_surfaces",
+                "name": "External Surfaces",
+                "acceptance": "External surfaces show no oil, grease, rust, preservative buildup, or foreign material that could affect installation or cleanliness."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-013",
+      "component": "Cylinder Block",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-013",
+        "component": "Cylinder Block",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "casting_fire_deck_integrity",
+                "name": "Casting & Fire Deck Integrity",
+                "acceptance": "Zero visible cracks, porosity, cold-shuts, or inclusions on the top deck face, water jackets, or exterior crankcase structures."
+              },
+              {
+                "key": "liner_seats_packing_grooves",
+                "name": "Liner Seats & Packing Grooves",
+                "acceptance": "Machined liner counterbore steps and lower O-ring packing grooves are sharp and free of fretting, scoring, rust, or residual machining steps."
+              },
+              {
+                "key": "main_bearing_saddles_caps",
+                "name": "Main Bearing Saddles & Caps",
+                "acceptance": "Cap-to-block mating serrations or flat locator surfaces are completely clean, unbruised, and free of nicks or handling damage."
+              },
+              {
+                "key": "thread_tap_condition",
+                "name": "Thread & Tap Condition",
+                "acceptance": "All cylinder head bolt holes, main cap bolt holes, and auxiliary oil gallery tapped threads are clean, fully formed, and free of cross-threading or trapped metal swarf."
+              },
+              {
+                "key": "oil_coolant_galleries",
+                "name": "Oil & Coolant Galleries",
+                "acceptance": "All internal oil cross-drillings and cooling passages are completely unobstructed; verified free of residual casting sand, scale, or machining chips."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "liner_counterbore_depth",
+                "name": "Liner Counterbore Depth",
+                "location": "Measured at 4 points (90° intervals) around the perimeter of each cylinder liner seating step.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "main_bearing_bore_diameter",
+                "name": "Main Bearing Bore Diameter",
+                "location": "Across all main journals with caps installed and torqued to specification (0° and 90° vertical/horizontal axes).",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "block_deck_flatness",
+                "name": "Block Deck Flatness",
+                "location": "Precision straight-edge and feeler gauge checks along longitudinal, transverse, and diagonal axes of the cylinder head mating face.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "camshaft_bore_diameter",
+                "name": "Camshaft Bore Diameter",
+                "location": "Inside diameter check at all internal cam tunnel bearing positions (0° and 90° axes).",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-014",
+      "component": "Crankshaft",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-014",
+        "component": "Crankshaft",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "journal_surface_finish",
+                "name": "Journal Surface Finish",
+                "acceptance": "All main and connecting rod journals ground to a mirror finish; zero evidence of linear scoring, micro-pitting, transit scratches, or heat discoloration."
+              },
+              {
+                "key": "fillet_radii_transitions",
+                "name": "Fillet Radii Transitions",
+                "acceptance": "Journal fillet radii are perfectly smooth and continuous; free of machining steps, grinding burn marks, or sharp undercut transitions."
+              },
+              {
+                "key": "oil_holes_chamfers",
+                "name": "Oil Holes & Chamfers",
+                "acceptance": "Lubrication cross-holes are fully open and deburred; chamfered edges are smooth with zero loose grinding fins or trapped debris inside the oil pathways."
+              },
+              {
+                "key": "keyways_splines_snout",
+                "name": "Keyways, Splines & Snout",
+                "acceptance": "Front snout keyways, timing gear press-fit areas, and rear flange bolt holes are crisp, clean, and free of burrs or rolled-over metal edges."
+              },
+              {
+                "key": "thrust_face_alignment",
+                "name": "Thrust Face Alignment",
+                "acceptance": "Machined thrust walls adjacent to the indexing main journal are clean and free of grinding tears or handling nicks."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "main_journal_outer_diameter_od",
+                "name": "Main Journal Outer Diameter (OD)",
+                "location": "At the front, center, and rear sections of each main journal across 0° and 90° axes.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "crankpin_rod_journal_outer_diameter_od",
+                "name": "Crankpin / Rod Journal Outer Diameter (OD)",
+                "location": "At the center section of each rod journal across 0° and 90° axes.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "journal_taper_out_of_round",
+                "name": "Journal Taper & Out-of-Round",
+                "location": "Calculated max-to-min diameter difference across the width and circumference of each individual journal.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "total_indicator_runout_crankshaft_straightness",
+                "name": "Total Indicator Runout (Crankshaft Straightness)",
+                "location": "Supported on V-blocks at the front and rear main journals; dial indicator on the center main journal through a 360° rotation.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-015",
+      "component": "Dampener",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-015",
+        "component": "Dampener",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "housing_seal_integrity_viscous_type",
+                "name": "Housing & Seal Integrity (Viscous Type)",
+                "acceptance": "Laser-welded or crimped housing is continuous and completely sealed; zero evidence of silicone fluid weeping, exterior dents, or housing bulges."
+              },
+              {
+                "key": "elastomer_element_rubber_type",
+                "name": "Elastomer Element (Rubber Type)",
+                "acceptance": "Bonded rubber strip is fully intact; zero cracking, separation from metal rings, dry-rot pits, or extrusion gaps between the hub and inertia ring."
+              },
+              {
+                "key": "indexing_timing_marks",
+                "name": "Indexing & Timing Marks",
+                "acceptance": "Top Dead Center (TDC) and degree alignment marks are permanently stamped, clean, legible, and unmarred."
+              },
+              {
+                "key": "mounting_flange_face",
+                "name": "Mounting Flange Face",
+                "acceptance": "Crankshaft snout mounting surface and bolt holes are flat and free of burrs, paint overspray, rust, or impact nicks."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "crankshaft_pilot_bore_inner_diameter_id",
+                "name": "Crankshaft Pilot Bore Inner Diameter (ID)",
+                "location": "Inside diameter of the center registration hub bore (measured across 2 perpendicular axes).",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "mounting_flange_thickness",
+                "name": "Mounting Flange Thickness",
+                "location": "At 4 equidistant points around the bolt circle flange layout.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "radial_and_axial_runout_tir",
+                "name": "Radial and Axial Runout (TIR)",
+                "location": "Mounted to a true test arbor; dial indicator tracked on the outermost perimeter face and front lateral face through a full rotation.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-016",
+      "component": "Exhaust Manifold Spacer",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-016",
+        "component": "Exhaust Manifold Spacer",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "sealing_flange_surface_finish",
+                "name": "Sealing Flange Surface Finish",
+                "acceptance": "Machined gasket seating faces are smooth and uniform; zero deep scratches, pitting, casting voids, or transport gouges."
+              },
+              {
+                "key": "gas_passage_profiles",
+                "name": "Gas Passage Profiles",
+                "acceptance": "Internal exhaust gas path is completely free of casting fins, flash, metal inclusions, or loose scale that could disrupt gas flow."
+              },
+              {
+                "key": "fastener_clearance_holes",
+                "name": "Fastener Clearance Holes",
+                "acceptance": "Through-bolt holes are clean, round, and free of edge crushing, burrs, or drilling exit steps."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "overall_thickness",
+                "name": "Overall Thickness",
+                "location": "With a micrometer at all 4 corners/edges of the spacer block.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "parallelism",
+                "name": "Parallelism",
+                "location": "Maximum thickness variation calculated between all measured points on the parallel seating planes.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "flange_face_flatness",
+                "name": "Flange Face Flatness",
+                "location": "Across the sealing planes using a precision surface plate layout or a knife-edge straight-edge.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-017",
+      "component": "Piston Oiler",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-017",
+        "component": "Piston Oiler",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "tube_alignment_nozzle_shape",
+                "name": "Tube Alignment & Nozzle Shape",
+                "acceptance": "Oiler target tubes are perfectly formed and visually straight; zero crimps, handling kinks, flattening, or tool indentation marks along the thin-wall tubing."
+              },
+              {
+                "key": "braze_weld_joint_integrity",
+                "name": "Braze / Weld Joint Integrity",
+                "acceptance": "Brazed or welded joints anchoring the target tubes to the mounting banjo base block are continuous, uniform, and free of pinholes or cracking."
+              },
+              {
+                "key": "jet_discharge_orifice",
+                "name": "Jet Discharge Orifice",
+                "acceptance": "The final fluid exit orifice is perfectly round, crisp, and 100% free of internal swarf, burrs, or storage preservative blockage."
+              },
+              {
+                "key": "locating_dowel_pin_tab",
+                "name": "Locating Dowel Pin / Tab",
+                "acceptance": "The alignment pin or anti-rotation tab on the mounting base is unbent, rigid, and completely free of casting or stamping defects."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "nozzle_jet_tip_orifice_diameter",
+                "name": "Nozzle Jet Tip Orifice Diameter",
+                "location": "Internal diameter verification at the tube exit tip using a calibrated Go/No-Go pin gauge.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "banjo_base_mounting_inner_diameter_id",
+                "name": "Banjo Base Mounting Inner Diameter (ID)",
+                "location": "Inside diameter of the bolt fastening bore (2 axes at 90°).",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "nozzle_tip_protrusion_height_offset",
+                "name": "Nozzle Tip Protrusion Height & Offset",
+                "location": "Via a height gauge fixture from the flat mounting base face to the center point of the nozzle tip orifice.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-018",
+      "component": "Piston Oiler Bolt",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-018",
+        "component": "Piston Oiler Bolt",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "thread_roll_quality",
+                "name": "Thread Roll Quality",
+                "acceptance": "Threads are fully formed, clean, and uniform; zero flat spots, rolling nicks, crest tearing, or cross-threaded areas."
+              },
+              {
+                "key": "fluid_feed_ports",
+                "name": "Fluid Feed Ports",
+                "acceptance": "Cross-drilled fluid passages and the central axial feed hole are entirely open; free of drilling burrs, loose flakes, or residual metal shavings."
+              },
+              {
+                "key": "internal_check_valve_mechanical_freedom",
+                "name": "Internal Check Valve Mechanical Freedom",
+                "acceptance": "Internal spring-loaded ball or plunger moves smoothly when depressed with a brass test probe; snaps back securely into its seat with no binding or sticking."
+              },
+              {
+                "key": "under_head_sealing_shoulder",
+                "name": "Under-Head Sealing Shoulder",
+                "acceptance": "The flat shoulder face that contacts the oiler block/crush washer is entirely free of radial scratches, burrs, or machining spirals."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "major_thread_diameter_pitch",
+                "name": "Major Thread Diameter & Pitch",
+                "location": "Thread section check using a micrometer and thread pitch ring gauge.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "under_head_shank_length",
+                "name": "Under-Head Shank Length",
+                "location": "From the flat bearing shoulder to the absolute end of the bolt shank.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "cross_drilled_port_diameter",
+                "name": "Cross-Drilled Port Diameter",
+                "location": "Inside diameter verification of fluid escape cross-holes via pin gauges.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-019",
+      "component": "Rocker Shaft",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-019",
+        "component": "Rocker Shaft",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "journal_seating_surface_finish",
+                "name": "Journal Seating Surface Finish",
+                "acceptance": "Centerless-ground shaft OD at all rocker arm journal locations must be mirror-smooth; zero scoring, ridges, pitting, handling bruises, or chrome-plating flaking."
+              },
+              {
+                "key": "oil_distribution_passages",
+                "name": "Oil Distribution Passages",
+                "acceptance": "All radial oil supply feed holes are smoothly deburred and radiused; internal oil tunnel is clear of honing residue or factory debris."
+              },
+              {
+                "key": "end_plug_sealing",
+                "name": "End-Plug Sealing",
+                "acceptance": "Pressed-in or welded end retention plugs are tight, seated flush, and show zero micro-cracks or loose fitment."
+              },
+              {
+                "key": "mounting_pedestal_bosses",
+                "name": "Mounting Pedestal Bosses",
+                "acceptance": "Flat relief cuts or mounting notches for hold-down bolts are free of sharp burrs or alignment distortion."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "shaft_outer_diameter_od",
+                "name": "Shaft Outer Diameter (OD)",
+                "location": "At each separate rocker arm journal position along 2 axes spaced 90° apart.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "shaft_straightness",
+                "name": "Shaft Straightness",
+                "location": "Total Indicator Runout (TIR) along the center span of the shaft while supported on V-blocks at both ends.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "pedestal_mount_bolt_hole_location",
+                "name": "Pedestal Mount Bolt Hole Location",
+                "location": "Center-to-center pitch distance checked between all adjacent hold-down bolt paths.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-020",
+      "component": "Connecting Rod Bearing",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-020",
+        "component": "Connecting Rod Bearing",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "antifriction_lining_overlay",
+                "name": "Antifriction Lining Overlay",
+                "acceptance": "The interior bearing lining surface is 100% flawless and uniform; zero scratches, scuffs, layer blistering, exposed mid-layers, or embedded foreign matter."
+              },
+              {
+                "key": "steel_backing_condition",
+                "name": "Steel Backing Condition",
+                "acceptance": "The rear steel shell face is smooth, clean, and uniform; zero rust stains, pitting, fretting shadows, or deep stamping indentations."
+              },
+              {
+                "key": "locating_tangs_parting_lines",
+                "name": "Locating Tangs & Parting Lines",
+                "acceptance": "Anti-rotation locating tangs are sharp, crisp, and completely unbent; parting line mating faces are flat and free of upset metal or handling burrs."
+              },
+              {
+                "key": "oil_grooves_holes",
+                "name": "Oil Grooves & Holes",
+                "acceptance": "Oil supply channels and cross-holes are cleanly punched/machined with smoothly chamfered edges; no loose backing burrs."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "bearing_shell_wall_thickness",
+                "name": "Bearing Shell Wall Thickness",
+                "location": "At the exact center apex of the bearing half using a specialized ball-anvil micrometer.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "overall_shell_width",
+                "name": "Overall Shell Width",
+                "location": "Parallel to the bearing centerline across the parting line edges.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "bearing_free_spread",
+                "name": "Bearing Free Spread",
+                "location": "Distance across the extreme outer tips of the bearing shell parting lines in its relaxed state.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-021",
+      "component": "Spacer Plate",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-021",
+        "component": "Spacer Plate",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "sealing_face_flatness_finish",
+                "name": "Sealing Face Flatness & Finish",
+                "acceptance": "Parallel sealing faces are flat and uniform; zero scratches, deep handling gouges, corrosion pits, or distorted areas caused by improper wire-wheel cleanup."
+              },
+              {
+                "key": "inner_outer_edge_cleanliness",
+                "name": "Inner & Outer Edge Cleanliness",
+                "acceptance": "Cylinder liner bore cutouts and outer perimeter profiles are clean-stamped/machined; completely free of heavy dross, hanging burrs, or edge distortions."
+              },
+              {
+                "key": "transfer_passages",
+                "name": "Transfer Passages",
+                "acceptance": "All stamped water-jacket holes, oil pressure feeds, and pushrod passages are fully formed, clear, and perfectly aligned with no obstruction or restricted corners."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "plate_thickness",
+                "name": "Plate Thickness",
+                "location": "With a micrometer at 6 standardized locations across the plate perimeter layout (ends and center bridges).",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "parallelism_thickness_variation",
+                "name": "Parallelism (Thickness Variation)",
+                "location": "Calculated total difference between maximum and minimum thickness readings across the entire plate body.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "cylinder_liner_cutout_inner_diameter_id",
+                "name": "Cylinder Liner Cutout Inner Diameter (ID)",
+                "location": "Across 2 perpendicular axes at each cylinder opening loop.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-022",
+      "component": "Thermostat",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-022",
+        "component": "Thermostat",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "housing_frame_valve_seat",
+                "name": "Housing Frame & Valve Seat",
+                "acceptance": "Stainless steel or brass support bridge is straight and free of bending deformation; valve seating face is uniform with no nicks or uneven gaps."
+              },
+              {
+                "key": "expansion_element_spring",
+                "name": "Expansion Element & Spring",
+                "acceptance": "Return spring is uniformly coiled, concentric, and free of distortion; copper wax pellet capsule is completely sealed with zero wax leakage or cracking."
+              },
+              {
+                "key": "bleed_valve_jiggle_pin_freedom",
+                "name": "Bleed Valve / Jiggle Pin Freedom",
+                "acceptance": "Bypass air bleed hole is open and clean; jiggle pin or check ball is loose and moves freely within its slot without binding."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "flange_outer_diameter_od",
+                "name": "Flange Outer Diameter (OD)",
+                "location": "Across the outermost edge of the main mounting seating flange (2 axes at 90°).",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "overall_assembly_height_closed",
+                "name": "Overall Assembly Height (Closed)",
+                "location": "From the apex of the frame bridge to the base of the closed bypass sealing disk.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "valve_opening_stroke_functional_check",
+                "name": "Valve Opening Stroke (Functional Check)",
+                "location": "Submerged hot water bath testing; measuring total valve lift distance at the fully open rated temperature spec.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-023",
+      "component": "Thrust Washer",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-023",
+        "component": "Thrust Washer",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "running_face_oil_grooves",
+                "name": "Running Face & Oil Grooves",
+                "acceptance": "The anti-friction thrust face overlay is entirely uniform; oil distribution grooves are clean, full-depth, and entirely free of machining burrs, scoring, or flaking."
+              },
+              {
+                "key": "steel_backing_flatness",
+                "name": "Steel Backing Flatness",
+                "acceptance": "The raw steel backing face is smooth, clean, flat, and completely free of localized high spots, transport nicks, or oxidation."
+              },
+              {
+                "key": "locating_tabs_tabs_profile",
+                "name": "Locating Tabs / Tabs Profile",
+                "acceptance": "Anti-rotation locking tabs or outer ear locations are clean-cut, unbent, and square."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "washer_total_thickness",
+                "name": "Washer Total Thickness",
+                "location": "With a micrometer at 4 equidistant points (90° intervals) around the center circle of the washer body.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "outer_diameter_od_and_inner_diameter_id",
+                "name": "Outer Diameter (OD) and Inner Diameter (ID)",
+                "location": "Across 2 perpendicular axes using a digital caliper.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "flatness_deviation",
+                "name": "Flatness Deviation",
+                "location": "On a certified precision surface plate with a feeler gauge to ensure zero warping.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-024",
+      "component": "Water Pump",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-024",
+        "component": "Water Pump",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "casting_housing_integrity",
+                "name": "Casting & Housing Integrity",
+                "acceptance": "Pump body volute and mounting flanges are entirely free of casting voids, hairline cracks, or sand inclusions."
+              },
+              {
+                "key": "impeller_seating_vanes",
+                "name": "Impeller Seating & Vanes",
+                "acceptance": "Impeller blades are complete and undamaged; zero cavitation pitting, casting slag, or distortion; securely pressed onto the pump shaft."
+              },
+              {
+                "key": "rotational_freedom_bearing_feel",
+                "name": "Rotational Freedom & Bearing Feel",
+                "acceptance": "Shaft rotates smoothly by hand through a full 360° loop; zero evidence of internal roughness, tight spots, clicking, or excessive dry friction feel."
+              },
+              {
+                "key": "weep_hole_openness",
+                "name": "Weep Hole Openness",
+                "acceptance": "The internal cartridge seal weep hole is open and completely free of excess sealant, metal chips, or signs of transit oil leaks."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "mounting_flange_flatness",
+                "name": "Mounting Flange Flatness",
+                "location": "Straight-edge and feeler gauge check across the block-mating flange face surface.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "drive_pulley_hub_protrusion_height",
+                "name": "Drive Pulley / Hub Protrusion Height",
+                "location": "From the flat block-mounting flange plane to the outer face of the drive pulley/gear hub.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "impeller_back_clearance",
+                "name": "Impeller Back-Clearance",
+                "location": "Distance between the rear edge of the impeller vanes and the inner volute casting wall.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-025",
+      "component": "Flywheel",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-025",
+        "component": "Flywheel",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "clutch_friction_surface_finish",
+                "name": "Clutch Friction Surface Finish",
+                "acceptance": "Ground clutch interface area is flat and mirror-smooth; zero evidence of heat checking, grinding scoring, radial scratches, or deep handling dents."
+              },
+              {
+                "key": "starter_ring_gear_teeth",
+                "name": "Starter Ring Gear Teeth",
+                "acceptance": "All ring gear teeth are complete and fully formed; zero chipped, broken, or cracked teeth; leading engagement chamfers are clean and uniform."
+              },
+              {
+                "key": "crank_snout_centering_pilot_thread_holes",
+                "name": "Crank Snout Centering Pilot & Thread Holes",
+                "acceptance": "Center locating pilot bore and crankshaft mounting bolt paths are free of rust, burrs, cross-drilling edge steps, or metal chips."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "friction_face_flatness_total_sweep",
+                "name": "Friction Face Flatness (Total Sweep)",
+                "location": "Via a dial indicator sweep across the outer radial friction surface while anchored on a true rotation fixture.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "pilot_bearing_pocket_inner_diameter_id",
+                "name": "Pilot Bearing Pocket Inner Diameter (ID)",
+                "location": "Inside diameter of the center pilot bearing bore (measured across 2 perpendicular axes).",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "starter_ring_gear_outer_diameter_od",
+                "name": "Starter Ring Gear Outer Diameter (OD)",
+                "location": "At 3 points (120° intervals) across the top tips of the ring gear teeth.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-026",
+      "component": "Stud Kit",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-026",
+        "component": "Stud Kit",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "rolled_thread_profiles",
+                "name": "Rolled Thread Profiles",
+                "acceptance": "Threads on both ends (block engagement and nut engagement) are fully formed and crisp; zero flat crests, cross-thread nicks, or razor burrs."
+              },
+              {
+                "key": "unthreaded_center_shank",
+                "name": "Unthreaded Center Shank",
+                "acceptance": "The solid intermediate shank body is straight and uniform; zero machining tool gouges, linear stretch marks, or hydrogen embrittlement micro-cracks."
+              },
+              {
+                "key": "hex_nut_internal_threading",
+                "name": "Hex Nut Internal Threading",
+                "acceptance": "Kit fasteners/nuts are fully tapped; threads are clean and free of plating build-up or loose internal metal flakes."
+              },
+              {
+                "key": "hardened_washer_face_uniformity",
+                "name": "Hardened Washer Face Uniformity",
+                "acceptance": "Parallel surfaces of parallel washers are smooth and clean; zero stamping burrs, edge splitting, or uneven dish warping."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "total_stud_length",
+                "name": "Total Stud Length",
+                "location": "End-to-end parallel to the central stud axis.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "block_end_nut_end_thread_lengths",
+                "name": "Block-End & Nut-End Thread Lengths",
+                "location": "Axial length check of the short and long thread segments using a digital caliper depth rod.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "nut_hex_parallel_width",
+                "name": "Nut Hex Parallel Width",
+                "location": "Micrometer measurement across the flat driving faces of a sample nut from the kit.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-027",
+      "component": "Main Bearing (Shell Half)",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-027",
+        "component": "Main Bearing (Shell Half)",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "antifriction_lining_overlay",
+                "name": "Antifriction Lining Overlay",
+                "acceptance": "Interior bearing lining surface is 100% uniform; zero scratches, scuffs, layer blistering, exposed mid-layers, or embedded foreign matter."
+              },
+              {
+                "key": "steel_backing_condition",
+                "name": "Steel Backing Condition",
+                "acceptance": "Rear steel shell face is smooth, clean, and uniform; zero rust stains, pitting, fretting shadows, or deep stamping indentations."
+              },
+              {
+                "key": "locating_tangs_parting_lines",
+                "name": "Locating Tangs & Parting Lines",
+                "acceptance": "Anti-rotation locating tangs are sharp, crisp, and completely unbent; parting line mating faces are flat and free of upset metal or handling burrs."
+              },
+              {
+                "key": "oil_grooves_holes",
+                "name": "Oil Grooves & Holes",
+                "acceptance": "Oil supply channels and cross-holes are cleanly punched/machined with smoothly chamfered edges; no loose backing burrs."
+              },
+              {
+                "key": "thrust_flanges_for_combination_main_thrust_beari",
+                "name": "Thrust Flanges (for combination main/thrust bearings only)",
+                "acceptance": "Flange lateral faces are smooth and free of machining tears, edge scoring, or handling nicks."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "bearing_shell_wall_thickness",
+                "name": "Bearing Shell Wall Thickness",
+                "location": "Measured at the exact center apex of the bearing half using a specialized ball-anvil micrometer.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "overall_shell_width",
+                "name": "Overall Shell Width",
+                "location": "Measured parallel to the bearing centerline across the parting line edges.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "bearing_free_spread",
+                "name": "Bearing Free Spread",
+                "location": "Measured distance across the extreme outer tips of the bearing shell parting lines in its relaxed state.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "flange_thickness_total_width_for_combination_mai",
+                "name": "Flange Thickness / Total Width (for combination main/thrust bearings only)",
+                "location": "Measured from thrust face to thrust face parallel to the crankshaft axis.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-028",
+      "component": "Cam Bearing (Bushing / Sleeve)",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-028",
+        "component": "Cam Bearing (Bushing / Sleeve)",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "inside_diameter_id_lining_finish",
+                "name": "Inside Diameter (ID) Lining Finish",
+                "acceptance": "Babbitt or overlay lining material is continuous and smoothly machined; zero scoring, pitting, handling marks, or peeling from the backing material."
+              },
+              {
+                "key": "outside_diameter_od_surface_quality",
+                "name": "Outside Diameter (OD) Surface Quality",
+                "acceptance": "Outer steel or bronze backing surface is uniform and smooth to facilitate proper press-fit; free of heavy insertion scratches, burrs, or corrosion."
+              },
+              {
+                "key": "chamfers_lead_in_edges",
+                "name": "Chamfers & Lead-in Edges",
+                "acceptance": "OD edge chamfers are cleanly formed and deburred to prevent scoring the engine block cam tunnel during installation."
+              },
+              {
+                "key": "oil_supply_holes",
+                "name": "Oil Supply Holes",
+                "acceptance": "Lubrication holes are completely open, round, and free of punching flash or hanging metal slivers."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "bearing_wall_thickness",
+                "name": "Bearing Wall Thickness",
+                "location": "Measured using a ball-anvil micrometer at 3 points around the circumference.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "bearing_outer_diameter_od",
+                "name": "Bearing Outer Diameter (OD)",
+                "location": "Measured across 2 axes at 90° to verify press-fit sizing before installation.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "total_bushing_width",
+                "name": "Total Bushing Width",
+                "location": "Measured parallel to the center axis of the sleeve.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-029",
+      "component": "Connecting Rod",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-029",
+        "component": "Connecting Rod",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_verification",
+                "name": "Quantity Verification",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "rod_beam_cap_surface",
+                "name": "Rod Beam & Cap Surface",
+                "acceptance": "Forged or machined surfaces are completely free of deep nicks, transport gouges, heat discoloration, or stamping cracks; no sharp structural stress-risers."
+              },
+              {
+                "key": "big_end_mating_serrations_fractured_face",
+                "name": "Big-End Mating Serrations / Fractured Face",
+                "acceptance": "Cap-to-rod mating interfaces (whether machined serrations or fractured split surfaces) are 100% clean, unbruised, and free of foreign particles or damaged teeth."
+              },
+              {
+                "key": "small_end_bushing_seating",
+                "name": "Small-End Bushing Seating",
+                "acceptance": "Pin bore bushing is securely pressed into place, aligned with the oil pathway, and free of internal scoring, flaking, or edge burrs."
+              },
+              {
+                "key": "bolt_seat_counterbores",
+                "name": "Bolt Seat Counterbores",
+                "acceptance": "Machined seating areas for the rod bolts are flat, clean, and free of tool chatter marks or debris."
+              },
+              {
+                "key": "weight_class_matching_marks",
+                "name": "Weight Class / Matching Marks",
+                "acceptance": "Rod and cap matching serialization or weight class indicators are clearly legible, matched, and permanently marked."
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "big_end_bore_diameter",
+                "name": "Big-End Bore Diameter",
+                "location": "Measured with rod cap installed and torqued to specification (0° and 90° axes with respect to the beam axis).",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "small_end_pin_bushing_inner_diameter_id",
+                "name": "Small-End Pin Bushing Inner Diameter (ID)",
+                "location": "Measured across 0° and 90° vertical/horizontal planes.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "center_to_center_distance",
+                "name": "Center-to-Center Distance",
+                "location": "Measured distance between the absolute center points of the big-end bore and the small-end bore.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "bore_parallelism_twist_and_bend",
+                "name": "Bore Parallelism (Twist and Bend)",
+                "location": "Alignment checked via precision rod fixture pins to calculate alignment error between the big-end and small-end axes.",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-MISC",
+      "component": "Miscellaneous",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "HISTORICAL",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-MISC",
+        "component": "Miscellaneous",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": []
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": []
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": []
+          }
+        ]
+      }
+    }
+  ]
+}

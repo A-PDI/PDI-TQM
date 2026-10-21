@@ -1,0 +1,44 @@
+# Render Blueprint TEMPLATE for an isolated STAGING environment (fictional data only).
+# Nothing here has been provisioned. Applying it creates paid resources and requires
+# explicit PDI owner approval (POL-09). Production must be a separate project/environment
+# with its own database, disk and credentials — never a copy of staging.
+projects:
+  - name: pdi-tqms
+    environments:
+      - name: staging
+        services:
+          - type: web
+            name: tqms-staging
+            runtime: docker
+            dockerfilePath: ./Dockerfile
+            region: oregon
+            plan: 0.5c-512mb        # sizing is POL-09; disks require a paid instance
+            numInstances: 1         # one instance: the evidence disk attaches to one instance
+            healthCheckPath: /health/ready
+            preDeployCommand: node dist/server/server/cli/migrate.js
+            autoDeployTrigger: off  # manual deploys until staging acceptance (Drawing D3.6)
+            disk:
+              name: tqms-evidence
+              mountPath: /app/data
+              sizeGB: 5
+            envVars:
+              - key: APP_ENV
+                value: staging
+              - key: DATABASE_URL
+                fromDatabase:
+                  name: tqms-staging-db
+                  property: connectionString
+              - key: STORAGE_ROOT
+                value: /app/data
+              - key: DISPLAY_TIMEZONE
+                sync: false
+              - key: SECURE_COOKIES
+                value: "true"
+        databases:
+          - name: tqms-staging-db
+            plan: 0.1c-256mb
+            postgresMajorVersion: "17"
+            region: oregon
+            databaseName: tqms
+            user: tqms
+            ipAllowList: []          # no external connections
