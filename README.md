@@ -80,7 +80,7 @@ Use `pg_dump`/`pg_restore` of the same major version as the server (the producti
 
 1. Build: Docker image from `Dockerfile`.
 2. Pre-deploy: `node dist/server/server/cli/migrate.js` (migrations + reference data).
-3. Once per new disk: `node dist/server/server/cli/storage-init.js` (Render shell). Until this runs, `/health/ready` reports the disk as not initialized; the app never writes evidence to the container image.
+3. First boot on a new disk: the app writes the volume marker itself, but only when `STORAGE_ROOT` is a separately mounted filesystem with no evidence tree and the database has never been paired with a volume or recorded a file. In any other case (for example a replacement disk) run `node dist/server/server/cli/storage-init.js` in the Render shell. Until the marker exists, `/health/ready` reports the disk as not initialized; the app never writes evidence to the container image.
 4. Once per environment: bootstrap the administrator.
 
 `/health/ready` fails if the database is unreachable, the evidence disk is absent, unwritable or nearly full, or the disk does not belong to this database.

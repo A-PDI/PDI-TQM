@@ -73,6 +73,23 @@ export async function pairEvidenceVolume(db: Db, storage: EvidenceStorage): Prom
   );
 }
 
+/**
+ * First boot on a freshly attached disk: writes the volume marker automatically, but only when the
+ * storage root is a separately mounted filesystem with no evidence tree yet and this database has never
+ * been paired with a volume or recorded a file. Anything else is left for an operator (storage-init),
+ * so an unmounted image folder or a wrong disk still fails readiness.
+ */
+export async function initFreshEvidenceVolume(db: Db, storage: EvidenceStorage): Promise<string | null> {
+  if (await storage.readVolumeId()) return null;
+  if (!(await storage.isMountPoint())) return null;
+  if (existsSync(storage.objectsDir)) return null;
+  const used = await db.query<{ n: string }>(
+    `SELECT (SELECT count(*) FROM system_setting WHERE key = 'evidence_volume') + (SELECT count(*) FROM file_object) AS n`,
+  );
+  if (Number(used.rows[0]!.n) > 0) return null;
+  return storage.initVolume();
+}
+
 export async function buildApp(config: Config, db: Db, opts: { rootDir?: string } = {}): Promise<{ app: FastifyInstance; svc: Services }> {
   const rootDir = opts.rootDir ?? process.cwd();
   const logoPath = path.join(rootDir, 'assets/brand/pdi_logo_reference_only.png');

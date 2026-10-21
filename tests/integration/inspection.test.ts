@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -371,6 +371,30 @@ describe('evidence files', () => {
     (h.svc as { storage: typeof original }).storage = original;
     expect(bad.statusCode).toBe(503);
     expect(bad.json().checks.evidenceStorage.ok).toBe(false);
+  });
+
+  it('first boot initializes only a freshly mounted, empty disk for a database that has never held evidence', async () => {
+    const { EvidenceStorage } = await import('../../src/server/storage.js');
+    const { initFreshEvidenceVolume } = await import('../../src/server/app.js');
+    const neverUsed = { query: async () => ({ rows: [{ n: '0' }] }) } as unknown as typeof h.pool;
+    const mounted = (root: string) => Object.assign(new EvidenceStorage(root, 1), { isMountPoint: async () => true });
+
+    // An ordinary folder (e.g. the image layer when the disk is not attached) is never initialized.
+    const folder = new EvidenceStorage(mkdtempSync(path.join(os.tmpdir(), 'tqms-folder-')), 1);
+    expect(await folder.isMountPoint()).toBe(false);
+    expect(await initFreshEvidenceVolume(neverUsed, folder)).toBeNull();
+    // A mounted disk is refused when this database is already paired with a volume or holds files.
+    expect(await initFreshEvidenceVolume(h.pool, mounted(mkdtempSync(path.join(os.tmpdir(), 'tqms-other-disk-'))))).toBeNull();
+    // A mounted disk that already has an evidence tree but lost its marker is left for an operator.
+    const lostMarker = mkdtempSync(path.join(os.tmpdir(), 'tqms-lost-marker-'));
+    mkdirSync(path.join(lostMarker, 'objects'));
+    expect(await initFreshEvidenceVolume(neverUsed, mounted(lostMarker))).toBeNull();
+
+    const fresh = mounted(mkdtempSync(path.join(os.tmpdir(), 'tqms-fresh-disk-')));
+    const volumeId = await initFreshEvidenceVolume(neverUsed, fresh);
+    expect(volumeId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(await fresh.check()).toMatchObject({ ok: true, volumeId });
+    expect(await initFreshEvidenceVolume(neverUsed, fresh)).toBeNull(); // already initialized: unchanged
   });
 });
 
