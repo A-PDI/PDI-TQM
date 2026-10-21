@@ -1,27 +1,8 @@
 import PDFDocument from 'pdfkit';
 import type { InspectionReportSnapshot, ReportRow, ReportSection } from '../inspections/report-snapshot.js';
 import { formatDate, formatDateTime, pdfText } from './text.js';
+import { C, CONTENT_W, FOOTER_H, MARGIN, PAGE } from './theme.js';
 
-// Suggested digital tokens (Drawing B6) — reference approximation pending approved brand guide (POL-07).
-const C = {
-  navy: '#1E2D50',
-  navyDark: '#152440',
-  slate: '#4B5563',
-  muted: '#8A93A3',
-  text: '#1F2937',
-  border: '#D8DDE5',
-  section: '#ECEFF3',
-  stripe: '#F8F9FB',
-  green: '#229A61',
-  amber: '#BB8427',
-  red: '#C63B33',
-  white: '#FFFFFF',
-};
-
-const PAGE = { width: 612, height: 792 };
-const MARGIN = 36; // 0.5 in
-const CONTENT_W = PAGE.width - MARGIN * 2;
-const FOOTER_H = 22;
 const BOTTOM = PAGE.height - MARGIN - FOOTER_H;
 
 type Status = 'P' | 'F' | 'A' | 'N' | null;
@@ -565,6 +546,16 @@ function sourceStateText(state: string): string {
       return 'Source approved with conditions';
     case 'APPROVED':
       return 'Source approved';
+    case 'SUSPENDED':
+      return 'Supplier/site SUSPENDED — material held pending authorized review';
+    case 'EXPIRED':
+      return 'Source approval expired — material held pending authorized review';
+    case 'AT_RISK':
+      return 'Source at risk — site qualification not current';
+    case 'RESTRICTED':
+      return 'Exact source RESTRICTED — material held pending authorized review';
+    case 'REQUALIFICATION_REQUIRED':
+      return 'Source change not yet verified — requalification required';
     default:
       return state;
   }

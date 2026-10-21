@@ -61,6 +61,8 @@ export const formDefinitionSchema = z
     formNumber: z.string().regex(/^PDI-IQI-[0-9A-Z]+$/),
     component: z.string().min(1),
     revisionLabel: z.string().nullable(),
+    /** Governed one-off form built for a single inspection (FR-042); never a released template. */
+    oneOff: z.boolean().optional(),
     sections: z.array(sectionSchema).min(1),
   })
   .superRefine((def, ctx) => {
@@ -265,6 +267,8 @@ export function formLabel(def: Pick<FormDefinition, 'formNumber' | 'component' |
 /** Deterministic JSON (sorted object keys) so hashes survive jsonb storage round-trips. */
 export function canonicalJson(value: unknown): string {
   if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  const withToJson = value as { toJSON?: () => unknown };
+  if (typeof withToJson.toJSON === 'function') return canonicalJson(withToJson.toJSON());
   if (Array.isArray(value)) return `[${value.map((v) => canonicalJson(v === undefined ? null : v)).join(',')}]`;
   const entries = Object.entries(value as Record<string, unknown>)
     .filter(([, v]) => v !== undefined)

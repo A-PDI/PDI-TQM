@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, fmtDateTime } from '../api';
-import { LoadState, StatusBadge, useLoad } from '../components/ui';
+import { QualityTabs, UserSelect, useDirectory } from '../components/quality';
+import { Dialog, LoadState, StatusBadge, useLoad } from '../components/ui';
 
 interface EventRow {
   id: string;
@@ -28,9 +29,10 @@ export function QualityList() {
       <div className="page-head">
         <div>
           <h1>Quality</h1>
-          <div className="muted small">Quick concerns and their triage. Formal NCR, containment, disposition and SCAR workflows arrive in Stage 3.</div>
+          <div className="muted small">Quick concerns and their triage. A confirmed concern becomes an NCR with containment, disposition and, when needed, a SCAR.</div>
         </div>
       </div>
+      <QualityTabs />
       <div className="row-actions card" role="group" aria-label="Status filter">
         {[
           ['OPEN', 'Open'],
@@ -100,7 +102,8 @@ interface EventDetail {
   event: Record<string, string | number | null> & { id: string; number: string; title: string; status: string; version: number };
   photos: Array<{ linkId: string; fileId: string; caption: string | null }>;
   history: Array<{ occurredAt: string; action: string; outcome: string; summary: string; reason: string | null; actor: string | null }>;
-  permissions: { canTriage: boolean; triageBlockedReason: string | null };
+  ncr: { id: string; number: string; status: string } | null;
+  permissions: { canTriage: boolean; canConfirmNcr: boolean; triageBlockedReason: string | null };
 }
 
 export function QualityDetail() {
@@ -112,6 +115,7 @@ export function QualityDetail() {
   const [severity, setSeverity] = useState('');
   const [reason, setReason] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   if (!data) return <LoadState loading={loading} error={error} />;
   const e = data.event;
   const field = (label: string, value: unknown) =>
@@ -185,6 +189,20 @@ export function QualityDetail() {
         )}
       </div>
 
+      {data.ncr && (
+        <div className="notice notice-ok">
+          Confirmed as <Link to={`/quality/ncrs/${data.ncr.id}`}>{data.ncr.number}</Link> — containment, disposition and closure continue there.
+        </div>
+      )}
+      {data.permissions.canConfirmNcr && (
+        <div className="card row-actions">
+          <span className="small">A confirmed nonconformance needs containment and an authorized disposition before material can be used.</span>
+          <button type="button" className="btn btn-primary" onClick={() => setConfirmOpen(true)}>
+            Confirm as NCR…
+          </button>
+        </div>
+      )}
+      <ConfirmNcrDialog open={confirmOpen} onClose={() => setConfirmOpen(false)} eventId={id} version={e.version} defaultSeverity={(e.severity as string) ?? ''} />
       {data.permissions.triageBlockedReason && <div className="notice notice-warn">{data.permissions.triageBlockedReason}</div>}
       {data.permissions.canTriage && (
         <form
@@ -244,7 +262,7 @@ export function QualityDetail() {
           <button type="submit" className="btn btn-primary">
             Record triage
           </button>
-          <p className="small muted">Triage does not dispose of material. NCR confirmation, containment and disposition are separate authorized steps (Stage 3).</p>
+          <p className="small muted">Triage does not dispose of material. NCR confirmation, containment and disposition are separate authorized steps.</p>
         </form>
       )}
       {msg && <div className={`notice ${msg.ok ? 'notice-ok' : 'notice-error'}`} role={msg.ok ? 'status' : 'alert'}>{msg.text}</div>}
@@ -262,5 +280,103 @@ export function QualityDetail() {
         </ul>
       </section>
     </>
+  );
+}
+
+function ConfirmNcrDialog({ open, onClose, eventId, version, defaultSeverity }: { open: boolean; onClose: () => void; eventId: string; version: number; defaultSeverity: string }) {
+  const navigate = useNavigate();
+  const owners = useDirectory('ncr.manage');
+  const scars = useLoad<Array<{ id: string; number: string; title: string; status: string }>>(open ? '/api/scars' : null);
+  const [form, setForm] = useState({ severity: defaultSeverity, ownerId: '', failureMode: '', rationale: '', recurrenceOfScarId: '', recurrenceResponseDue: '' });
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const set = (k: keyof typeof form) => (ev: { target: { value: string } }) => setForm({ ...form, [k]: ev.target.value });
+  return (
+    <Dialog
+      open={open}
+      title="Confirm nonconformance"
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="submit" form="confirm-ncr" className="btn btn-primary" disabled={busy}>
+            Confirm NCR
+          </button>
+        </>
+      }
+    >
+      <form
+        id="confirm-ncr"
+        onSubmit={async (ev) => {
+          ev.preventDefault();
+          setBusy(true);
+          setError(null);
+          try {
+            const r = await api<{ id: string }>(`/api/quality/events/${eventId}/confirm-ncr`, {
+              body: {
+                expectedVersion: version,
+                severity: form.severity,
+                ownerId: form.ownerId,
+                failureMode: form.failureMode || null,
+                rationale: form.rationale,
+                recurrenceOfScarId: form.recurrenceOfScarId || null,
+                recurrenceResponseDue: form.recurrenceResponseDue || null,
+              },
+            });
+            navigate(`/quality/ncrs/${r.id}`);
+          } catch (e) {
+            setError((e as Error).message);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <p className="small muted">The NCR keeps the concern’s part, supplier, lot, expected/actual values and the same photographs — nothing is retyped.</p>
+        <div className="field">
+          <label htmlFor="ncr-sev">Severity</label>
+          <select id="ncr-sev" value={form.severity} onChange={set('severity')} required>
+            <option value="">Select…</option>
+            <option>LOW</option>
+            <option>MEDIUM</option>
+            <option>HIGH</option>
+            <option>CRITICAL</option>
+          </select>
+        </div>
+        <UserSelect id="ncr-owner" label="NCR owner" value={form.ownerId} onChange={(v) => setForm({ ...form, ownerId: v })} users={owners} />
+        <div className="field">
+          <label htmlFor="ncr-mode">Failure mode (optional)</label>
+          <input id="ncr-mode" type="text" value={form.failureMode} onChange={set('failureMode')} />
+        </div>
+        <div className="field">
+          <label htmlFor="ncr-why">Confirmation rationale</label>
+          <textarea id="ncr-why" value={form.rationale} onChange={set('rationale')} required minLength={5} />
+        </div>
+        <div className="field">
+          <label htmlFor="ncr-recur">Recurrence of an earlier SCAR (optional)</label>
+          <select id="ncr-recur" value={form.recurrenceOfScarId} onChange={set('recurrenceOfScarId')}>
+            <option value="">Not a known recurrence</option>
+            {scars.data?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.number} — {s.title} ({s.status.replaceAll('_', ' ').toLowerCase()})
+              </option>
+            ))}
+          </select>
+          <div className="field-hint">A recurrence after verified implementation reopens the SCAR into a new cycle; earlier results are kept.</div>
+        </div>
+        {form.recurrenceOfScarId && (
+          <div className="field">
+            <label htmlFor="ncr-recur-due">New supplier response due</label>
+            <input id="ncr-recur-due" type="date" value={form.recurrenceResponseDue} onChange={set('recurrenceResponseDue')} />
+          </div>
+        )}
+        {error && (
+          <div className="notice notice-error" role="alert">
+            {error}
+          </div>
+        )}
+      </form>
+    </Dialog>
   );
 }

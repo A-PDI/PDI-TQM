@@ -28,7 +28,7 @@ export interface Session {
   cookie: string;
   csrf: string;
   get: (url: string) => Promise<Res>;
-  send: (method: 'POST' | 'PATCH' | 'DELETE', url: string, body?: unknown) => Promise<Res>;
+  send: (method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', url: string, body?: unknown) => Promise<Res>;
   upload: (url: string, bytes: Buffer, filename: string, contentType: string) => Promise<Res>;
 }
 
@@ -59,7 +59,7 @@ export async function startHarness(): Promise<Harness> {
     STORAGE_ROOT: storageRoot,
     STORAGE_MIN_FREE_MB: '1',
     MAX_PHOTO_MB: '2',
-    LOG_LEVEL: 'silent',
+    LOG_LEVEL: process.env.TEST_LOG_LEVEL ?? 'silent',
     DISPLAY_TIMEZONE: 'America/Chicago',
     WEB_DIST_DIR: path.join(ROOT, 'does-not-exist'),
   });

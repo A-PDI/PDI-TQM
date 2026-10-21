@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { commitmentEscalation, concessionState, daysBetween, diffCharacteristics, isUsableOutcome, needsReinspection } from '../../src/shared/quality.js';
 import { type FormDefinition, formDefinitionSchema, sectionRows } from '../../src/shared/forms.js';
 import { type EntryState, evaluateInspection, passAllTargets, readingId, rowId, worstOutcome } from '../../src/shared/inspection.js';
 import { type GoverningLimit, compareDecimal, evaluateReading, parseReading } from '../../src/shared/measurement.js';
@@ -221,5 +222,57 @@ describe('PDF text safety', () => {
   it('maps characters the standard fonts cannot draw', () => {
     expect(pdfText('≤ 0.05″ → ok — 25°')).toBe('<= 0.05" -> ok — 25°');
     expect(pdfText('漢')).toBe('?');
+  });
+});
+
+describe('canonical JSON', () => {
+  it('is key-order independent and keeps dates', async () => {
+    const { canonicalJson } = await import('../../src/shared/forms.js');
+    expect(canonicalJson({ b: 1, a: [{ d: 2, c: 3 }] })).toBe(canonicalJson({ a: [{ c: 3, d: 2 }], b: 1 }));
+    expect(canonicalJson({ at: new Date('2026-10-21T00:00:00Z') })).toBe('{"at":"2026-10-21T00:00:00.000Z"}');
+  });
+});
+
+describe('Stage 3 rules', () => {
+  const c = { status: 'APPROVED', valid_from: '2026-10-01', valid_until: '2026-10-31', quantity_limit: 5 };
+  it('a concession authorizes only inside its dates and quantity (AT-14)', () => {
+    expect(concessionState(c, 0, '2026-10-15')).toBe('CURRENT');
+    expect(concessionState(c, 4, '2026-10-31')).toBe('CURRENT');
+    expect(concessionState(c, 5, '2026-10-15')).toBe('EXHAUSTED');
+    expect(concessionState(c, 0, '2026-11-01')).toBe('EXPIRED');
+    expect(concessionState(c, 0, '2026-09-30')).toBe('NOT_YET_VALID');
+    expect(concessionState({ ...c, status: 'REQUESTED' }, 0, '2026-10-15')).toBe('REQUESTED');
+  });
+
+  it('reminders and escalation are proportional to severity (FR-013)', () => {
+    expect(commitmentEscalation('HIGH', 0)).toEqual({ remind: false, escalate: false });
+    expect(commitmentEscalation('HIGH', 1)).toEqual({ remind: true, escalate: true });
+    expect(commitmentEscalation('MEDIUM', 6)).toEqual({ remind: true, escalate: false });
+    expect(commitmentEscalation('MEDIUM', 7)).toEqual({ remind: true, escalate: true });
+    expect(commitmentEscalation('LOW', 30)).toEqual({ remind: true, escalate: false });
+    expect(daysBetween('2026-10-19', '2026-10-21')).toBe(2);
+  });
+
+  it('dispositions: only rework/repair need reinspection; returned or scrapped material is never released', () => {
+    expect(needsReinspection('REWORK') && needsReinspection('REPAIR')).toBe(true);
+    expect(needsReinspection('USE_AS_IS')).toBe(false);
+    expect(['RETURN_TO_SUPPLIER', 'SCRAP'].map(isUsableOutcome)).toEqual([false, false]);
+    expect(['REWORK', 'REPAIR', 'USE_AS_IS'].map(isUsableOutcome)).toEqual([true, true, true]);
+  });
+
+  it('baseline comparison lists changed, added and removed characteristics (FR-083)', () => {
+    const before = [
+      { charKey: 'a', name: 'Bore', lower: '10.00', upper: '10.02', unit: 'mm' },
+      { charKey: 'b', name: 'Finish', limitText: 'Ra 0.8' },
+    ];
+    const after = [
+      { charKey: 'a', name: 'Bore', lower: '10.00', upper: '10.01', unit: 'mm' },
+      { charKey: 'c', name: 'Coating', limitText: 'PVD present' },
+    ];
+    expect(diffCharacteristics(before, after).map((r) => [r.charKey, r.change, r.fields])).toEqual([
+      ['a', 'CHANGED', ['upper']],
+      ['c', 'ADDED', []],
+      ['b', 'REMOVED', []],
+    ]);
   });
 });

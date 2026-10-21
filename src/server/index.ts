@@ -1,6 +1,7 @@
 import { buildApp, checkReadiness, pairEvidenceVolume } from './app.js';
 import { loadConfig } from './config.js';
 import { createPool } from './db.js';
+import { startReminderSchedule } from './quality/commitments.js';
 
 async function main() {
   const config = loadConfig();
@@ -13,11 +14,16 @@ async function main() {
   const readiness = await checkReadiness(svc);
   if (!readiness.ready) app.log.error({ checks: readiness.checks }, 'TQMS is NOT READY — see readiness checks');
 
-  if (config.jobsEnabled) svc.worker?.start();
+  let stopReminders: (() => void) | null = null;
+  if (config.jobsEnabled) {
+    svc.worker?.start();
+    stopReminders = startReminderSchedule(svc);
+  }
   await app.listen({ port: config.port, host: config.host });
 
   const shutdown = async (signal: string) => {
     app.log.info({ signal }, 'shutting down');
+    stopReminders?.();
     await svc.worker?.stop();
     await app.close();
     await db.end();

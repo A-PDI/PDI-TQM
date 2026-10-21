@@ -65,11 +65,18 @@ export function Inspections() {
           <h1>Inspections</h1>
           <div className="muted small">Receiving inspections, newest first.</div>
         </div>
-        {can('inspection.perform') && (
-          <button type="button" className="btn btn-primary" onClick={() => update({ new: '1' })}>
-            New Inspection
-          </button>
-        )}
+        <div className="row-actions">
+          {can('forms.publish') && (
+            <Link className="btn" to="/forms">
+              Forms
+            </Link>
+          )}
+          {can('inspection.perform') && (
+            <button type="button" className="btn btn-primary" onClick={() => update({ new: '1' })}>
+              New Inspection
+            </button>
+          )}
+        </div>
       </div>
       <div className="card">
         <form
@@ -209,6 +216,13 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
   const [sampling, setSampling] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [oneOff, setOneOff] = useState({ component: '', reason: '', receivingFrom: '', visual: '', dimensional: '' });
+  const isOneOff = formId === 'ONE_OFF';
+  const lines = (text: string) =>
+    text
+      .split('\n')
+      .map((l) => l.split('|').map((x) => x.trim()))
+      .filter((p) => p[0]);
 
   useEffect(() => {
     if (!part) {
@@ -227,13 +241,44 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
   }, [part, forms.data]);
 
   const unitCount = Number(units);
-  const valid = part && formId && Number.isInteger(unitCount) && unitCount >= 1 && unitCount <= 100 && received;
+  const valid =
+    part &&
+    formId &&
+    Number.isInteger(unitCount) &&
+    unitCount >= 1 &&
+    unitCount <= 100 &&
+    received &&
+    (!isOneOff || (oneOff.component.trim() && oneOff.reason.trim().length >= 10 && (oneOff.receivingFrom || forms.data?.find((f) => f.formNumber === options?.suggestedFormNumber)) && (oneOff.visual.trim() || oneOff.dimensional.trim())));
   const selectedSource = options?.sources.find((s) => s.id === sourceId);
 
   const start = async () => {
     setBusy(true);
     setError(null);
     try {
+      const common = {
+        unitCount,
+        poNumber: po || null,
+        dateReceived: received,
+        sourceId: sourceId || null,
+        lotNumber: lot || null,
+        lotSize: lotSize ? Number(lotSize) : null,
+        samplingNote: sampling || null,
+      };
+      if (isOneOff) {
+        const created = await api<{ id: string }>('/api/inspections/one-off', {
+          body: {
+            ...common,
+            partId: part!.id,
+            component: oneOff.component,
+            reason: oneOff.reason,
+            receivingFromRevisionId: oneOff.receivingFrom || forms.data?.find((f) => f.formNumber === options?.suggestedFormNumber)?.revisionId,
+            visualRows: lines(oneOff.visual).map(([name, acceptance]) => ({ name, acceptance: acceptance || undefined })),
+            dimensionalRows: lines(oneOff.dimensional).map(([name, unit]) => ({ name, unit: unit || undefined })),
+          },
+        });
+        navigate(`/inspections/${created.id}`);
+        return;
+      }
       const created = await api<{ id: string }>('/api/inspections', {
         body: {
           partId: part!.id,
@@ -287,9 +332,45 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
               {f.revisionLabel ? ` (Rev ${f.revisionLabel})` : ''}
             </option>
           ))}
+          <option value="ONE_OFF">One-off inspection (no catalogue form)…</option>
         </select>
         {options?.suggestedFormNumber && <div className="field-hint">Suggested for this part: {options.suggestedFormNumber}</div>}
       </div>
+      {isOneOff && (
+        <fieldset className="card" style={{ margin: '0 0 12px' }}>
+          <legend className="small" style={{ fontWeight: 600 }}>
+            One-off form — always independently reviewed; never becomes a released template
+          </legend>
+          <div className="field">
+            <label htmlFor="oo-component">Component</label>
+            <input id="oo-component" type="text" value={oneOff.component} onChange={(e) => setOneOff({ ...oneOff, component: e.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor="oo-reason">Why a one-off form is needed</label>
+            <input id="oo-reason" type="text" value={oneOff.reason} onChange={(e) => setOneOff({ ...oneOff, reason: e.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor="oo-recv">Copy receiving checklist from</label>
+            <select id="oo-recv" value={oneOff.receivingFrom} onChange={(e) => setOneOff({ ...oneOff, receivingFrom: e.target.value })}>
+              <option value="">{options?.suggestedFormNumber ? `Suggested form (${options.suggestedFormNumber})` : 'Select form…'}</option>
+              {forms.data?.map((f) => (
+                <option key={f.revisionId} value={f.revisionId}>
+                  {f.formNumber} — {f.component}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="oo-visual">Visual checks (one per line: name | acceptance)</label>
+            <textarea id="oo-visual" value={oneOff.visual} onChange={(e) => setOneOff({ ...oneOff, visual: e.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor="oo-dim">Measurements (one per line: name | unit)</label>
+            <textarea id="oo-dim" value={oneOff.dimensional} onChange={(e) => setOneOff({ ...oneOff, dimensional: e.target.value })} />
+            <div className="field-hint">No limits are invented: readings are recorded as observations for Engineering review.</div>
+          </div>
+        </fieldset>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         <div className="field">
           <label htmlFor="launch-units">Number of Items (1–100)</label>

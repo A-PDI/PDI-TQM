@@ -17,7 +17,8 @@ import {
 import { type EntryState, type Evaluation, type Issue, type Outcome, activationId, evaluateInspection, passAllTargets, readingId, rowId } from '../../shared/inspection';
 import { type GoverningLimit, formatLimit } from '../../shared/measurement';
 import { ApiError, api, fmtDate, fmtDateTime } from '../api';
-import { Dialog, LoadState, OutcomeBadge, StatusBadge } from '../components/ui';
+import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
+import { RequestConcessionDialog } from './Concessions';
 
 interface Detail {
   id: string;
@@ -54,7 +55,8 @@ interface Detail {
   reportPending: boolean;
   reportError: string | null;
   concerns: Array<{ id: string; number: string; title: string; status: string; unitIndex: number; sectionKey: string; rowKey: string }>;
-  permissions: { canEdit: boolean; canReview: boolean; canReviewAccepted: boolean; canAmend: boolean; canCaptureConcern: boolean };
+  concession: { id: string; number: string; quantity: number; validUntil: string } | null;
+  permissions: { canEdit: boolean; canReview: boolean; canReviewAccepted: boolean; canAmend: boolean; canCaptureConcern: boolean; canRequestConcession: boolean };
 }
 
 interface Photo {
@@ -982,6 +984,8 @@ function QuestionRow({ section, row, unitIndex, index, ...ctx }: RowCtx & { sect
 
 function StatusPanel({ detail, evaluation, onReload }: { detail: Detail; evaluation: Evaluation; onReload: () => Promise<unknown> }) {
   const [comment, setComment] = useState('');
+  const [concessionId, setConcessionId] = useState('');
+  const [requestOpen, setRequestOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -991,11 +995,18 @@ function StatusPanel({ detail, evaluation, onReload }: { detail: Detail; evaluat
   }, [detail.reportPending, onReload]);
   const reasons = detail.reviewReasons ?? [];
   const hasAccepted = reasons.some((r) => r.message.startsWith('Accepted'));
+  const concessions = useLoad<Array<{ id: string; number: string; state: string; used: number; quantityLimit: number; validUntil: string; characteristic: string }>>(
+    hasAccepted && detail.status === 'READY_FOR_REVIEW' && detail.partId && detail.lotNumber
+      ? `/api/concessions?status=APPROVED&partId=${detail.partId}&lot=${encodeURIComponent(detail.lotNumber)}`
+      : null,
+  );
   const review = async (decision: 'CONFIRM' | 'RETURN') => {
     setBusy(true);
     setError(null);
     try {
-      await api(`/api/inspections/${detail.id}/review`, { body: { decision, comment: comment || null, expectedVersion: detail.version } });
+      await api(`/api/inspections/${detail.id}/review`, {
+        body: { decision, comment: comment || null, expectedVersion: detail.version, concessionId: decision === 'CONFIRM' && concessionId ? concessionId : null },
+      });
       await onReload();
     } catch (err) {
       setError((err as Error).message);
@@ -1029,6 +1040,14 @@ function StatusPanel({ detail, evaluation, onReload }: { detail: Detail; evaluat
       </div>
       <p className="small muted" style={{ margin: '6px 0 0' }}>
         Material: not authorized by this inspection.{detail.sourceState !== 'APPROVED' ? ' Source is not approved; material stays on hold pending authorized disposition.' : ''}
+        {detail.concession && (
+          <>
+            {' '}
+            Accepted item(s) covered by <Link to={`/quality/concessions/${detail.concession.id}`}>{detail.concession.number}</Link> ({detail.concession.quantity}, valid until{' '}
+            {fmtDate(detail.concession.validUntil)}).
+          </>
+        )}
+        {detail.outcome === 'ACCEPTED' && !detail.concession && detail.status === 'COMPLETED' && ' Accepted items have no concession recorded; they are not authorized for use.'}
       </p>
 
       {detail.status === 'READY_FOR_REVIEW' && (
@@ -1050,6 +1069,29 @@ function StatusPanel({ detail, evaluation, onReload }: { detail: Detail; evaluat
               {hasAccepted && !detail.permissions.canReviewAccepted && (
                 <div className="notice notice-warn small">Confirming an Accepted result requires accepted-result review authority. You can return it or leave it for an authorized reviewer.</div>
               )}
+              {hasAccepted && detail.permissions.canReviewAccepted && (
+                <div className="field">
+                  <label htmlFor="review-concession">Concession covering the accepted item(s)</label>
+                  <select id="review-concession" value={concessionId} onChange={(e) => setConcessionId(e.target.value)}>
+                    <option value="">None — accepted items stay unauthorized for use</option>
+                    {concessions.data
+                      ?.filter((c) => c.state === 'CURRENT')
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.number} — {c.characteristic}, {c.used}/{c.quantityLimit} used, until {fmtDate(c.validUntil)}
+                        </option>
+                      ))}
+                  </select>
+                  <div className="field-hint">
+                    Only current concessions for this part and lot {detail.lotNumber ?? '(no lot recorded)'} are offered.{' '}
+                    {detail.permissions.canRequestConcession && detail.partId && (
+                      <button type="button" className="btn-link" onClick={() => setRequestOpen(true)}>
+                        Request a concession
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="row-actions">
                 <button type="button" className="btn btn-primary" disabled={busy || (hasAccepted && !detail.permissions.canReviewAccepted)} onClick={() => void review('CONFIRM')}>
                   Confirm review
@@ -1064,6 +1106,19 @@ function StatusPanel({ detail, evaluation, onReload }: { detail: Detail; evaluat
           )}
           {error && <div className="notice notice-error" role="alert">{error}</div>}
         </div>
+      )}
+      {detail.partId && (
+        <RequestConcessionDialog
+          open={requestOpen}
+          onClose={() => setRequestOpen(false)}
+          partId={detail.partId}
+          inspectionId={detail.id}
+          lotNumber={detail.lotNumber}
+          onCreated={() => {
+            setRequestOpen(false);
+            concessions.reload();
+          }}
+        />
       )}
 
       {detail.status === 'COMPLETED' && (

@@ -1,10 +1,10 @@
 # PDI TQMS — Total Quality Management System
 
-Internal quality-management web application for PDI: receiving inspections, quality concerns, parts/sources/suppliers, controlled reports and (in later stages) sourcing, NCR/SCAR, change control and injector testing.
+Internal quality-management web application for PDI: receiving inspections, quality concerns and NCRs with containment and disposition, concessions, SCARs, supplier commitments, parts/sources/suppliers with A/B/C sourcing, change control, controlled forms and reports, and (in a later stage) injector testing.
 
 One TypeScript modular monolith: React web app + Fastify (Node 22) API, PostgreSQL as the source of truth, a private persistent disk for original files and generated PDFs, and a database-backed job queue. Designed to run as a single Render web service.
 
-**Status: Stage 0–1 (foundation + receiving inspection).** Not production-ready; see [docs/DESIGN_BASELINE.md](docs/DESIGN_BASELINE.md) for what is built, what is not, and the business decisions PDI must sign.
+**Status: Stages 0–3 (foundation, receiving inspection, supplier qualification and sourcing, NCR/concession/SCAR, supplier commitments, change control and the form editor).** Not production-ready; see [docs/DESIGN_BASELINE.md](docs/DESIGN_BASELINE.md) for what is built, what is not, and the business decisions PDI must sign.
 
 ## Local development
 
@@ -23,7 +23,7 @@ npm run dev:server              # API on :3000
 npm run dev:web                 # web on :5173 (proxies /api to :3000)
 ```
 
-Demo users (fictional, all share `TQMS_DEMO_PASSWORD`): `jordan.rivera@example.com` (inspector), `casey.morgan@example.com` (quality), `taylor.brooks@example.com` (engineering), `riley.chen@example.com` (management + inspector), `avery.patel@example.com` (administrator).
+Demo users (fictional, all share `TQMS_DEMO_PASSWORD`): `jordan.rivera@example.com` (inspector), `casey.morgan@example.com` (quality), `taylor.brooks@example.com` (engineering), `riley.chen@example.com` (management + inspector), `avery.patel@example.com` (administrator), `morgan.diaz@example.com` (purchasing).
 
 For a real environment, do not seed demo data. Create the first administrator once:
 
@@ -55,6 +55,8 @@ npm run build && npm run test:e2e   # Playwright desktop (1440) and phone (390) 
 | `STORAGE_MIN_FREE_MB` | no | Readiness fails below this free space (default 256) |
 | `MAX_PHOTO_MB` | no | Photo upload limit (default 15) |
 | `SESSION_TTL_HOURS` | no | Session lifetime (default 12) |
+| `LOGIN_RATE_LIMIT_PER_MIN` | no | Sign-in attempts per IP per minute (default 10) |
+| `MAX_DOCUMENT_MB` | no | Document evidence upload limit (default 25) |
 | `SECURE_COOKIES` | no | Defaults to `true` in staging/production |
 | `DISPLAY_TIMEZONE` | no | IANA zone for report dates (default `UTC`; POL-16) |
 | `JOBS_ENABLED` | no | `false` disables the in-process job worker |
@@ -74,7 +76,7 @@ npm run build && npm run test:e2e   # Playwright desktop (1440) and phone (390) 
 ## Repository layout
 
 ```
-src/shared/     domain rules shared by server and browser (forms, measurement, completion)
+src/shared/     domain rules shared by server and browser (forms, measurement, completion, sourcing, quality/change rules)
 src/server/     Fastify API, auth, audit, storage, jobs, PDF rendering, CLIs
 src/web/        React application
 migrations/     forward-only SQL migrations

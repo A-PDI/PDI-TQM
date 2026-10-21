@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { api } from '../api';
 
 export function OutcomeBadge({ outcome }: { outcome: string | null | undefined }) {
@@ -90,7 +90,8 @@ export function useLoad<T>(path: string | null, deps: unknown[] = []) {
       .finally(() => setLoading(false));
     return () => ctrl.abort();
   }, [path, tick, ...deps]);
-  return { data, error, loading, reload: () => setTick((t) => t + 1), setData };
+  const reload = useCallback(() => setTick((t) => t + 1), []);
+  return { data, error, loading, reload, setData };
 }
 
 export function LoadState({ loading, error }: { loading: boolean; error: string | null }) {

@@ -153,6 +153,12 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
         [id],
       ),
     ]);
+    // Accepted items are covered only by a recorded concession use; the inspection itself never releases material (NEG-06).
+    const concessionUse = await one<{ id: string; number: string; quantity: number; valid_until: string }>(
+      db,
+      `SELECT c.id, c.number, u.quantity, c.valid_until::text FROM concession_use u JOIN concession c ON c.id = u.concession_id WHERE u.inspection_id = $1 AND u.released_at IS NULL`,
+      [id],
+    );
     const editable = ['DRAFT', 'PARTIAL'].includes(r.status) && r.inspector_id === auth.userId && has(auth, 'inspection.perform');
     return {
       id: r.id,
@@ -207,12 +213,14 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
       reportPending: pendingSnapshots!.n > 0,
       reportError: failedJob ? 'Report generation failed; an administrator has been notified in the job log.' : null,
       concerns,
+      concession: concessionUse ? { id: concessionUse.id, number: concessionUse.number, quantity: concessionUse.quantity, validUntil: concessionUse.valid_until } : null,
       permissions: {
         canEdit: editable,
         canReview: r.status === 'READY_FOR_REVIEW' && has(auth, 'inspection.review') && r.inspector_id !== auth.userId,
         canReviewAccepted: has(auth, 'inspection.review_accepted'),
         canAmend: r.status === 'COMPLETED' && has(auth, 'inspection.amend'),
         canCaptureConcern: has(auth, 'quality.capture'),
+        canRequestConcession: has(auth, 'concession.request'),
       },
     };
   });
@@ -259,7 +267,12 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
   app.post('/api/inspections/:id/review', async (req) => {
     const { id } = req.params as { id: string };
     const body = z
-      .object({ decision: z.enum(['CONFIRM', 'RETURN']), comment: z.string().max(2000).nullable().optional(), expectedVersion: z.number().int() })
+      .object({
+        decision: z.enum(['CONFIRM', 'RETURN']),
+        comment: z.string().max(2000).nullable().optional(),
+        expectedVersion: z.number().int(),
+        concessionId: z.string().uuid().nullable().optional(),
+      })
       .parse(req.body);
     return reviewInspection(db, config, req, id, body);
   });

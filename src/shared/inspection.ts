@@ -162,6 +162,15 @@ export function evaluateInspection(ctx: EvaluationContext, state: EntryState): E
   const sharedOutcome = worstOutcome(sharedStatuses);
   for (const u of units) if (!(u in unitOutcomes)) unitOutcomes[u] = null;
   const overall = worstOutcome([sharedOutcome, ...units.map((u) => unitOutcomes[u])]);
+  if (ctx.definition.oneOff) {
+    reviewReasons.unshift({
+      unitIndex: 0,
+      sectionKey: '',
+      rowKey: null,
+      path: 'Inspection',
+      message: 'One-off form — not a released template; independent review required',
+    });
+  }
   if (overall === 'FAIL') {
     reviewReasons.unshift({
       unitIndex: 0,

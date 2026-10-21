@@ -182,3 +182,20 @@ export function setSessionCookie(reply: FastifyReply, token: string, expiresAt: 
 export function clearSessionCookie(reply: FastifyReply, secure: boolean) {
   reply.clearCookie(SESSION_COOKIE, { httpOnly: true, secure, sameSite: 'strict', path: '/' });
 }
+
+/**
+ * Records a denied consequential attempt on the pool (outside any transaction, so the record
+ * survives the rollback) and returns the 403 to throw.
+ */
+export async function auditedDenial(
+  db: Queryable,
+  req: FastifyRequest,
+  actorId: string,
+  action: string,
+  entityType: string,
+  entityId: string,
+  message: string,
+) {
+  await audit(db, { actorId, action, outcome: 'DENIED', entityType, entityId, summary: `Denied: ${message}`, requestId: req.id });
+  return forbidden(message);
+}
