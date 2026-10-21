@@ -58,6 +58,16 @@ export class EvidenceStorage {
     return volumeId;
   }
 
+  /** True only when the root is its own mounted filesystem (a different device from its parent folder). */
+  async isMountPoint(): Promise<boolean> {
+    try {
+      const [own, parent] = await Promise.all([fs.stat(this.root), fs.stat(path.dirname(this.root))]);
+      return own.dev !== parent.dev;
+    } catch {
+      return false;
+    }
+  }
+
   async readVolumeId(): Promise<string | null> {
     try {
       const raw = await fs.readFile(path.join(this.root, VOLUME_MARKER), 'utf8');

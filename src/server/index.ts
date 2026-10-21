@@ -1,4 +1,4 @@
-import { buildApp, checkReadiness, pairEvidenceVolume } from './app.js';
+import { buildApp, checkReadiness, initFreshEvidenceVolume, pairEvidenceVolume } from './app.js';
 import { loadConfig } from './config.js';
 import { createPool } from './db.js';
 import { startReminderSchedule } from './quality/commitments.js';
@@ -10,6 +10,11 @@ async function main() {
 
   // Startup verification: never fall back to ephemeral storage. The process still serves
   // /health so the platform sees a clear "not ready" reason instead of a crash loop.
+  const initialized = await initFreshEvidenceVolume(db, svc.storage).catch((err) => {
+    app.log.error({ err }, 'could not initialize the evidence volume');
+    return null;
+  });
+  if (initialized) app.log.info({ volumeId: initialized }, 'initialized a freshly attached evidence volume');
   await pairEvidenceVolume(db, svc.storage).catch((err) => app.log.error({ err }, 'could not pair evidence volume'));
   const readiness = await checkReadiness(svc);
   if (!readiness.ready) app.log.error({ checks: readiness.checks }, 'TQMS is NOT READY — see readiness checks');
