@@ -1,0 +1,60 @@
+{
+  "name": "pdi-tqms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PDI Total Quality Management System (TQMS) \u2014 modular monolith",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12 <23"
+  },
+  "scripts": {
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:web": "vite --config vite.config.ts",
+    "build": "npm run build:server && npm run build:web",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:web": "vite build --config vite.config.ts",
+    "start": "node dist/server/server/index.js",
+    "migrate": "tsx src/server/cli/migrate.ts",
+    "migrate:prod": "node dist/server/server/cli/migrate.js",
+    "catalogue:import": "tsx scripts/import-appendix-a.ts",
+    "bootstrap:admin": "tsx src/server/cli/bootstrap-admin.ts",
+    "seed:demo": "tsx src/server/cli/seed-demo.ts",
+    "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.web.json --noEmit && tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "storage:init": "tsx src/server/cli/storage-init.ts",
+    "storage:init:prod": "node dist/server/server/cli/storage-init.js"
+  },
+  "dependencies": {
+    "@fastify/cookie": "11.1.2",
+    "@fastify/helmet": "13.1.1",
+    "@fastify/multipart": "9.4.0",
+    "@fastify/rate-limit": "10.3.0",
+    "@fastify/static": "10.1.5",
+    "fastify": "5.12.5",
+    "image-size": "2.0.4",
+    "pdfkit": "0.17.2",
+    "pg": "8.23.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.20.5",
+    "@types/pdfkit": "0.17.6",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "eslint": "9.39.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router-dom": "7.18.4",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.1",
+    "vite": "7.3.7",
+    "vitest": "4.1.11"
+  }
+}

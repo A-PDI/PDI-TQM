@@ -1,0 +1,39 @@
+# Construction Drawing D — Render operations, security, retention and deployment
+
+## D1. Selected hosting architecture; avoid infrastructure shenanigans
+
+Use Render for app execution, managed PostgreSQL for all structured entities and business jobs, and private Render persistent disk for documents, photographs and generated PDFs. Do **not** provision S3/AWS, Redis, object-gateway, standalone worker, Elasticsearch, Kafka, Kubernetes, external auth tenant, separate scanning microservice or alternate database merely because a generic architectural template suggests it. The plan must be affordable for seven initial people and explicit about limitations and costs. Architecture leaves a storage abstraction to migrate to private object storage *later* if multi-instance scaling or durability policy demands, without building both providers today.
+
+**Staging starting blueprint (example, not a claim that resources already exist):** dedicated Render project/environment, Docker web service one instance, Oregon region unless PDI elects otherwise, `DATABASE_URL` injected from managed PostgreSQL 17; `STORAGE_BACKEND=filesystem`, `STORAGE_ROOT=/app/data`; separately provision 5 GB durable disk mounted `/app/data` for proof of concept, scaled and monitored with actual workload; secure https origin from Render external URL. Staging synthetic-only. Production has **separate project/environment/resources/disk/database and credentials** sized from measurements; never share staging DB, evidence mounts or copy snapshots into production as a quick deployment shortcut.
+
+The repository's earlier staging blueprint used PostgreSQL 17 on managed Render, single Docker web service with 5 GB evidence disk. That is a tested *direction*, not a guarantee that the same plan/capacity suffices for production. Benchmark photos/storage/backup and decide at go-live with recorded RTO/RPO and budget.
+
+## D2. Filesystem evidence durability controls
+
+App never writes originals to ephemeral image layers, `/tmp` or a public static web folder. Use content-derived or random opaque paths under `/app/data`, append-only immutable originals, temporary staging upload directory on the same persistent disk, atomic finalize/rename, checksum verified, metadata committed only after durable write status. Race/failed orphans reconciled safely through logged maintenance. Never expose the whole disk as a static directory. Limit types/sizes; inspect file signatures, block scripts, enforce PDFs/images safe bounds, record the original hash/length and evidence associations. Restrict uploads to authorized users; downloads authorized at request time using session-checked short-lived non-forwardable download URLs or streamed responses; signed links are not identity-neutral approvals. Ensure file permission, path traversal and download timing tests.
+
+Database/attached disk are distinct persistence systems and snapshots are not one atomic backup. Provide a documented **application-consistent export/backup**: enter short quiesced window or backup coordination, export PG contents using approved Render mechanism, enumerate/checksum files from disk, produce versioned manifest, copy both to an independently secured encrypted destination outside the service, and verify an isolated restore end to end. Test original file bytes, foreign keys, audit, user roles, PDFs, reports and permissions. Version stamps allow detection of uncoordinated sets. Do not claim the evidence disk alone or database backup alone is sufficient recovery. Set approved retention and backup RPO/RTO before operational production.
+
+## D3. Deployment procedure
+
+1. Build/test locally using Docker (Postgres and app) and fictional fixture data. Typecheck, lint, unit, integration, UI, PDF, backup/restore tests required. Scripted fresh-install smoke test.
+2. Create protected `main` + feature PR reviews + CI. Never deploy `main` to live users without approved release process. Keep build and seed/reset workflows completely separate.
+3. Provision isolated Render staging with managed PG and private disk. No production data; confirm a real administrator can sign in, then explicit audited idempotent fictional-demo import. Avoid public demo passwords.
+4. Configure HTTPS origin/cookies, auth session secret, internal DB URL, disk root/permissions, safe MIME/size limits, email delivery disabled until a real destination is approved. Prepared runbook must distinguish PostgreSQL migration (predeploy) and web startup origin/storage checks to avoid false boot failures.
+5. Migrations forward-only, idempotent as designed, backed up and verified; no silent schema drops. At deploy, existing test user/session, partial inspection, photos and frozen PDFs survive restart/redeploy. Health and readiness avoid exposing secrets.
+6. Before staging acceptance: manual deploy and Blueprint sync only. Enable controlled auto-deploy after explicit acceptance; no automatic synthetic seeding on each boot; no Render plan purchases or resource creation without owner approval.
+7. Production go/no-go after role tests, performance, security, file persistence, backup/off-site copy, isolated restore, applicable PDI business policies and training. Separate production provisioning authorization; no automatic operational use or supplier invitation.
+
+## D4. Security baseline
+
+Use TLS-only origin; secure HttpOnly SameSite cookies, CSRF defense for state changes, rate limiting and login throttling, strong password hashing and reset flow, role/capability/record scope enforcement on backend reads **and** writes, authenticated private evidence, file upload validation, request schema validation, exception hygiene, secrets management, session revocation and least privilege. Entra/Microsoft SSO is an optional planned extension; **local accounts at launch** acceptable, but production must use strong authentication/MFA or a PDI-approved equivalent considering risk. Administrator bootstrap is create-once and explicitly auditable; a single admin must not spoof an independent approver or share credentials to work around segregation.
+
+Server logs record relevant event IDs, failed gate reasons and safe user reference; never secret tokens, complete credentials, unredacted data attachments. Readiness check must fail if DB unreachable or evidence disk absent, read-only or dangerously full; never degrade to ephemeral writes. Scheduled jobs retry with bounded backoff and visible failures. PII and supplier confidential evidence must be access-controlled, not placed in public demonstration archives or screenshots.
+
+## D5. Monitoring, maintenance, cost and capacity
+
+Track web availability, HTTP error rate/latency, DB connectivity, job queue age/failures, evidence disk fullness, file validation errors, backup age, restore success, mail failures and audit anomalies. Alert a named responsible employee, not an assumed enterprise IT team. Log retention and notification delivery are policy questions; minimal operational dashboards can be implemented with application logs, Render metrics and database queries before buying dedicated observability tools. Run capacity scenarios for 100-unit forms, ~1k inspections/year, years of photos and documents; use actual workload measurements to size database/file disk and backup. Determine expected monthly cost before purchases; note Render disk is bound to one instance and deploy scheduling may interrupt service.
+
+## D6. Formal operator handoff
+
+Deliver: environment variables table without credentials, Render provisioning script or blueprint, migration and rollback playbook, fresh install bootstrap, account management, safe seed procedure, backup/export and isolated restore executable procedure with evidence manifest, outage/recovery instructions, job-failure workflow, security incident response, file retention approach, data export/exit strategy, tested dependency-update cadence, and production acceptance signatures.
