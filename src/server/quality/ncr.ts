@@ -775,7 +775,7 @@ export function registerNcrRoutes(app: FastifyInstance, svc: Services) {
         action: 'ncr.release',
         entityType: 'ncr',
         entityId: scope.ncr_id,
-        summary: `${qty} unit(s) of lot ${scope.lot_number} released from the TQMS hold (record only; no ERP stock movement)`,
+        summary: `${qty} unit(s) of lot ${scope.lot_number} released from the TQM hold (record only; no ERP stock movement)`,
         reason: body.note,
         requestId: req.id,
       });

@@ -1,4 +1,4 @@
-# PDI TQMS — Total Quality Management System
+# PDI TQM — Total Quality Management
 
 Internal quality-management web application for PDI: receiving inspections, quality concerns and NCRs with containment and disposition, concessions, SCARs, supplier commitments, parts/sources/suppliers with A/B/C sourcing, change control, controlled forms, injector bench testing and repair, management reports and traceability.
 

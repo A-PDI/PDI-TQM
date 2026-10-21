@@ -187,7 +187,7 @@ export function NcrDetail() {
           </Link>
         </div>
       </div>
-      {!closed && <div className="notice notice-warn">Affected material is not authorized for use until its disposition is verified and released. A TQMS hold does not move ERP stock.</div>}
+      {!closed && <div className="notice notice-warn">Affected material is not authorized for use until its disposition is verified and released. A TQM hold does not move ERP stock.</div>}
       {closed && openScars.length > 0 && (
         <div className="notice notice-warn">
           The NCR is closed for local material, but {openScars.map((s) => s.number).join(', ')} remains open with the supplier.
@@ -556,7 +556,7 @@ export function NcrDetail() {
       {dialog?.kind === 'release' && (
         <NoteDialog
           title="Release verified material"
-          label="Release note (TQMS record only; ERP stock is moved separately)"
+          label="Release note (TQM record only; ERP stock is moved separately)"
           action="Release"
           onClose={() => setDialog(null)}
           submit={(note) => api(`/api/scopes/${dialog.scope.id}/release`, { body: { note } })}

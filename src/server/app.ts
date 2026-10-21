@@ -92,7 +92,7 @@ export async function initFreshEvidenceVolume(db: Db, storage: EvidenceStorage):
 
 export async function buildApp(config: Config, db: Db, opts: { rootDir?: string } = {}): Promise<{ app: FastifyInstance; svc: Services }> {
   const rootDir = opts.rootDir ?? process.cwd();
-  const logoPath = path.join(rootDir, 'assets/brand/pdi_logo_reference_only.png');
+  const logoPath = path.join(rootDir, 'assets/brand/pdi-logo.png');
   const storage = new EvidenceStorage(config.storageRoot, config.storageMinFreeBytes);
   const app = Fastify({
     logger: {

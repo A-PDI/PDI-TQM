@@ -22,7 +22,7 @@ export const SCOPE_STATE_TEXT: Record<string, string> = {
   SEGREGATED_VERIFIED: 'Segregation verified',
   DECIDED: 'Disposition decided',
   VERIFIED_RESOLVED: 'Disposition verified',
-  RELEASED: 'Released from TQMS hold',
+  RELEASED: 'Released from TQM hold',
 };
 
 export const DISPOSITION_OUTCOMES = ['RETURN_TO_SUPPLIER', 'SCRAP', 'REWORK', 'REPAIR', 'USE_AS_IS'] as const;

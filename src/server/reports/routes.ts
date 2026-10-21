@@ -93,7 +93,7 @@ export function registerReportRoutes(app: FastifyInstance, svc: Services) {
 
   // CSV exports: each carries its period, time zone, generation time and definitions version (FR-103, C10).
   const sendCsv = async (reply: FastifyReply, name: string, title: string, p: { from: string; to: string }, header: string[], rows: unknown[][]) => {
-    const body = [[`# PDI TQMS ${title}; period ${p.from} to ${p.to} (${tz}); generated ${new Date().toISOString()}; ${METRICS_VERSION}`], header, ...rows];
+    const body = [[`# PDI TQM ${title}; period ${p.from} to ${p.to} (${tz}); generated ${new Date().toISOString()}; ${METRICS_VERSION}`], header, ...rows];
     return reply
       .header('Content-Type', 'text/csv; charset=utf-8')
       .header('Content-Disposition', `attachment; filename="${name}-${p.from}-${p.to}.csv"`)

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { QuickCapture } from './QuickCapture';
+import logoUrl from '../assets/pdi-logo.png';
 
 const NAV: Array<{ to: string; label: string; built: boolean; stage?: string; also?: string[] }> = [
   { to: '/', label: 'Home', built: true },
@@ -28,7 +29,7 @@ export function Layout() {
     <div className="shell">
       <aside className={`sidebar${menuOpen ? ' open' : ''}`}>
         <div className="brand">
-          <span className="brand-mark">PDI</span> TQMS
+          <img className="brand-logo" src={logoUrl} alt="PDI" /> <span>TQM</span>
         </div>
         {showEnv && <span className="env-badge">{me.environment.toUpperCase()}</span>}
         <nav aria-label="Main navigation">
