@@ -129,7 +129,10 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
     },
     crossOriginResourcePolicy: { policy: 'same-origin' },
   });
-  await app.register(rateLimit, { global: true, max: 600, timeWindow: '1 minute' });
+  // The limit guards the API. Static files and the app shell are exempt: one page load fetches
+  // several of them, and an office shares one public address, so counting them would make the
+  // app fail to load for everyone once a few people are busy.
+  await app.register(rateLimit, { global: true, max: 600, timeWindow: '1 minute', allowList: (req) => !req.url.startsWith('/api/') });
   await app.register(multipart, { limits: { files: 1, fields: 10, fieldSize: 2048 } });
 
   app.decorateRequest('auth', null);

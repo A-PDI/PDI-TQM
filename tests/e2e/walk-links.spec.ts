@@ -24,9 +24,16 @@ async function crawl(browser: Browser, email: string) {
   const problems: string[] = [];
   let current = '/';
   page.on('pageerror', (err) => problems.push(`${current} — browser error: ${err.message}`));
+  // What happened while the current page loaded, reported only if the page shows no heading.
+  let notes: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') notes.push(`console: ${msg.text()}`);
+  });
+  page.on('requestfailed', (req) => notes.push(`request failed: ${new URL(req.url()).pathname} (${req.failure()?.errorText ?? 'unknown'})`));
   page.on('response', (res) => {
     const url = new URL(res.url());
     if (url.pathname.startsWith('/api/') && res.request().method() === 'GET' && res.status() >= 400) problems.push(`${current} — ${res.status()} from ${url.pathname}${url.search}`);
+    else if (!url.pathname.startsWith('/api/') && res.status() >= 400) problems.push(`${current} — ${res.status()} for asset ${url.pathname}`);
   });
 
   const queue = ['/'];
@@ -36,6 +43,7 @@ async function crawl(browser: Browser, email: string) {
   while (queue.length && visited < MAX_PAGES) {
     current = queue.shift()!;
     visited += 1;
+    notes = [];
     await page.goto(current);
     await page.waitForLoadState('networkidle');
     const heading = page.getByRole('heading', { level: 1 });
@@ -43,7 +51,10 @@ async function crawl(browser: Browser, email: string) {
     // A lazy route can still show its loading fallback once the network is quiet on a slow runner.
     await heading.or(notFound).first().waitFor({ timeout: 10_000 }).catch(() => undefined);
     if (await notFound.count()) problems.push(`${current} — Page not found`);
-    else if ((await heading.count()) === 0) problems.push(`${current} — no page heading`);
+    else if ((await heading.count()) === 0) {
+      const shown = (await page.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 200);
+      problems.push(`${current} — no page heading; shows "${shown}"${notes.length ? `; ${notes.join('; ')}` : ''}`);
+    }
     const hrefs = await page.locator('main a[href^="/"], nav a[href^="/"]').evaluateAll((as) => as.map((a) => a.getAttribute('href')!));
     for (const href of hrefs) {
       if (href.startsWith('/api/') || seen.has(href)) continue;
