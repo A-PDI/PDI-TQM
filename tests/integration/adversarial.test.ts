@@ -106,6 +106,20 @@ describe('real concurrency — one open concern per failed row', () => {
   });
 });
 
+describe('rate limiting', () => {
+  it('limits the API but never static files or health checks, which a single page load fetches many of', async () => {
+    const api = await h.app.inject({ method: 'GET', url: '/api/auth/me' });
+    expect(api.headers['x-ratelimit-limit']).toBe('600');
+    const statuses = new Set<number>();
+    for (let i = 0; i < 650; i += 1) {
+      const res = await h.app.inject({ method: 'GET', url: '/health/live' });
+      statuses.add(res.statusCode);
+      expect(res.headers['x-ratelimit-limit']).toBeUndefined();
+    }
+    expect([...statuses]).toEqual([200]);
+  });
+});
+
 describe('direct status tampering in the database', () => {
   it('completed inspections, their entries, reviews, renditions and files cannot be altered or deleted', async () => {
     const id = await completed(false);
