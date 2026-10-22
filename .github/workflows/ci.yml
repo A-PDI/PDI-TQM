@@ -7,6 +7,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-24.04
+    # A stalled runner step (e.g. package download) should fail the run instead of holding it for hours.
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:17

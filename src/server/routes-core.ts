@@ -105,6 +105,7 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
                 WHEN 'CHANGE' THEN '/changes/' || w.subject_id
                 WHEN 'CHANGE_ACTION' THEN '/changes/' || (SELECT ca.change_id FROM change_action ca WHERE ca.id = w.subject_id)
                 WHEN 'FORM_REVISION' THEN '/forms/' || w.subject_id
+                WHEN 'INSPECTION_STAGE' THEN '/inspection-stages/' || w.subject_id
               END AS link,
               (w.due_at IS NOT NULL AND w.due_at < now()) AS overdue
          FROM work_item w LEFT JOIN app_user a ON a.id = w.assignee_id

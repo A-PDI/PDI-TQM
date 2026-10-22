@@ -25,6 +25,7 @@ import { registerFormRoutes } from './forms/forms.js';
 import { registerInjectorRoutes } from './injectors/routes.js';
 import { registerReportRoutes } from './reports/routes.js';
 import { registerControlledDocumentRoutes } from './documents/routes.js';
+import { registerStageRoutes } from './inspections/stages.js';
 import { registerCoreRoutes } from './routes-core.js';
 import { recordReportHandler } from './sourcing/approval-report.js';
 import { registerBaselineRoutes } from './sourcing/baselines.js';
@@ -191,6 +192,7 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
   registerInjectorRoutes(app, svc);
   registerReportRoutes(app, svc);
   registerControlledDocumentRoutes(app, svc);
+  registerStageRoutes(app, svc);
 
   if (existsSync(path.join(config.webDistDir, 'index.html'))) {
     await app.register(fastifyStatic, { root: config.webDistDir, wildcard: false, index: false });

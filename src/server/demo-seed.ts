@@ -82,6 +82,7 @@ export async function seedDemo(db: Db, password: string): Promise<{ users: Recor
       ['TQ-LNR-2002', 'Cylinder liner, wet type', 'Liners', 'PDI-IQI-002', ['OE-LNR-55-2002']],
       ['TQ-PRK-3003', 'Piston ring kit, 3-ring', 'Rings', 'PDI-IQI-004', ['OE-PRK-55-3003', 'LEG-RK-3003']],
       ['TQ-CYH-4004', 'Cylinder head, 6-cylinder', 'Cylinder heads', 'PDI-IQI-005', ['OE-CYH-55-4004']],
+      ['TQ-CYH-4004-S2', 'Cylinder head, 6-cylinder, Stage 2 (fire ring)', 'Cylinder heads', 'PDI-IQI-005', []],
       ['TQ-TRB-5005', 'Turbocharger, VGT', 'Turbochargers', 'PDI-IQI-011', ['OE-TRB-55-5005']],
       ['TQ-CRK-6006', 'Crankshaft, forged', 'Crankshafts', 'PDI-IQI-014', ['OE-CRK-55-6006']],
       ['TQ-WPM-7007', 'Water pump assembly', 'Cooling', 'PDI-IQI-024', ['OE-WPM-55-7007']],
@@ -116,6 +117,12 @@ export async function seedDemo(db: Db, password: string): Promise<{ users: Recor
       ['valve_recession_intake', 'Valve recession — intake', 'valve_recession:intake', 'in', '0.030', '0.050'],
       ['valve_recession_exhaust', 'Valve recession — exhaust', 'valve_recession:exhaust', 'in', '0.030', '0.050'],
       ['head_height', 'Cylinder Head Height', 'general_measurements:cylinder_head_height', 'in', '4.795', '4.805'],
+    ]);
+
+    // Stage 2 product made from a Stage 1 head: only the fire ring groove limits apply (Stage 2 addendum).
+    await releasedBaseline(tx, parts['TQ-CYH-4004-S2']!, 'PDI drawing TQ-CYH-4004-S2 (synthetic)', 'PDI', 'A', users.engineering, [
+      ['groove_depth', 'Fire ring groove depth', 'groove_specs:groove_depth', 'in', '0.029', '0.031'],
+      ['wire_protrusion', 'Fire ring wire protrusion', 'groove_specs:wire_protrusion', 'in', '0.008', '0.010'],
     ]);
 
     // Synthetic PDI bench criteria for the injector (FUNCTIONAL, referenced as injector:<condition>__<parameter>).
