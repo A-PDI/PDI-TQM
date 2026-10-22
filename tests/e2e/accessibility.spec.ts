@@ -93,11 +93,13 @@ test('axe: every main destination has no serious or critical WCAG A/AA violation
     `/trace?partId=${part.id}&lot=LOT-A11Y`,
     '/search?q=TQ',
     '/policies',
+    '/documents',
   ];
   const findings: string[] = [];
   for (const url of urls) findings.push(...(await audit(page, url)));
   const admin = await pageAs(browser, 'avery.patel@example.com');
   findings.push(...(await audit(admin, '/admin')));
+  findings.push(...(await audit(admin, '/documents')));
   const quality = await pageAs(browser, 'casey.morgan@example.com');
   findings.push(...(await audit(quality, '/forms')));
   expect(findings).toEqual([]);

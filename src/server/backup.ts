@@ -39,6 +39,8 @@ const COUNTED_TABLES = [
   'change_request',
   'source_approval_decision',
   'injector_test',
+  'controlled_document',
+  'controlled_document_revision',
 ] as const;
 
 export interface BackupFile {
@@ -342,9 +344,10 @@ export async function verifyBackup(opts: {
       check('evidence links', bad === 0 && files.length === manifest.evidence.count, bad ? `${bad} restored records point to missing or altered files` : `${files.length} file records resolve to restored bytes with matching SHA-256`);
       const dangling = (await restored.query<{ n: number }>(
         `SELECT (SELECT count(*) FROM evidence_link l LEFT JOIN file_object f ON f.id = l.file_id WHERE f.id IS NULL OR f.status <> 'AVAILABLE')
-              + (SELECT count(*) FROM report_rendition r LEFT JOIN file_object f ON f.id = r.file_id WHERE f.id IS NULL OR f.sha256 <> r.sha256) AS n`,
+              + (SELECT count(*) FROM report_rendition r LEFT JOIN file_object f ON f.id = r.file_id WHERE f.id IS NULL OR f.sha256 <> r.sha256)
+              + (SELECT count(*) FROM controlled_document_revision d LEFT JOIN file_object f ON f.id = d.file_id WHERE f.id IS NULL OR f.sha256 <> d.sha256) AS n`,
       )).rows[0]!.n;
-      check('evidence and report references', Number(dangling) === 0, Number(dangling) ? `${dangling} links or report editions do not resolve` : 'every evidence link and report edition resolves');
+      check('evidence and report references', Number(dangling) === 0, Number(dangling) ? `${dangling} links, report editions or document revisions do not resolve` : 'every evidence link, report edition and document revision resolves');
       const pairing = (await restored.query<{ value: { volumeId: string } }>(`SELECT value FROM system_setting WHERE key = 'evidence_volume'`)).rows[0]?.value.volumeId ?? null;
       check('volume pairing', pairing === manifest.evidence.volumeId, pairing ? `restored database and evidence share volume ${pairing}` : 'no pairing recorded');
     } finally {

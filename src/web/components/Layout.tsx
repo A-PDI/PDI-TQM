@@ -12,6 +12,7 @@ const NAV: Array<{ to: string; label: string; built: boolean; stage?: string; al
   { to: '/suppliers', label: 'Suppliers', built: true, also: ['/commitments'] },
   { to: '/injectors', label: 'Injectors', built: true },
   { to: '/changes', label: 'Changes', built: true },
+  { to: '/documents', label: 'Documents', built: true },
   { to: '/reports', label: 'Reports', built: true, also: ['/trace'] },
 ];
 

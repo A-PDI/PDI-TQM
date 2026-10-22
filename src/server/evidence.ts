@@ -126,7 +126,8 @@ export function registerEvidenceRoutes(app: FastifyInstance, svc: Services) {
       `SELECT f.* FROM file_object f
         WHERE f.id = $1 AND f.status = 'AVAILABLE'
           AND (EXISTS (SELECT 1 FROM evidence_link l WHERE l.file_id = f.id)
-               OR EXISTS (SELECT 1 FROM report_rendition r WHERE r.file_id = f.id))`,
+               OR EXISTS (SELECT 1 FROM report_rendition r WHERE r.file_id = f.id)
+               OR EXISTS (SELECT 1 FROM controlled_document_revision d WHERE d.file_id = f.id))`,
       [fileId],
     );
     if (!file) throw notFound('File');
