@@ -10,6 +10,9 @@ export PORT="${E2E_PORT:-3100}"
 export LOG_LEVEL=warn
 # Browser tests sign in many times from one address; production keeps the default of 10/minute.
 export LOGIN_RATE_LIMIT_PER_MIN=200
+# Bench sync talks to the local CarbonZapp stand-in (scripts/carbonzapp-stub.ts), never the real cloud.
+export CARBONZAPP_BASE_URL="http://127.0.0.1:${CARBONZAPP_STUB_PORT:-3199}"
+export CARBONZAPP_API_KEY=e2e-only-carbonzapp-key
 export TQMS_DEMO_PASSWORD="${E2E_PASSWORD:-E2E-Only-Password-2026}"
 psql "$DATABASE_URL" -q -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
 rm -rf "$STORAGE_ROOT"

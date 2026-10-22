@@ -48,7 +48,20 @@ export interface EvaluationContext {
   unitCount: number;
   /** Governing limits from the released technical baseline, keyed by limit reference. */
   limits: Record<string, GoverningLimit>;
+  /** Test-bench results carried by items of an inspection started from bench results, by unit. */
+  bench?: Record<number, BenchUnitResult>;
 }
+
+/** A bench result is read-only evidence: anything but PASS keeps the item from passing. */
+export interface BenchUnitResult {
+  outcome: 'PASS' | 'FAIL' | 'DNF' | 'UNKNOWN';
+}
+
+export const BENCH_REVIEW_TEXT: Record<Exclude<BenchUnitResult['outcome'], 'PASS'>, string> = {
+  FAIL: 'Test bench result FAIL — independent review required',
+  DNF: 'Test bench run did not finish (DNF) — not a passing result; independent review required',
+  UNKNOWN: 'Test bench result could not be scored — not a passing result; independent review required',
+};
 
 export interface Issue {
   unitIndex: number;
@@ -161,6 +174,12 @@ export function evaluateInspection(ctx: EvaluationContext, state: EntryState): E
 
   const sharedOutcome = worstOutcome(sharedStatuses);
   for (const u of units) if (!(u in unitOutcomes)) unitOutcomes[u] = null;
+  for (const u of units) {
+    const bench = ctx.bench?.[u];
+    if (!bench || bench.outcome === 'PASS') continue;
+    unitOutcomes[u] = 'FAIL';
+    reviewReasons.push({ unitIndex: u, sectionKey: 'BENCH', rowKey: null, path: `Item ${u} → Test bench`, message: BENCH_REVIEW_TEXT[bench.outcome] });
+  }
   const overall = worstOutcome([sharedOutcome, ...units.map((u) => unitOutcomes[u])]);
   if (ctx.definition.oneOff) {
     reviewReasons.unshift({

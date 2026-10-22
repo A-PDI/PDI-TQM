@@ -29,6 +29,9 @@ export function InjectorTabs() {
       <NavLink to="/injectors" end className={cls}>
         Injectors
       </NavLink>
+      <NavLink to="/injectors/bench" className={cls}>
+        Test bench results
+      </NavLink>
       <NavLink to="/injectors/imports" className={cls}>
         Bench imports
       </NavLink>
@@ -118,7 +121,7 @@ export function InjectorList() {
       <div className="page-head">
         <div>
           <h1>Injectors</h1>
-          <div className="muted small">Serialized injectors with bench tests, repairs and retests. Bench data arrives through the interim {BENCH_ADAPTER} file layout.</div>
+          <div className="muted small">Serialized injectors with bench tests, repairs and retests. CarbonZapp results arrive by sync (Test bench results); other benches use the interim {BENCH_ADAPTER} file layout.</div>
         </div>
         <div className="row-actions">
           {can('injector.test') && (
@@ -1447,5 +1450,361 @@ export function InjectorAnalytics() {
         </>
       )}
     </>
+  );
+}
+
+interface BenchStatus {
+  configured: boolean;
+  host: string;
+  lastSync: string | null;
+  lastImport: string | null;
+  exclusions: string[];
+  waiting: Array<{ partNumber: string; count: number; reason: string }>;
+}
+
+interface BenchRow {
+  id: string;
+  testedAt: string;
+  outcome: 'PASS' | 'FAIL' | 'DNF' | 'UNKNOWN';
+  pdiEvaluation: string;
+  machine: string;
+  testPlan: string;
+  injectorId: string;
+  serial: string;
+  partNumber: string;
+  slot: number;
+  importNumber: string | null;
+  measurements: number;
+  failed: number;
+  inspection: { id: string; number: string; status: string } | null;
+}
+
+interface SyncResult {
+  importNumber: string | null;
+  fetched: number;
+  added: number;
+  duplicate: number;
+  conflict: number;
+  excluded: number;
+  unreadable: number;
+  waitingForPart: number;
+  pendingImported: number;
+  truncated: boolean;
+}
+
+const BENCH_BADGE: Record<BenchRow['outcome'], [string, string]> = {
+  PASS: ['badge-pass', 'Pass'],
+  FAIL: ['badge-fail', 'Fail'],
+  DNF: ['badge-accepted', 'Did not finish'],
+  UNKNOWN: ['badge-accepted', 'Not scored'],
+};
+
+function syncMessage(r: SyncResult): string {
+  if (!r.fetched && !r.pendingImported) return `No new bench reports since the last sync.${r.waitingForPart ? ` ${r.waitingForPart} result(s) still wait for a part number.` : ''}`;
+  const parts = [`${r.fetched} report(s) fetched`, `${r.added} new result(s) added`];
+  if (r.duplicate) parts.push(`${r.duplicate} already present`);
+  if (r.conflict) parts.push(`${r.conflict} changed on the bench (originals kept)`);
+  if (r.excluded || r.unreadable) parts.push(`${r.excluded + r.unreadable} excluded`);
+  if (r.waitingForPart) parts.push(`${r.waitingForPart} waiting for a part number`);
+  return `${r.importNumber ? `${r.importNumber}: ` : ''}${parts.join(', ')}.${r.truncated ? ' The bench returned more than one sync can read; sync again to continue.' : ''}`;
+}
+
+/** CarbonZapp bench results (owner decision 22 Oct 2026): Sync now, select results, start an incoming inspection. */
+export function BenchResults() {
+  const { can } = useAuth();
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const [q, setQ] = useState(params.get('q') ?? '');
+  const [selected, setSelected] = useState<string[]>([]);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [dialog, setDialog] = useState(false);
+  const canSync = can('injector.bench_sync');
+  const status = useLoad<BenchStatus>(canSync ? '/api/injectors/bench' : null);
+  const qs = new URLSearchParams();
+  for (const k of ['q', 'outcome', 'from', 'to']) if (params.get(k)) qs.set(k, params.get(k)!);
+  if (params.get('all') !== '1') qs.set('available', 'true');
+  const { data, error, loading, reload } = useLoad<BenchRow[]>(`/api/injectors/bench/tests?${qs.toString()}`);
+  const setParam = (k: string, v: string | null) => {
+    const next = new URLSearchParams(params);
+    if (v) next.set(k, v);
+    else next.delete(k);
+    setParams(next);
+    setSelected([]);
+  };
+  // Items are numbered as the inspection will number them: by test time, then bench slot.
+  const chosen = (data ?? []).filter((r) => selected.includes(r.id)).sort((a, b) => a.testedAt.localeCompare(b.testedAt) || a.slot - b.slot);
+  const parts = [...new Set(chosen.map((r) => r.partNumber))];
+  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  const sync = async () => {
+    setSyncing(true);
+    setMessage(null);
+    try {
+      const r = await api<SyncResult>('/api/injectors/bench/sync', { method: 'POST', body: {} });
+      setMessage({ ok: true, text: syncMessage(r) });
+      reload();
+      status.reload();
+    } catch (err) {
+      setMessage({ ok: false, text: (err as Error).message });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="page-head">
+        <div>
+          <h1>Test bench results</h1>
+          <div className="muted small">CarbonZapp bench results, one per injector per bench slot. Pass/fail is judged against the bench's green acceptance band.</div>
+        </div>
+        {canSync && (
+          <div className="row-actions">
+            <button type="button" className="btn btn-primary" disabled={syncing || !status.data?.configured} onClick={() => void sync()}>
+              {syncing ? 'Syncing…' : 'Sync now'}
+            </button>
+          </div>
+        )}
+      </div>
+      <InjectorTabs />
+      {message && (
+        <div className={`notice ${message.ok ? 'notice-ok' : 'notice-error'}`} role={message.ok ? 'status' : 'alert'}>
+          {message.text}
+        </div>
+      )}
+      {canSync && status.data && (
+        <div className="card small">
+          {status.data.configured ? (
+            <>
+              Connected to {status.data.host}. Last sync: {status.data.lastSync ? fmtDateTime(status.data.lastSync) : 'never'}
+              {status.data.lastImport ? (
+                <>
+                  {' '}
+                  ({status.data.lastImport})
+                </>
+              ) : null}
+              . Not imported: {status.data.exclusions.join('; ').toLowerCase()}.
+            </>
+          ) : (
+            <span>The CarbonZapp API key is not configured on the server (CARBONZAPP_API_KEY), so results cannot be synced.</span>
+          )}
+          {status.data.waiting.length > 0 && (
+            <div className="notice" style={{ marginTop: 8 }} role="region" aria-label="Results waiting for a part number">
+              <strong>Waiting for a part number.</strong> Add the bench part code as an alias of the PDI part (Parts &amp; Sources), then sync again:
+              <ul style={{ margin: '4px 0 0' }}>
+                {status.data.waiting.map((w) => (
+                  <li key={w.partNumber}>
+                    {w.partNumber} — {w.count} result(s). {w.reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+      <div className="card">
+        <form
+          className="row-actions"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setParam('q', q.trim() || null);
+          }}
+        >
+          <label htmlFor="bench-q" className="sr-only">
+            Search bench results
+          </label>
+          <input id="bench-q" type="search" style={{ maxWidth: 260 }} placeholder="Serial or part number" value={q} onChange={(e) => setQ(e.target.value)} />
+          <button type="submit" className="btn">
+            Search
+          </button>
+          <label className="small" htmlFor="bench-outcome">
+            Result
+          </label>
+          <select id="bench-outcome" style={{ width: 'auto' }} value={params.get('outcome') ?? ''} onChange={(e) => setParam('outcome', e.target.value || null)}>
+            <option value="">any</option>
+            <option value="PASS">Pass</option>
+            <option value="FAIL">Fail</option>
+            <option value="DNF">Did not finish</option>
+            <option value="UNKNOWN">Not scored</option>
+          </select>
+          <label className="small" htmlFor="bench-from">
+            From
+          </label>
+          <input id="bench-from" type="date" style={{ width: 'auto' }} value={params.get('from') ?? ''} onChange={(e) => setParam('from', e.target.value || null)} />
+          <label className="small" htmlFor="bench-to">
+            To
+          </label>
+          <input id="bench-to" type="date" style={{ width: 'auto' }} value={params.get('to') ?? ''} onChange={(e) => setParam('to', e.target.value || null)} />
+          <label className="small" style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <input type="checkbox" checked={params.get('all') === '1'} onChange={(e) => setParam('all', e.target.checked ? '1' : null)} style={{ width: 'auto' }} />
+            Include results already in an inspection
+          </label>
+        </form>
+      </div>
+      {selected.length > 0 && (
+        <div className="notice row-actions" role="region" aria-label="Selection">
+          <span>
+            {selected.length} selected{parts.length === 1 ? ` · ${parts[0]}` : parts.length > 1 ? ` · ${parts.length} part numbers` : ''}
+          </span>
+          {canSync && (
+            <button type="button" className="btn btn-small btn-primary" disabled={parts.length !== 1 || selected.length > 100} onClick={() => setDialog(true)}>
+              Start inspection…
+            </button>
+          )}
+          {parts.length > 1 && <span className="small">One inspection covers one part number.</span>}
+          <button type="button" className="btn btn-small" onClick={() => setSelected([])}>
+            Clear
+          </button>
+        </div>
+      )}
+      <LoadState loading={loading && !data} error={error} />
+      {data && (
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr>
+                <th>
+                  <span className="sr-only">Select</span>
+                </th>
+                <th>Tested</th>
+                <th>Part</th>
+                <th>Serial</th>
+                <th>Bench result</th>
+                <th>Outside band</th>
+                <th>Bench</th>
+                <th>Inspection</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.length === 0 && (
+                <tr>
+                  <td colSpan={8}>
+                    <div className="empty">{canSync ? 'No bench results match. Use Sync now to fetch new results from CarbonZapp.' : 'No bench results match.'}</div>
+                  </td>
+                </tr>
+              )}
+              {data.map((r) => (
+                <tr key={r.id}>
+                  <td>
+                    <input type="checkbox" aria-label={`Select ${r.serial}`} checked={selected.includes(r.id)} disabled={Boolean(r.inspection)} onChange={() => toggle(r.id)} />
+                  </td>
+                  <td className="small">{fmtDateTime(r.testedAt)}</td>
+                  <td>{r.partNumber}</td>
+                  <td>
+                    <Link to={`/injectors/${r.injectorId}`}>{r.serial}</Link>
+                  </td>
+                  <td>
+                    <span className={`badge ${BENCH_BADGE[r.outcome][0]}`}>{BENCH_BADGE[r.outcome][1]}</span>
+                    {r.pdiEvaluation === 'FAIL' && <span className="badge badge-fail" style={{ marginLeft: 4 }}>PDI fail</span>}
+                  </td>
+                  <td className="small">
+                    {r.failed} of {r.measurements}
+                  </td>
+                  <td className="small">
+                    {r.machine}
+                    <div className="muted">{r.testPlan}</div>
+                  </td>
+                  <td className="small">{r.inspection ? <Link to={`/inspections/${r.inspection.id}`}>{r.inspection.number}</Link> : <span className="muted">—</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <BenchInspectionDialog
+        open={dialog}
+        rows={chosen}
+        onClose={() => setDialog(false)}
+        onDone={(id) => {
+          setDialog(false);
+          navigate(`/inspections/${id}`);
+        }}
+      />
+    </>
+  );
+}
+
+function BenchInspectionDialog({ open, rows, onClose, onDone }: { open: boolean; rows: BenchRow[]; onClose: () => void; onDone: (id: string) => void }) {
+  const { me, can } = useAuth();
+  const inspectors = useLoad<Array<{ id: string; displayName: string }>>(open ? '/api/users/directory?capability=inspection.perform' : null);
+  const latest = rows.reduce<string | null>((m, r) => (!m || r.testedAt > m ? r.testedAt : m), null);
+  const [inspectorId, setInspectorId] = useState('');
+  const [po, setPo] = useState('');
+  const [received, setReceived] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    setError(null);
+    setReceived(latest ? new Date(latest).toLocaleDateString('en-CA') : new Date().toLocaleDateString('en-CA'));
+    setInspectorId(can('inspection.perform') ? (me?.user.id ?? '') : '');
+  }, [open, latest, can, me]);
+  const notReady = rows.filter((r) => r.outcome !== 'PASS');
+  return (
+    <Dialog
+      open={open}
+      title="Start inspection from bench results"
+      onClose={onClose}
+      footer={
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy || !inspectorId || !received}
+          onClick={async () => {
+            setBusy(true);
+            setError(null);
+            try {
+              const r = await api<{ id: string }>('/api/injectors/bench/inspections', {
+                body: { testIds: rows.map((x) => x.id), poNumber: po.trim() || null, dateReceived: received, inspectorId },
+              });
+              onDone(r.id);
+            } catch (err) {
+              setError((err as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Start inspection
+        </button>
+      }
+    >
+      {error && (
+        <div className="notice notice-error" role="alert">
+          {error}
+        </div>
+      )}
+      <p className="small" style={{ marginTop: 0 }}>
+        {rows.length} item(s) of {rows[0]?.partNumber}: {rows.map((r) => r.serial).join(', ')}. Serial numbers and bench results are filled in; receiving and visual checks are done by the inspector.
+      </p>
+      {notReady.length > 0 && (
+        <div className="notice" role="note">
+          {notReady.length} selected result(s) did not pass on the bench; those items cannot pass and the inspection will need independent review.
+        </div>
+      )}
+      <div className="field">
+        <label htmlFor="bench-inspector">Inspector</label>
+        <select id="bench-inspector" value={inspectorId} onChange={(e) => setInspectorId(e.target.value)}>
+          <option value="">Choose an inspector</option>
+          {inspectors.data?.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.displayName}
+              {u.id === me?.user.id ? ' (me)' : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="two-col">
+        <div className="field">
+          <label htmlFor="bench-po">PO Number</label>
+          <input id="bench-po" type="text" value={po} onChange={(e) => setPo(e.target.value)} maxLength={60} />
+        </div>
+        <div className="field">
+          <label htmlFor="bench-received">Date Received</label>
+          <input id="bench-received" type="date" value={received} onChange={(e) => setReceived(e.target.value)} />
+        </div>
+      </div>
+    </Dialog>
   );
 }

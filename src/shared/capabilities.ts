@@ -40,6 +40,7 @@ export const CAPABILITIES = {
   'change.verify': { description: 'Verify implementation of an effective change', sensitive: true },
   'injector.test': { description: 'Import and record injector bench tests and repairs', sensitive: false },
   'injector.evaluate': { description: 'Issue injector shipment evaluations', sensitive: true },
+  'injector.bench_sync': { description: 'Sync CarbonZapp bench results and start inspections from them', sensitive: true },
   'work.view_team': { description: 'View team-wide and unassigned work', sensitive: false },
   'reports.export': { description: 'Export operational data', sensitive: false },
   'admin.users': { description: 'Manage user accounts and authority grants', sensitive: true },
@@ -134,6 +135,6 @@ export const ROLE_BUNDLES: Record<string, { label: string; capabilities: Capabil
   },
   administrator: {
     label: 'Administrator',
-    capabilities: ['records.read', 'admin.users', 'admin.system', 'documents.control'],
+    capabilities: ['records.read', 'admin.users', 'admin.system', 'documents.control', 'injector.bench_sync'],
   },
 };

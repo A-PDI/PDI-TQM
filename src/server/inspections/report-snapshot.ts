@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 import { type FormSection, type SectionPattern, canonicalJson, readingLimitRef, sectionRows, sectionTitle } from '../../shared/forms.js';
 import { type Outcome, activationId, readingId, rowId } from '../../shared/inspection.js';
 import { formatLimit } from '../../shared/measurement.js';
-import type { LoadedInspection } from './state.js';
+import { specText } from '../../shared/carbonzapp.js';
+import { type LoadedInspection, benchUnitOutcome } from './state.js';
 
 export interface ReportReading {
   label: string;
@@ -31,6 +32,15 @@ export interface ReportSection {
   readingLabels: string[];
   limitSummary: string | null;
   rows: ReportRow[];
+}
+
+/** Read-only test-bench results carried by an item (inspection started from bench results). */
+export interface ReportBench {
+  testedAt: string;
+  machine: string;
+  testPlan: string;
+  outcome: 'PASS' | 'FAIL' | 'DNF' | 'UNKNOWN';
+  rows: Array<{ label: string; spec: string; value: string; outcome: 'PASS' | 'FAIL' | 'DNF' | 'UNKNOWN' | null; note: string | null }>;
 }
 
 export interface ReportPhoto {
@@ -74,7 +84,7 @@ export interface InspectionReportSnapshot {
   review: { decision: string; reviewer: string; reviewedAt: string; comment: string | null; reasons: string[] } | null;
   amendment: { number: number; reason: string; by: string; at: string } | null;
   shared: ReportSection[];
-  units: Array<{ unitIndex: number; serial: string | null; outcome: Outcome | null; dispositionNote: string | null; sections: ReportSection[] }>;
+  units: Array<{ unitIndex: number; serial: string | null; outcome: Outcome | null; dispositionNote: string | null; sections: ReportSection[]; bench?: ReportBench }>;
   photos: ReportPhoto[];
 }
 
@@ -194,6 +204,7 @@ export function buildReportSnapshot(state: LoadedInspection, extras: SnapshotExt
   const shared = def.sections.filter((s) => s.scope === 'inspection').map((s) => buildSection(s, 0));
   const units = Array.from({ length: row.unit_count }, (_, i) => i + 1).map((unitIndex) => {
     const unit = state.units.find((u) => u.unit_index === unitIndex);
+    const bench = state.bench.find((b) => b.unitIndex === unitIndex);
     return {
       unitIndex,
       serial: unit?.serial_number ?? null,
@@ -202,6 +213,23 @@ export function buildReportSnapshot(state: LoadedInspection, extras: SnapshotExt
       sections: def.sections
         .filter((s) => s.scope === 'unit' && (!s.optional || activated.has(activationId(unitIndex, s.key))))
         .map((s) => buildSection(s, unitIndex)),
+      ...(bench
+        ? {
+            bench: {
+              testedAt: bench.testedAt,
+              machine: bench.machine,
+              testPlan: bench.testPlan,
+              outcome: benchUnitOutcome(bench),
+              rows: bench.results.map((r) => ({
+                label: r.condition,
+                spec: specText({ unit: r.unit, bench: { spec: r.spec, lower: r.lower, upper: r.upper } }),
+                value: r.value,
+                outcome: r.pdiEvaluation === 'OUTSIDE' ? 'FAIL' : r.outcome,
+                note: r.note,
+              })),
+            },
+          }
+        : {}),
     };
   });
 

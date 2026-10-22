@@ -156,7 +156,8 @@ export async function renderInspectionReport(input: RenderInput): Promise<Render
     sectionBar(title);
     if (preamble) {
       font('Helvetica', 7.5, C.slate).text(pdfText(preamble), MARGIN + 4, y, { width: CONTENT_W - 8 });
-      y += 13;
+      // One line keeps the original 13 pt step; a wrapped preamble pushes the table down.
+      y += Math.max(13, doc.heightOfString(pdfText(preamble), { width: CONTENT_W - 8 }) + 3);
     }
     tableHeader(columns);
     rows.forEach((cells, index) => {
@@ -441,6 +442,31 @@ export async function renderInspectionReport(input: RenderInput): Promise<Render
   for (const unit of s.units) {
     itemBar(`ITEM ${unit.unitIndex} OF ${s.units.length}${unit.serial ? ` · SERIAL ${unit.serial}` : ''}`);
     for (const section of unit.sections) renderSection(section);
+    if (unit.bench) {
+      const b = unit.bench;
+      const resultCell = (o: (typeof b.rows)[number]['outcome']): Cell =>
+        o === 'PASS' ? { status: 'P' } : o === 'FAIL' ? { status: 'F' } : { segments: [{ text: o === 'DNF' ? 'DNF' : 'Not scored', font: 'Helvetica-Bold', color: C.amber }] };
+      table(
+        'TEST BENCH RESULTS (CARBONZAPP)',
+        [
+          { header: '#', width: 18 },
+          { header: 'Test Step', width: 140 },
+          { header: 'Acceptance band', width: 130 },
+          { header: 'Measured', width: 80, align: 'center' },
+          { header: 'Bench note', width: 104 },
+          { header: 'Result', width: 68 },
+        ],
+        b.rows.map((r, n) => [
+          { segments: [{ text: String(n + 1), color: C.slate }] },
+          { segments: [{ text: r.label }] },
+          { segments: [{ text: r.spec, color: C.slate }] },
+          { segments: [{ text: r.value, color: r.outcome === 'FAIL' ? C.red : C.text, font: r.outcome === 'FAIL' ? 'Helvetica-Bold' : 'Helvetica' }], align: 'center' },
+          { segments: r.note ? [{ text: r.note, color: C.amber }] : [] },
+          resultCell(r.outcome),
+        ]),
+        `Tested ${formatDateTime(b.testedAt, tz)} on bench ${b.machine} (${b.testPlan}) — bench result ${b.outcome}. Read-only from the bench; judged against the bench's green acceptance band.`,
+      );
+    }
     // Unit disposition kept beside the unit's last row.
     ensure(46);
     doc.rect(MARGIN, y, CONTENT_W, 16).fill(C.section);

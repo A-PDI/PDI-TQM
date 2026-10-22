@@ -60,11 +60,20 @@ export async function createInspection(
     samplingNote?: string | null;
     /** Runs inside the creating transaction, so related records commit or roll back with the inspection. */
     afterCreate?: (tx: DbClient, created: { id: string; number: string; userId: string; formRevisionId: string }) => Promise<void>;
+    /**
+     * Starting from bench results (owner decision: administrators): the creator needs this capability
+     * instead of inspection.perform and may name the inspector, who must hold inspection.perform.
+     */
+    creatorCapability?: 'injector.bench_sync';
   },
 ): Promise<{ id: string; number: string }> {
-  const auth = await requireCapability(db, req, 'inspection.perform', { action: 'inspection.create', consequential: false });
+  const auth = await requireCapability(db, req, input.creatorCapability ?? 'inspection.perform', { action: 'inspection.create', consequential: false });
   const inspectorId = input.inspectorId ?? auth.userId;
-  if (inspectorId !== auth.userId) {
+  if (input.creatorCapability) {
+    if (!(await recheckCapability(db, inspectorId, 'inspection.perform'))) {
+      throw unprocessable(inspectorId === auth.userId ? 'You are not authorized to perform inspections; choose an inspector' : 'The selected inspector is not authorized to perform inspections');
+    }
+  } else if (inspectorId !== auth.userId) {
     await requireCapability(db, req, 'inspection.assign', { action: 'inspection.assign', entityType: 'user', entityId: inspectorId });
     if (!(await recheckCapability(db, inspectorId, 'inspection.perform'))) {
       throw unprocessable('The selected inspector is not authorized to perform inspections');
@@ -377,6 +386,10 @@ export async function saveEntries(
       const serial = u.serialNumber === undefined ? undefined : u.serialNumber?.trim() || null;
       const note = u.dispositionNote === undefined ? undefined : u.dispositionNote?.trim() || null;
       if ((serial?.length ?? 0) > 80 || (note?.length ?? 0) > MAX_NOTE) throw badRequest('Unit field is too long');
+      const bench = state.bench.find((b) => b.unitIndex === u.unitIndex);
+      if (bench && serial !== undefined && serial !== bench.serial) {
+        throw unprocessable(`Item ${u.unitIndex} carries the bench result of SN ${bench.serial}; its serial number cannot change`);
+      }
       await tx.query(
         `UPDATE inspection_unit SET
            serial_number = CASE WHEN $3 THEN $4 ELSE serial_number END,

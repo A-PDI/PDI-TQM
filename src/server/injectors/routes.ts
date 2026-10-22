@@ -41,7 +41,7 @@ export async function testsFor(db: Queryable, injectorIds: string[]): Promise<Te
             (SELECT b.title || ' Rev ' || r.revision_label FROM baseline_revision r JOIN technical_baseline b ON b.id = r.baseline_id WHERE r.id = t.criteria_revision_id) AS criteria_label,
             t.repair_action_id, rc.number AS repair_case_number, t.note,
             coalesce((SELECT json_agg(json_build_object('condition', x.condition, 'parameter', x.parameter, 'unit', x.unit, 'value_text', x.value_text, 'machine_verdict', x.machine_verdict,
-                                     'lower_limit', x.lower_limit::text, 'upper_limit', x.upper_limit::text, 'pdi_evaluation', x.pdi_evaluation) ORDER BY x.condition, x.parameter)
+                                     'lower_limit', x.lower_limit::text, 'upper_limit', x.upper_limit::text, 'pdi_evaluation', x.pdi_evaluation) ORDER BY x.position NULLS LAST, x.condition, x.parameter)
                         FROM injector_test_result x WHERE x.test_id = t.id), '[]') AS results
        FROM injector_test t LEFT JOIN bench_import bi ON bi.id = t.import_id
        LEFT JOIN repair_action ra ON ra.id = t.repair_action_id LEFT JOIN repair_case rc ON rc.id = ra.case_id
