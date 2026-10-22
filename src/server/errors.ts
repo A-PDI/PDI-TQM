@@ -29,6 +29,7 @@ const UNIQUE_MESSAGES: Record<string, string> = {
   sourcing_request_one_per_source: 'This exact source is already being qualified under another sourcing request',
   injector_test_source_key_key: 'This test is already recorded (same machine, serial, time and sequence)',
   injector_part_id_normalized_serial_key: 'This serial is already registered for the part',
+  controlled_document_revision_document_id_revision_label_key: 'This revision of the document is already recorded',
 };
 
 export function fromDbError(err: unknown): AppError | null {
