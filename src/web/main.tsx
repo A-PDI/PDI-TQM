@@ -50,6 +50,7 @@ const router = createBrowserRouter([
           { path: '/', element: <Home /> },
           { path: '/inspections', element: <Inspections /> },
           { path: '/inspections/:id', element: page(workbench, 'Workbench') },
+          { path: '/inspection-stages/:id', element: page(() => import('./pages/Stage2'), 'Stage2') },
           { path: '/quality', element: page(quality, 'QualityList') },
           { path: '/quality/:id', element: page(quality, 'QualityDetail') },
           { path: '/quality/ncrs', element: page(ncr, 'NcrList') },

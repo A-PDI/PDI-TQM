@@ -42,6 +42,7 @@ const KIND_LABEL: Record<string, string> = {
 
 const RECENT_LINK: Record<string, string> = {
   inspection: '/inspections/',
+  inspection_stage: '/inspection-stages/',
   quality_event: '/quality/',
   ncr: '/quality/ncrs/',
   scar: '/quality/scars/',

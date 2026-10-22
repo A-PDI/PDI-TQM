@@ -40,6 +40,7 @@ const COUNTED_TABLES = [
   'source_approval_decision',
   'injector_test',
   'controlled_document',
+  'inspection_stage',
   'controlled_document_revision',
 ] as const;
 
