@@ -17,10 +17,10 @@ import {
 import { type EntryState, type Evaluation, type Issue, type Outcome, activationId, evaluateInspection, passAllTargets, readingId, rowId } from '../../shared/inspection';
 import { type GoverningLimit, formatLimit } from '../../shared/measurement';
 import { ApiError, api, fmtDate, fmtDateTime } from '../api';
-import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
+import { Dialog, LoadState, OutcomeBadge, type PartOption, PartTypeahead, StatusBadge, useLoad } from '../components/ui';
 import { RequestConcessionDialog } from './Concessions';
 
-interface Detail {
+export interface Detail {
   id: string;
   number: string;
   status: 'DRAFT' | 'PARTIAL' | 'READY_FOR_REVIEW' | 'COMPLETED' | 'VOID';
@@ -57,9 +57,11 @@ interface Detail {
   concerns: Array<{ id: string; number: string; title: string; status: string; unitIndex: number; sectionKey: string; rowKey: string }>;
   concession: { id: string; number: string; quantity: number; validUntil: string } | null;
   permissions: { canEdit: boolean; canReview: boolean; canReviewAccepted: boolean; canAmend: boolean; canCaptureConcern: boolean; canRequestConcession: boolean };
+  stages?: Array<{ id: string; number: string; unitIndex: number; serialNumber: string; stagePartNumber: string; performedOn: string; status: string; outcome: Outcome | null }>;
+  stage2?: { available: boolean; canStart: boolean };
 }
 
-interface Photo {
+export interface Photo {
   linkId: string;
   fileId: string;
   unitIndex: number | null;
@@ -537,6 +539,7 @@ export function Workbench() {
       )}
 
       <StatusPanel detail={detail} evaluation={evaluation} onReload={load} />
+      {(detail.stage2?.available || (detail.stages?.length ?? 0) > 0) && <StagesPanel detail={detail} />}
 
       {(showIssues || detail.status === 'READY_FOR_REVIEW') && evaluation.errors.length > 0 && (
         <section className="card" aria-labelledby="issues-h">
@@ -756,7 +759,7 @@ function mergeChange(a: EntryChange, b: EntryChange): EntryChange {
   };
 }
 
-interface RowCtx {
+export interface RowCtx {
   detail: Detail;
   responses: Detail['responses'];
   readings: Record<string, string>;
@@ -773,7 +776,7 @@ interface RowCtx {
   onConcern: (u: number, s: string, r: string) => Promise<void>;
 }
 
-function SectionBlock({ section, unitIndex, onPassAll, ...ctx }: RowCtx & { section: FormSection; unitIndex: number; onPassAll: () => void }) {
+export function SectionBlock({ section, unitIndex, onPassAll, ...ctx }: RowCtx & { section: FormSection; unitIndex: number; onPassAll: () => void }) {
   const rows = sectionRows(section);
   const measured = rows.filter((r) => r.readingKeys.length > 0);
   const unreleased = measured.some((r) => r.readingKeys.some((rk) => {
@@ -979,6 +982,116 @@ function QuestionRow({ section, row, unitIndex, index, ...ctx }: RowCtx & { sect
         </div>
       )}
     </div>
+  );
+}
+
+/** Cylinder head Stage 2: per-head follow-on records of this completed Stage 1 inspection. */
+function StagesPanel({ detail }: { detail: Detail }) {
+  const navigate = useNavigate();
+  const [startFor, setStartFor] = useState<number | null>(null);
+  const [part, setPart] = useState<PartOption | null>(null);
+  const [performedOn, setPerformedOn] = useState(() => new Date().toLocaleDateString('en-CA'));
+  const [serial, setSerial] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const stages = detail.stages ?? [];
+  const unit = startFor ? detail.units.find((u) => u.unitIndex === startFor) : undefined;
+  const needsSerial = startFor !== null && !unit?.serialNumber;
+  return (
+    <section className="card" aria-labelledby="stage2-title">
+      <h2 id="stage2-title">Cylinder head Stage 2</h2>
+      <p className="small muted" style={{ marginTop: 0 }}>
+        Heads converted to a Stage 2 product get the fire ring section with its own date, Stage 2 part number, result and addendum. This Stage 1 record does not change.
+      </p>
+      <div className="table-wrap">
+        <table className="data stack">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Serial</th>
+              <th>Stage 2</th>
+              <th>Stage 2 part</th>
+              <th>Stage 2 date</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: detail.unitCount }, (_, i) => i + 1).map((u) => {
+              const st = stages.find((x) => x.unitIndex === u);
+              const serialNumber = detail.units.find((x) => x.unitIndex === u)?.serialNumber ?? null;
+              return (
+                <tr key={u}>
+                  <td data-label="Item">{u}</td>
+                  <td data-label="Serial">{st?.serialNumber ?? serialNumber ?? '—'}</td>
+                  <td data-label="Stage 2">
+                    {st ? (
+                      <Link to={`/inspection-stages/${st.id}`}>{st.number}</Link>
+                    ) : detail.stage2?.canStart ? (
+                      <button type="button" className="btn btn-small" onClick={() => { setStartFor(u); setError(null); setSerial(''); }}>
+                        Start Stage 2…
+                      </button>
+                    ) : (
+                      <span className="muted">Not converted</span>
+                    )}
+                  </td>
+                  <td data-label="Stage 2 part">{st?.stagePartNumber ?? '—'}</td>
+                  <td data-label="Stage 2 date">{st ? fmtDate(st.performedOn) : '—'}</td>
+                  <td data-label="Result">{st ? (st.status === 'COMPLETED' ? <OutcomeBadge outcome={st.outcome} /> : <StatusBadge status={st.status === 'OPEN' ? 'DRAFT' : st.status} />) : '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <Dialog
+        open={startFor !== null}
+        title={`Start Stage 2 — item ${startFor ?? ''}`}
+        onClose={() => setStartFor(null)}
+        footer={
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy || !part || !performedOn || (needsSerial && !serial.trim())}
+            onClick={async () => {
+              setBusy(true);
+              setError(null);
+              try {
+                const created = await api<{ id: string }>(`/api/inspections/${detail.id}/stage2`, {
+                  body: { unitIndex: startFor, stagePartId: part!.id, performedOn, serialNumber: needsSerial ? serial.trim() : null },
+                });
+                navigate(`/inspection-stages/${created.id}`);
+              } catch (err) {
+                setError((err as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Start Stage 2
+          </button>
+        }
+      >
+        {error && <div className="notice notice-error" role="alert">{error}</div>}
+        <p className="small" style={{ marginTop: 0 }}>
+          Item {startFor} · SN {unit?.serialNumber ?? 'not recorded'} · Stage 1 part {detail.partNumber}
+        </p>
+        <div className="field">
+          <label htmlFor="part-number">Stage 2 part number</label>
+          <PartTypeahead value={part} onSelect={setPart} />
+        </div>
+        <div className="field">
+          <label htmlFor="stage2-date">Stage 2 date</label>
+          <input id="stage2-date" type="date" value={performedOn} onChange={(e) => setPerformedOn(e.target.value)} />
+        </div>
+        {needsSerial && (
+          <div className="field">
+            <label htmlFor="stage2-serial">Head serial number</label>
+            <input id="stage2-serial" type="text" value={serial} onChange={(e) => setSerial(e.target.value)} />
+            <div className="field-hint">Stage 1 did not record a serial for this item.</div>
+          </div>
+        )}
+      </Dialog>
+    </section>
   );
 }
 

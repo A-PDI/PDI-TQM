@@ -174,7 +174,7 @@ export async function createInspection(
   });
 }
 
-async function resolveBaseline(tx: DbClient, partId: string, sourceBaselineId: string | null, hasSource: boolean): Promise<BaselineSnapshot | null> {
+export async function resolveBaseline(tx: DbClient, partId: string, sourceBaselineId: string | null, hasSource: boolean): Promise<BaselineSnapshot | null> {
   let revisionId: string | null = null;
   if (hasSource) {
     revisionId = sourceBaselineId;

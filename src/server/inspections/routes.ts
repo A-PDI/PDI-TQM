@@ -17,6 +17,7 @@ import {
   saveEntries,
   savePartial,
 } from './service.js';
+import { stageSection, stagesOf } from './stages.js';
 import { loadInspection } from './state.js';
 
 const statusEnum = z.enum(['P', 'F', 'A', 'N']).nullable();
@@ -242,6 +243,12 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
         canAmend: r.status === 'COMPLETED' && has(auth, 'inspection.amend'),
         canCaptureConcern: has(auth, 'quality.capture'),
         canRequestConcession: has(auth, 'concession.request'),
+      },
+      // Cylinder head Stage 2: per-head follow-on records of a completed inspection whose form has the fire ring section.
+      stages: await stagesOf(db, id),
+      stage2: {
+        available: r.status === 'COMPLETED' && stageSection(r.form_snapshot) !== null,
+        canStart: r.status === 'COMPLETED' && stageSection(r.form_snapshot) !== null && has(auth, 'inspection.perform'),
       },
     };
   });
