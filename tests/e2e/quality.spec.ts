@@ -239,11 +239,18 @@ test('Form editor: draft a new revision, add a row, submit; another person relea
 test('Custom form saved as a template at launch: someone else releases it, then it is offered for new inspections', async ({ browser }, info) => {
   test.skip(info.project.name !== 'desktop', 'desktop walkthrough');
   const inspector = await pageAs(browser, 'jordan.rivera@example.com');
+  // The part's suggested form arrives late: choosing a custom form first must not be overridden by it.
+  await inspector.route('**/api/parts/*/launch-options', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
   await inspector.getByRole('link', { name: 'New Inspection' }).click();
   const dialog = inspector.getByRole('dialog', { name: 'New Inspection' });
   await dialog.getByRole('combobox', { name: 'Part Number' }).fill('OE-PRK');
   await inspector.getByRole('option', { name: /TQ-PRK-3003/ }).click();
   await dialog.getByLabel('Inspection Form').selectOption('ONE_OFF');
+  await inspector.waitForResponse('**/api/parts/*/launch-options');
+  await expect(dialog.getByLabel('Inspection Form')).toHaveValue('ONE_OFF');
   await dialog.getByLabel('Component').fill('Oil Cooler Sample (fictional)');
   await dialog.getByLabel('Why a one-off form is needed').fill('First sample from a new supplier (fictional)');
   await dialog.getByLabel(/^Measurements/).fill('Overall Length | mm | 362.0\nStep Length | | 346.0');
