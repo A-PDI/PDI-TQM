@@ -34,6 +34,9 @@ projects:
                 sync: false
               - key: SECURE_COOKIES
                 value: "true"
+              # CarbonZapp bench API key (decision 37): entered in the Render dashboard, never committed.
+              - key: CARBONZAPP_API_KEY
+                sync: false
         databases:
           - name: tqms-staging-db
             plan: 0.1c-256mb

@@ -22,6 +22,7 @@ import { registerNcrRoutes } from './quality/ncr.js';
 import { registerScarRoutes } from './quality/scars.js';
 import { registerChangeRoutes } from './changes/changes.js';
 import { registerFormRoutes } from './forms/forms.js';
+import { registerBenchRoutes } from './injectors/bench-routes.js';
 import { registerInjectorRoutes } from './injectors/routes.js';
 import { registerReportRoutes } from './reports/routes.js';
 import { registerControlledDocumentRoutes } from './documents/routes.js';
@@ -190,6 +191,7 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
   registerChangeRoutes(app, svc);
   registerFormRoutes(app, svc);
   registerInjectorRoutes(app, svc);
+  registerBenchRoutes(app, svc);
   registerReportRoutes(app, svc);
   registerControlledDocumentRoutes(app, svc);
   registerStageRoutes(app, svc);

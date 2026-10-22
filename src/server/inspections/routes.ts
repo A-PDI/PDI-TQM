@@ -246,6 +246,7 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
       },
       // Cylinder head Stage 2: per-head follow-on records of a completed inspection whose form has the fire ring section.
       stages: await stagesOf(db, id),
+      bench: state.bench,
       stage2: {
         available: r.status === 'COMPLETED' && stageSection(r.form_snapshot) !== null,
         canStart: r.status === 'COMPLETED' && stageSection(r.form_snapshot) !== null && has(auth, 'inspection.perform'),

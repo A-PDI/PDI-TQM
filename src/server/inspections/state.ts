@@ -90,6 +90,55 @@ export interface PhotoRow {
   linked_by_name: string;
 }
 
+/** A bench test carried read-only by one item of the inspection (inspection started from bench results). */
+export interface BenchLink {
+  unitIndex: number;
+  testId: string;
+  injectorId: string;
+  serial: string;
+  testedAt: string;
+  machine: string;
+  testPlan: string;
+  outcome: 'PASS' | 'FAIL' | 'DNF' | 'UNKNOWN';
+  pdiEvaluation: string;
+  results: Array<{
+    condition: string;
+    parameter: string;
+    unit: string | null;
+    value: string;
+    spec: string | null;
+    lower: string | null;
+    upper: string | null;
+    outcome: 'PASS' | 'FAIL' | 'DNF' | 'UNKNOWN' | null;
+    pdiEvaluation: string;
+    note: string | null;
+  }>;
+}
+
+/** Combined result of a linked bench test: the bench classification, and FAIL when released PDI criteria fail. */
+export const benchUnitOutcome = (b: Pick<BenchLink, 'outcome' | 'pdiEvaluation'>): BenchLink['outcome'] => (b.pdiEvaluation === 'FAIL' ? 'FAIL' : b.outcome);
+
+export async function loadBenchLinks(db: Queryable, inspectionId: string): Promise<BenchLink[]> {
+  const tests = await many<Omit<BenchLink, 'results'>>(
+    db,
+    `SELECT l.unit_index AS "unitIndex", t.id AS "testId", t.injector_id AS "injectorId", j.serial_number AS serial,
+            to_char(t.tested_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS "testedAt", t.machine_id AS machine, t.test_plan AS "testPlan",
+            coalesce(t.bench_outcome, 'UNKNOWN') AS outcome, t.pdi_evaluation AS "pdiEvaluation"
+       FROM inspection_bench_test l JOIN injector_test t ON t.id = l.test_id JOIN injector j ON j.id = t.injector_id
+      WHERE l.inspection_id = $1 ORDER BY l.unit_index`,
+    [inspectionId],
+  );
+  if (!tests.length) return [];
+  const rows = await many<BenchLink['results'][number] & { testId: string }>(
+    db,
+    `SELECT test_id AS "testId", condition, parameter, unit, value_text AS value, bench_spec AS spec, bench_lower::text AS lower, bench_upper::text AS upper,
+            bench_outcome AS outcome, pdi_evaluation AS "pdiEvaluation", bench_note AS note
+       FROM injector_test_result WHERE test_id = ANY($1::uuid[]) ORDER BY test_id, position NULLS LAST, condition, parameter`,
+    [tests.map((t) => t.testId)],
+  );
+  return tests.map((t) => ({ ...t, results: rows.filter((r) => r.testId === t.testId).map(({ testId: _t, ...r }) => r) }));
+}
+
 export interface LoadedInspection {
   row: InspectionRow;
   units: Array<{ unit_index: number; serial_number: string | null; disposition_note: string | null }>;
@@ -98,6 +147,7 @@ export interface LoadedInspection {
   readings: Record<string, { text: string; amendmentNo: number }>;
   photos: PhotoRow[];
   limits: Record<string, GoverningLimit>;
+  bench: BenchLink[];
   entry: EntryState;
   evaluation: Evaluation;
   effectiveOutcome: Outcome | null;
@@ -206,7 +256,11 @@ export async function loadInspection(db: Queryable, id: string, opts: { lock?: b
     activated,
   };
   const limits = limitsFromBaseline(row.baseline_snapshot);
-  const evaluation = evaluateInspection({ definition: row.form_snapshot, unitCount: row.unit_count, limits }, entry);
+  const bench = await loadBenchLinks(db, id);
+  const evaluation = evaluateInspection(
+    { definition: row.form_snapshot, unitCount: row.unit_count, limits, bench: Object.fromEntries(bench.map((b) => [b.unitIndex, { outcome: benchUnitOutcome(b) }])) },
+    entry,
+  );
   const effectiveOutcome = amendments[0]?.resulting_outcome ?? row.outcome;
-  return { row, units, activated, responses, readings, photos, limits, entry, evaluation, effectiveOutcome };
+  return { row, units, activated, responses, readings, photos, limits, bench, entry, evaluation, effectiveOutcome };
 }

@@ -42,6 +42,8 @@ const COUNTED_TABLES = [
   'controlled_document',
   'inspection_stage',
   'controlled_document_revision',
+  'inspection_bench_test',
+  'bench_pending',
 ] as const;
 
 export interface BackupFile {

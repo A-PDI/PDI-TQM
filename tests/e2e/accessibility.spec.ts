@@ -84,6 +84,7 @@ test('axe: every main destination has no serious or critical WCAG A/AA violation
     ...(baseline ? [`/baselines/${baseline}`] : []),
     '/injectors',
     `/injectors/${injector.id}`,
+    '/injectors/bench',
     '/injectors/imports',
     '/injectors/compare',
     '/injectors/shipments',

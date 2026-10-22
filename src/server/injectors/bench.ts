@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import type { BenchOutcome, BenchResultRow } from '../../shared/carbonzapp.js';
 import { BENCH_ADAPTER, BENCH_COLUMNS, criteriaRef, normalizeSerial, parseCsv } from '../../shared/injectors.js';
 import { canonicalJson } from '../../shared/forms.js';
 import { compareDecimal, parseReading } from '../../shared/measurement.js';
@@ -18,6 +19,8 @@ export interface BenchResultInput {
   unit: string | null;
   value: string;
   result: 'PASS' | 'FAIL' | null;
+  /** CarbonZapp: green band, step outcome and bench note of this measurement. */
+  bench?: BenchResultRow['bench'];
 }
 
 export interface BenchTestInput {
@@ -29,7 +32,9 @@ export interface BenchTestInput {
   testSeq: string;
   operator: string | null;
   results: BenchResultInput[];
-  raw: Array<Record<string, string>>;
+  raw: Array<Record<string, string>> | Record<string, unknown>;
+  /** CarbonZapp: the bench classification and the report/slot identity. */
+  bench?: { outcome: BenchOutcome; reportId: string; slot: number };
 }
 
 export interface ParsedBenchFile {
@@ -178,7 +183,7 @@ export const contentHash = (t: BenchTestInput) =>
 export const sourceKey = (t: { machineId: string; serial: string; testedAt: string; testSeq: string }, origin: 'IMPORT' | 'MANUAL' = 'IMPORT') =>
   `${origin === 'MANUAL' ? 'manual:' : ''}${t.machineId.trim().toUpperCase()}|${normalizeSerial(t.serial)}|${t.testedAt}|${t.testSeq}`;
 
-async function findPart(tx: Queryable, partNumber: string) {
+export async function findPart(tx: Queryable, partNumber: string) {
   const norm = partNumber.toUpperCase().replace(/[^A-Z0-9]/g, '');
   return one<{ id: string; part_number: string }>(
     tx,
@@ -212,8 +217,8 @@ export async function insertTest(
   const row = await one<{ id: string }>(
     tx,
     `INSERT INTO injector_test (injector_id, source_key, content_sha256, origin, import_id, machine_id, test_plan, tested_at, operator, machine_verdict,
-        pdi_evaluation, criteria_revision_id, repair_action_id, raw, note, recorded_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
+        pdi_evaluation, criteria_revision_id, repair_action_id, raw, note, recorded_by, bench_outcome, bench_report_id, bench_slot)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING id`,
     [
       ctx.injectorId,
       sourceKey(t, ctx.origin),
@@ -231,14 +236,36 @@ export async function insertTest(
       JSON.stringify(t.raw),
       ctx.note ?? null,
       ctx.actorId,
+      t.bench?.outcome ?? null,
+      t.bench?.reportId ?? null,
+      t.bench?.slot ?? null,
     ],
   );
   for (const r of ev.evaluated) {
     const v = parseReading(r.value);
     await tx.query(
-      `INSERT INTO injector_test_result (test_id, condition, parameter, unit, value_text, value, machine_verdict, lower_limit, upper_limit, pdi_evaluation)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      [row!.id, r.condition, r.parameter, r.unit, r.value, v.ok ? v.value.canonical : null, r.result, r.lower, r.upper, r.evaluation],
+      `INSERT INTO injector_test_result (test_id, condition, parameter, unit, value_text, value, machine_verdict, lower_limit, upper_limit, pdi_evaluation,
+          position, bench_spec, bench_lower, bench_upper, bench_outcome, bench_note, bench_conditions)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+      [
+        row!.id,
+        r.condition,
+        r.parameter,
+        r.unit,
+        r.value,
+        v.ok ? v.value.canonical : null,
+        r.result,
+        r.lower,
+        r.upper,
+        r.evaluation,
+        r.bench?.position ?? null,
+        r.bench?.spec ?? null,
+        r.bench?.lower ?? null,
+        r.bench?.upper ?? null,
+        r.bench?.outcome ?? null,
+        r.bench?.note ?? null,
+        r.bench?.conditions ?? null,
+      ],
     );
   }
   return row!.id;

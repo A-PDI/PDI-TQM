@@ -59,7 +59,35 @@ export interface Detail {
   permissions: { canEdit: boolean; canReview: boolean; canReviewAccepted: boolean; canAmend: boolean; canCaptureConcern: boolean; canRequestConcession: boolean };
   stages?: Array<{ id: string; number: string; unitIndex: number; serialNumber: string; stagePartNumber: string; performedOn: string; status: string; outcome: Outcome | null }>;
   stage2?: { available: boolean; canStart: boolean };
+  bench?: BenchLink[];
 }
+
+export interface BenchLink {
+  unitIndex: number;
+  testId: string;
+  injectorId: string;
+  serial: string;
+  testedAt: string;
+  machine: string;
+  testPlan: string;
+  outcome: 'PASS' | 'FAIL' | 'DNF' | 'UNKNOWN';
+  pdiEvaluation: string;
+  results: Array<{
+    condition: string;
+    parameter: string;
+    unit: string | null;
+    value: string;
+    spec: string | null;
+    lower: string | null;
+    upper: string | null;
+    outcome: 'PASS' | 'FAIL' | 'DNF' | 'UNKNOWN' | null;
+    pdiEvaluation: string;
+    note: string | null;
+  }>;
+}
+
+/** Same rule as the server: the bench classification, and FAIL when released PDI criteria fail. */
+const benchOutcome = (b: BenchLink) => (b.pdiEvaluation === 'FAIL' ? 'FAIL' : b.outcome);
 
 export interface Photo {
   linkId: string;
@@ -273,7 +301,18 @@ export function Workbench() {
     };
   }, [detail, responses, readings, photos]);
   const evaluation: Evaluation | null = useMemo(
-    () => (detail && entry ? evaluateInspection({ definition: detail.form.definition, unitCount: detail.unitCount, limits: detail.limits }, entry) : null),
+    () =>
+      detail && entry
+        ? evaluateInspection(
+            {
+              definition: detail.form.definition,
+              unitCount: detail.unitCount,
+              limits: detail.limits,
+              bench: Object.fromEntries((detail.bench ?? []).map((b) => [b.unitIndex, { outcome: benchOutcome(b) }])),
+            },
+            entry,
+          )
+        : null,
     [detail, entry],
   );
 
@@ -615,6 +654,7 @@ export function Workbench() {
               type="text"
               value={units.find((u) => u.unitIndex === unit)?.serialNumber ?? ''}
               disabled={!editable}
+              readOnly={detail.bench?.some((b) => b.unitIndex === unit)}
               maxLength={80}
               onChange={(e) => setUnitField(unit, 'serialNumber', e.target.value)}
             />
@@ -648,6 +688,9 @@ export function Workbench() {
             <SectionBlock key={s.key} section={s} unitIndex={unit} {...rowProps} onPassAll={() => requestPassAll(s, unit)} />
           ),
         )}
+        {detail.bench
+          ?.filter((b) => b.unitIndex === unit)
+          .map((b) => <BenchBlock key={b.testId} bench={b} />)}
         <div className="card">
           <label htmlFor={`disp-${unit}`}>Item {unit} result comment</label>
           <textarea
@@ -986,6 +1029,61 @@ function QuestionRow({ section, row, unitIndex, index, ...ctx }: RowCtx & { sect
 }
 
 /** Cylinder head Stage 2: per-head follow-on records of this completed Stage 1 inspection. */
+const BENCH_TEXT: Record<string, string> = { PASS: 'Pass', FAIL: 'Fail', DNF: 'Did not finish', UNKNOWN: 'Not scored' };
+
+function bandText(r: BenchLink['results'][number]): string {
+  const unit = r.unit ? ` ${r.unit}` : '';
+  if (r.lower !== null && r.upper !== null) return `${r.lower} – ${r.upper}${unit}`;
+  if (r.lower !== null) return `≥ ${r.lower}${unit}`;
+  if (r.upper !== null) return `≤ ${r.upper}${unit}`;
+  return r.spec ?? '—';
+}
+
+/** Read-only bench results of one item; they come from the immutable bench test, not from the inspector. */
+function BenchBlock({ bench }: { bench: BenchLink }) {
+  const outcome = benchOutcome(bench);
+  return (
+    <section className="section" aria-labelledby={`bench-${bench.unitIndex}`}>
+      <div className="section-head">
+        <h3 id={`bench-${bench.unitIndex}`}>Test bench results (CarbonZapp)</h3>
+        <span className={`badge ${outcome === 'PASS' ? 'badge-pass' : outcome === 'FAIL' ? 'badge-fail' : 'badge-accepted'}`}>Bench: {BENCH_TEXT[outcome]}</span>
+      </div>
+      <p className="small muted" style={{ margin: '0 14px 8px' }}>
+        SN {bench.serial} · tested {fmtDateTime(bench.testedAt)} on bench {bench.machine} ({bench.testPlan}). Read-only from the bench, judged against its green acceptance band.{' '}
+        <Link to={`/injectors/${bench.injectorId}`}>Injector history</Link>
+      </p>
+      <div className="table-wrap">
+        <table className="data stack">
+          <thead>
+            <tr>
+              <th>Test step</th>
+              <th>Acceptance band</th>
+              <th>Measured</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bench.results.map((r) => {
+              const o = r.pdiEvaluation === 'OUTSIDE' ? 'FAIL' : r.outcome;
+              return (
+                <tr key={`${r.condition}|${r.parameter}`}>
+                  <td data-label="Test step">{r.condition}</td>
+                  <td data-label="Acceptance band">{bandText(r)}</td>
+                  <td data-label="Measured" style={o === 'FAIL' ? { color: 'var(--red)', fontWeight: 700 } : undefined}>
+                    {r.value}
+                    {r.note ? <div className="small" style={{ color: 'var(--amber)' }}>{r.note}</div> : null}
+                  </td>
+                  <td data-label="Result">{o ? BENCH_TEXT[o] : '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function StagesPanel({ detail }: { detail: Detail }) {
   const navigate = useNavigate();
   const [startFor, setStartFor] = useState<number | null>(null);
