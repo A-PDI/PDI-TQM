@@ -294,6 +294,26 @@ describe('measurement governance', () => {
   });
 });
 
+describe('owner-supplied forms', () => {
+  it('Head Bolt and Bellows Kit are released and an inspection records Head Bolt dimensions in mm', async () => {
+    const forms = (await inspector.get('/api/forms')).json as Array<{ formNumber: string; component: string }>;
+    expect(forms.filter((f) => ['PDI-IQI-030', 'PDI-IQI-031'].includes(f.formNumber)).map((f) => `${f.formNumber} ${f.component}`)).toEqual([
+      'PDI-IQI-030 Head Bolt',
+      'PDI-IQI-031 Bellows Kit',
+    ]);
+    const r = await inspector.send('POST', '/api/inspections', {
+      partId: (await inspector.get('/api/parts?q=TQ-PRK-3003')).json[0].id,
+      formRevisionId: await formRevisionId(inspector, 'PDI-IQI-030'),
+      unitCount: 2,
+      dateReceived: '2026-10-22',
+    });
+    expect(r.status, JSON.stringify(r.json)).toBe(201);
+    const def = (await inspector.get(`/api/inspections/${r.json.id}`)).json.form.definition;
+    expect(def.component).toBe('Head Bolt');
+    expect(def.sections.find((s: { key: string }) => s.key === 'C').rows.every((row: { unit: string }) => row.unit === 'mm')).toBe(true);
+  });
+});
+
 describe('form revision history (AT-03 / NEG-03)', () => {
   it('existing inspections keep revision A while new work uses the newly released revision', async () => {
     const oldId = await launchRingKit(inspector, 1);

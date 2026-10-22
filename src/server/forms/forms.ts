@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { type FormDefinition, type FormSection, canonicalJson, formDefinitionSchema } from '../../shared/forms.js';
+import { FORM_NUMBER, type FormDefinition, type FormSection, canonicalJson, formDefinitionSchema } from '../../shared/forms.js';
 import { audit } from '../audit.js';
 import { auditedDenial, has, recheckCapability, requireCapability } from '../auth.js';
 import { type Queryable, many, one, withTransaction } from '../db.js';
@@ -76,6 +76,9 @@ export function diffForms(before: FormDefinition | null, after: FormDefinition):
   return out;
 }
 
+/** How a revision is named in messages; a form's first revision may have no label. */
+const revName = (label: string | null) => (label ? `Rev ${label}` : 'original revision');
+
 const slug = (name: string, taken: Set<string>) => {
   const baseKey = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'row';
   let key = baseKey;
@@ -138,7 +141,7 @@ export function registerFormRoutes(app: FastifyInstance, svc: Services) {
         tx,
         `INSERT INTO form_revision (form_id, sequence, revision_label, status, definition, definition_sha256, provenance, change_summary, created_by, based_on_revision_id)
          VALUES ($1,$2,$3,'DRAFT',$4,$5,$6,$7,$8,$9) RETURNING id`,
-        [r.form_id, seq, body.revisionLabel, JSON.stringify(def), sha(def), `Drafted in TQM from ${r.revision_label ? `Rev ${r.revision_label}` : `sequence ${r.sequence}`}`, body.changeSummary, auth.userId, r.id],
+        [r.form_id, seq, body.revisionLabel, JSON.stringify(def), sha(def), `Drafted in TQM from ${r.revision_label ? `${revName(r.revision_label)}` : `sequence ${r.sequence}`}`, body.changeSummary, auth.userId, r.id],
       );
       await audit(tx, { actorId: auth.userId, action: 'forms.draft', entityType: 'form_revision', entityId: row!.id, summary: `${r.form_number} Rev ${body.revisionLabel} drafted`, reason: body.changeSummary, requestId: req.id });
       return { id: row!.id };
@@ -186,8 +189,8 @@ export function registerFormRoutes(app: FastifyInstance, svc: Services) {
       if (r.status !== 'DRAFT') throw conflict('Only a draft can be submitted');
       if (!diffForms(r.based_on_revision_id ? (await loadRevision(tx, r.based_on_revision_id)).definition : null, r.definition).length) throw unprocessable('The draft has no changes');
       await tx.query(`UPDATE form_revision SET status = 'IN_REVIEW', submitted_by = $2, submitted_at = now(), status_changed_at = now() WHERE id = $1`, [id, auth.userId]);
-      await openWork(tx, { kind: 'FORM_RELEASE', title: `Release ${r.form_number} Rev ${r.revision_label}`, subjectType: 'FORM_REVISION', subjectId: id, capability: 'forms.publish' });
-      await audit(tx, { actorId: auth.userId, action: 'forms.submit', entityType: 'form_revision', entityId: id, summary: `${r.form_number} Rev ${r.revision_label} submitted for release`, requestId: req.id });
+      await openWork(tx, { kind: 'FORM_RELEASE', title: `Release ${r.form_number} ${revName(r.revision_label)}`, subjectType: 'FORM_REVISION', subjectId: id, capability: 'forms.publish' });
+      await audit(tx, { actorId: auth.userId, action: 'forms.submit', entityType: 'form_revision', entityId: id, summary: `${r.form_number} ${revName(r.revision_label)} submitted for release`, requestId: req.id });
       return { status: 'IN_REVIEW' };
     });
   });
@@ -201,7 +204,7 @@ export function registerFormRoutes(app: FastifyInstance, svc: Services) {
       if (r.status !== 'IN_REVIEW') throw conflict('Only a revision in review can be returned');
       await tx.query(`UPDATE form_revision SET status = 'DRAFT', status_changed_at = now() WHERE id = $1`, [id]);
       await closeWork(tx, ['FORM_RELEASE'], 'FORM_REVISION', id, auth.userId, 'Returned');
-      await audit(tx, { actorId: auth.userId, action: 'forms.return', entityType: 'form_revision', entityId: id, summary: `${r.form_number} Rev ${r.revision_label} returned to draft`, reason: body.reason, requestId: req.id });
+      await audit(tx, { actorId: auth.userId, action: 'forms.return', entityType: 'form_revision', entityId: id, summary: `${r.form_number} ${revName(r.revision_label)} returned to draft`, reason: body.reason, requestId: req.id });
       return { status: 'DRAFT' };
     });
   });
@@ -229,7 +232,7 @@ export function registerFormRoutes(app: FastifyInstance, svc: Services) {
         action: 'forms.release',
         entityType: 'form_revision',
         entityId: id,
-        summary: `${r.form_number} Rev ${r.revision_label} released${prior ? `; Rev ${prior.revision_label ?? '(original)'} superseded — existing inspections keep their frozen form` : ''}`,
+        summary: `${r.form_number} ${revName(r.revision_label)} released${prior ? `; Rev ${prior.revision_label ?? '(original)'} superseded — existing inspections keep their frozen form` : ''}`,
         reason: body.rationale,
         requestId: req.id,
       });
@@ -244,7 +247,7 @@ export function registerFormRoutes(app: FastifyInstance, svc: Services) {
       const r = await loadRevision(tx, id, true);
       if (r.status !== 'DRAFT') throw conflict('Only a draft can be discarded');
       await tx.query('DELETE FROM form_revision WHERE id = $1', [id]);
-      await audit(tx, { actorId: auth.userId, action: 'forms.discard', entityType: 'inspection_form', entityId: r.form_id, summary: `Draft ${r.form_number} Rev ${r.revision_label} discarded`, requestId: req.id });
+      await audit(tx, { actorId: auth.userId, action: 'forms.discard', entityType: 'inspection_form', entityId: r.form_id, summary: `Draft ${r.form_number} ${revName(r.revision_label)} discarded`, requestId: req.id });
       return { ok: true };
     });
   });
@@ -268,9 +271,19 @@ export function registerFormRoutes(app: FastifyInstance, svc: Services) {
         lotNumber: z.string().trim().max(80).nullable().optional(),
         lotSize: z.number().int().positive().nullable().optional(),
         samplingNote: z.string().trim().max(500).nullable().optional(),
+        /** Also submit the custom form for release as a reusable template under this number. */
+        saveAsTemplate: z
+          .object({ formNumber: z.string().trim().toUpperCase().regex(FORM_NUMBER, 'Use a form number like PDI-IQI-032 or PDI-IQI-010-S') })
+          .nullable()
+          .optional(),
       })
       .parse(req.body);
     if (!body.visualRows.length && !body.dimensionalRows.length) throw unprocessable('Add at least one visual or dimensional characteristic');
+    const templateNumber = body.saveAsTemplate?.formNumber ?? null;
+    if (templateNumber === 'PDI-IQI-MISC') throw unprocessable('Choose a new form number for the template');
+    if (templateNumber && (await one(db, 'SELECT 1 FROM inspection_form WHERE form_number = $1', [templateNumber]))) {
+      throw conflict(`${templateNumber} already exists; choose another form number`);
+    }
     const template = await loadRevision(db, body.receivingFromRevisionId);
     if (template.status !== 'RELEASED') throw unprocessable('Copy the receiving checklist from a released form');
     const receiving = template.definition.sections.find((s) => s.scope === 'inspection');
@@ -307,7 +320,41 @@ export function registerFormRoutes(app: FastifyInstance, svc: Services) {
       lotNumber: body.lotNumber,
       lotSize: body.lotSize,
       samplingNote: body.samplingNote,
+      afterCreate: templateNumber
+        ? async (tx, c) => {
+            await submitTemplate(tx, { formNumber: templateNumber, component: body.component, sections, fromInspection: c, reason: body.reason, requestId: req.id });
+          }
+        : undefined,
     });
-    return reply.code(201).send(created);
+    return reply.code(201).send({ ...created, templateFormNumber: templateNumber });
   });
+}
+
+/**
+ * Turns a one-off custom form into a new controlled form: revision 1 goes straight to review, so it is
+ * usable only after a forms publisher who did not create it releases it (POL-01 independence).
+ */
+async function submitTemplate(
+  tx: Queryable,
+  t: { formNumber: string; component: string; sections: FormSection[]; fromInspection: { id: string; number: string; userId: string }; reason: string; requestId: string },
+) {
+  const form = await one<{ id: string }>(tx, `INSERT INTO inspection_form (form_number, component) VALUES ($1, $2) ON CONFLICT (form_number) DO NOTHING RETURNING id`, [t.formNumber, t.component]);
+  if (!form) throw conflict(`${t.formNumber} already exists; choose another form number`);
+  const definition = formDefinitionSchema.parse({ schemaVersion: 1, formNumber: t.formNumber, component: t.component, revisionLabel: null, sections: t.sections });
+  const stored = JSON.parse(JSON.stringify(definition)) as FormDefinition;
+  const rev = await one<{ id: string }>(
+    tx,
+    `INSERT INTO form_revision (form_id, sequence, revision_label, status, definition, definition_sha256, provenance, change_summary, created_by, submitted_by, submitted_at)
+     VALUES ($1, 1, NULL, 'IN_REVIEW', $2, $3, $4, $5, $6, $6, now()) RETURNING id`,
+    [form.id, JSON.stringify(stored), sha(stored), `Custom form saved as a template from ${t.fromInspection.number}`, t.reason, t.fromInspection.userId],
+  );
+  await audit(tx, {
+    actorId: t.fromInspection.userId,
+    action: 'forms.template_submit',
+    entityType: 'form_revision',
+    entityId: rev!.id,
+    summary: `${t.formNumber} (${t.component}) submitted for release as a template, from custom form of ${t.fromInspection.number}`,
+    requestId: t.requestId,
+  });
+  await openWork(tx, { kind: 'FORM_RELEASE', title: `Release new form ${t.formNumber} (${t.component})`, subjectType: 'FORM_REVISION', subjectId: rev!.id, capability: 'forms.publish' });
 }

@@ -811,6 +811,50 @@ describe('AT-03 / NEG-03 — controlled form revision editing and one-off inspec
       'One-off form — not a released template; independent review required',
     );
   });
+
+  it('a custom form can be saved as a template at launch; it starts new work only after independent release', async () => {
+    const receiving = await formRevisionId(inspector, 'PDI-IQI-010');
+    const custom = {
+      partId: ringPartId,
+      component: 'CAT Oil Cooler Sample',
+      reason: 'First sample of a new oil cooler; measured against the sample drawing',
+      receivingFromRevisionId: receiving,
+      dimensionalRows: [
+        { name: 'Overall Length', unit: 'mm', specText: '362.0' },
+        { name: 'Thread Size', specText: '3/8-16' },
+      ],
+      unitCount: 1,
+      dateReceived: today(),
+    };
+    const bad = await inspector.send('POST', '/api/inspections/one-off', { ...custom, saveAsTemplate: { formNumber: 'OIL-COOLER-S' } });
+    expect(bad.status).toBe(400);
+    const taken = await inspector.send('POST', '/api/inspections/one-off', { ...custom, saveAsTemplate: { formNumber: 'PDI-IQI-010' } });
+    expect(taken.status).toBe(409);
+    expect(taken.json.error.message).toMatch(/PDI-IQI-010 already exists/);
+
+    const before = (await h.pool.query(`SELECT count(*)::int AS n FROM inspection`)).rows[0].n;
+    const r = ok(await inspector.send('POST', '/api/inspections/one-off', { ...custom, saveAsTemplate: { formNumber: 'pdi-iqi-010-s' } }), 201);
+    expect(r.templateFormNumber).toBe('PDI-IQI-010-S');
+    expect((await h.pool.query(`SELECT count(*)::int AS n FROM inspection`)).rows[0].n).toBe(before + 1);
+    const tpl = (ok(await quality.get('/api/forms?all=1')) as Array<{ formNumber: string; status: string; revisionId: string }>).find((f) => f.formNumber === 'PDI-IQI-010-S')!;
+    expect(tpl.status).toBe('IN_REVIEW');
+    const detail = ok(await quality.get(`/api/form-revisions/${tpl.revisionId}`));
+    expect(detail.revision.definition).toMatchObject({ formNumber: 'PDI-IQI-010-S', component: 'CAT Oil Cooler Sample' });
+    expect(detail.revision.definition.oneOff).toBeUndefined();
+    expect(detail.revision.definition.sections.find((s: { key: string }) => s.key === 'C').rows).toEqual([
+      { key: 'overall_length', name: 'Overall Length', unit: 'mm', specText: '362.0' },
+      { key: 'thread_size', name: 'Thread Size', specText: '3/8-16' },
+    ]);
+    // Not usable until released, and the inspector who created it cannot release it.
+    expect((await inspector.send('POST', '/api/inspections', { partId: ringPartId, formRevisionId: tpl.revisionId, unitCount: 1, dateReceived: today() })).status).toBe(422);
+    expect((await inspector.send('POST', `/api/form-revisions/${tpl.revisionId}/release`, { rationale: 'self' })).status).toBe(403);
+    const work = await h.pool.query(`SELECT kind, required_capability, status FROM work_item WHERE subject_type = 'FORM_REVISION' AND subject_id = $1`, [tpl.revisionId]);
+    expect(work.rows).toEqual([{ kind: 'FORM_RELEASE', required_capability: 'forms.publish', status: 'OPEN' }]);
+    ok(await quality.send('POST', `/api/form-revisions/${tpl.revisionId}/release`, { rationale: 'Checked against the sample drawing (fictional)' }));
+    expect((await h.pool.query(`SELECT status FROM work_item WHERE subject_type = 'FORM_REVISION' AND subject_id = $1`, [tpl.revisionId])).rows[0].status).not.toBe('OPEN');
+    const next = ok(await inspector.send('POST', '/api/inspections', { partId: ringPartId, formRevisionId: await formRevisionId(inspector, 'PDI-IQI-010-S'), unitCount: 1, dateReceived: today() }), 201);
+    expect(ok(await inspector.get(`/api/inspections/${next.id}`)).form.definition.formNumber).toBe('PDI-IQI-010-S');
+  });
 });
 
 describe('search and work queue across Stage 3 records', () => {

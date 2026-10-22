@@ -74,7 +74,23 @@ export async function loadReferenceData(db: Db, rootDir: string, log: (m: string
     );
   }
 
-  const catalogue = JSON.parse(readFileSync(path.join(rootDir, 'seed/forms/appendix-a-v1.0.json'), 'utf8')) as CatalogueFile;
+  for (const { file, pendingValidation } of FORM_CATALOGUES) {
+    const catalogue = JSON.parse(readFileSync(path.join(rootDir, 'seed/forms', file), 'utf8')) as CatalogueFile;
+    const loaded = await loadCatalogue(db, catalogue, systemUserId, pendingValidation);
+    if (loaded) log(`loaded ${loaded} form revisions from ${catalogue.source.release}`);
+  }
+}
+
+/**
+ * Released form catalogues, loaded in order: the Appendix A set, then forms supplied by the owner.
+ * Entries already present (same form and sequence) are left untouched.
+ */
+const FORM_CATALOGUES = [
+  { file: 'appendix-a-v1.0.json', pendingValidation: true },
+  { file: 'owner-additions-2026-10.json', pendingValidation: false },
+];
+
+async function loadCatalogue(db: Db, catalogue: CatalogueFile, systemUserId: string, pendingValidation: boolean): Promise<number> {
   let loaded = 0;
   await withTransaction(db, async (tx) => {
     for (const entry of catalogue.entries) {
@@ -100,7 +116,7 @@ export async function loadReferenceData(db: Db, rootDir: string, log: (m: string
           status,
           JSON.stringify(definition),
           definitionHash(definition),
-          `${catalogue.source.release}; source sha256 ${catalogue.source.sha256.slice(0, 16)}; PDI owner validation pending (POL-12)`,
+          `${catalogue.source.release}; source sha256 ${catalogue.source.sha256.slice(0, 16)}${pendingValidation ? '; PDI owner validation pending (POL-12)' : ''}`,
           systemUserId,
         ],
       );
@@ -115,5 +131,5 @@ export async function loadReferenceData(db: Db, rootDir: string, log: (m: string
       });
     }
   });
-  if (loaded) log(`loaded ${loaded} form revisions from the Appendix A catalogue`);
+  return loaded;
 }

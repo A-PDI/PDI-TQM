@@ -55,10 +55,13 @@ const sectionSchema = z.object({
 });
 export type FormSection = z.infer<typeof sectionSchema>;
 
+/** Form numbers: PDI-IQI-<id>, optionally with one suffix such as PDI-IQI-010-S. */
+export const FORM_NUMBER = /^PDI-IQI-[0-9A-Z]+(-[0-9A-Z]+)?$/;
+
 export const formDefinitionSchema = z
   .object({
     schemaVersion: z.literal(1),
-    formNumber: z.string().regex(/^PDI-IQI-[0-9A-Z]+$/),
+    formNumber: z.string().regex(FORM_NUMBER),
     component: z.string().min(1),
     revisionLabel: z.string().nullable(),
     /** Governed one-off form built for a single inspection (FR-042); never a released template. */

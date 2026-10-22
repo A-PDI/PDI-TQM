@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { CAPABILITIES, type Capability, ROLE_BUNDLES } from '../shared/capabilities.js';
+import { FORM_NUMBER } from '../shared/forms.js';
 import { audit } from './audit.js';
 import {
   attemptLogin,
@@ -262,7 +263,7 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
         partNumber: z.string().trim().min(2).max(60),
         description: z.string().trim().min(2).max(200),
         family: z.string().trim().max(80).nullable().optional(),
-        defaultFormNumber: z.string().regex(/^PDI-IQI-[0-9A-Z]+$/).nullable().optional(),
+        defaultFormNumber: z.string().regex(FORM_NUMBER).nullable().optional(),
         aliases: z.array(z.string().trim().min(1).max(60)).max(20).optional(),
       })
       .parse(req.body);

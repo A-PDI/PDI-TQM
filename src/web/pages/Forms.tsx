@@ -65,13 +65,13 @@ export function FormsList() {
                           {released.revisionLabel ? `Rev ${released.revisionLabel}` : 'Original'} · {released.inspectionCount} inspection(s)
                         </Link>
                       ) : (
-                        <span className="muted">None (historical)</span>
+                        <span className="muted">{working.length ? 'Not yet released' : 'None (historical)'}</span>
                       )}
                     </td>
                     <td className="small">
                       {working.map((w) => (
                         <div key={w.revisionId}>
-                          <Link to={`/forms/${w.revisionId}`}>Rev {w.revisionLabel}</Link> <StateBadge state={w.status} />
+                          <Link to={`/forms/${w.revisionId}`}>{w.revisionLabel ? `Rev ${w.revisionLabel}` : 'Original'}</Link> <StateBadge state={w.status} />
                         </div>
                       ))}
                     </td>

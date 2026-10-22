@@ -55,6 +55,26 @@ describe('outcome derivation', () => {
   });
 });
 
+describe('owner-supplied forms', () => {
+  const owner = JSON.parse(readFileSync('seed/forms/owner-additions-2026-10.json', 'utf8')) as typeof catalogue;
+  it('adds Head Bolt (PDI-IQI-030) and Bellows Kit (PDI-IQI-031) as schema-valid active forms', () => {
+    expect(owner.entries.map((e) => `${e.formNumber} ${e.availability}`)).toEqual(['PDI-IQI-030 ACTIVE', 'PDI-IQI-031 ACTIVE']);
+    for (const e of owner.entries) {
+      expect(() => formDefinitionSchema.parse(e.definition)).not.toThrow();
+      expect(e.definition.sections[0]).toMatchObject({ key: 'A', scope: 'inspection', pattern: 'pfn_checklist' });
+    }
+  });
+  it('records Head Bolt dimensions in mm without inventing limits', () => {
+    const dims = owner.entries[0]!.definition.sections.find((s) => s.pattern === 'dimensional')!;
+    expect(dims.rows.map((r) => r.name)).toEqual(['Body Diameter', 'Flange Head Diameter', 'Head Size', 'Shoulder Length', 'Thread Length']);
+    for (const r of dims.rows) expect(r).toMatchObject({ unit: 'mm', limitNote: 'Not supplied; resolve to authorized product specification' });
+  });
+  it('does not reuse an Appendix A form number', () => {
+    const existing = new Set(catalogue.entries.map((e) => e.formNumber));
+    for (const e of owner.entries) expect(existing.has(e.formNumber)).toBe(false);
+  });
+});
+
 describe('Appendix A catalogue', () => {
   it('contains 31 definitions with 28 active forms, all schema-valid', () => {
     expect(catalogue.entries).toHaveLength(31);
