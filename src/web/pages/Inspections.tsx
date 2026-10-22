@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { FORM_NUMBER } from '../../shared/forms';
 import { ApiError, api, fmtDate } from '../api';
@@ -220,6 +220,8 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
   const [part, setPart] = useState<PartOption | null>(null);
   const [options, setOptions] = useState<LaunchOptions | null>(null);
   const [formId, setFormId] = useState('');
+  // A form the user picked for this part wins over the part's suggestion, which can arrive later.
+  const formPicked = useRef(false);
   const [units, setUnits] = useState('1');
   const [po, setPo] = useState('');
   const [received, setReceived] = useState(today());
@@ -241,6 +243,7 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
       .filter((p) => p[0]);
 
   useEffect(() => {
+    formPicked.current = false;
     if (!part) {
       setOptions(null);
       setSourceId('');
@@ -250,7 +253,7 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
       .then((o) => {
         setOptions(o);
         const suggested = forms.data?.find((f) => f.formNumber === o.suggestedFormNumber);
-        if (suggested) setFormId(suggested.revisionId);
+        if (suggested && !formPicked.current) setFormId(suggested.revisionId);
         if (o.sources.length === 1) setSourceId(o.sources[0]!.id);
       })
       .catch(() => setOptions(null));
@@ -348,7 +351,14 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
       </div>
       <div className="field">
         <label htmlFor="launch-form">Inspection Form</label>
-        <select id="launch-form" value={formId} onChange={(e) => setFormId(e.target.value)}>
+        <select
+          id="launch-form"
+          value={formId}
+          onChange={(e) => {
+            formPicked.current = true;
+            setFormId(e.target.value);
+          }}
+        >
           <option value="">Select form…</option>
           {forms.data?.map((f) => (
             <option key={f.revisionId} value={f.revisionId}>
