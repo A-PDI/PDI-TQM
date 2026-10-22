@@ -138,7 +138,7 @@ export function registerFormRoutes(app: FastifyInstance, svc: Services) {
         tx,
         `INSERT INTO form_revision (form_id, sequence, revision_label, status, definition, definition_sha256, provenance, change_summary, created_by, based_on_revision_id)
          VALUES ($1,$2,$3,'DRAFT',$4,$5,$6,$7,$8,$9) RETURNING id`,
-        [r.form_id, seq, body.revisionLabel, JSON.stringify(def), sha(def), `Drafted in TQMS from ${r.revision_label ? `Rev ${r.revision_label}` : `sequence ${r.sequence}`}`, body.changeSummary, auth.userId, r.id],
+        [r.form_id, seq, body.revisionLabel, JSON.stringify(def), sha(def), `Drafted in TQM from ${r.revision_label ? `Rev ${r.revision_label}` : `sequence ${r.sequence}`}`, body.changeSummary, auth.userId, r.id],
       );
       await audit(tx, { actorId: auth.userId, action: 'forms.draft', entityType: 'form_revision', entityId: row!.id, summary: `${r.form_number} Rev ${body.revisionLabel} drafted`, reason: body.changeSummary, requestId: req.id });
       return { id: row!.id };

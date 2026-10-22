@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ApiError, api } from '../api';
 import { useAuth } from '../auth';
+import logoUrl from '../assets/pdi-logo.png';
 
 export function Login() {
   const { refresh } = useAuth();
@@ -29,9 +30,14 @@ export function Login() {
         }}
       >
         <div style={{ background: 'var(--navy)', color: '#fff', margin: '-14px -16px 16px', padding: '16px', borderRadius: '8px 8px 0 0' }}>
-          <strong style={{ fontSize: 18 }}>PDI TQMS</strong>
-          <div className="small" style={{ color: '#c9d1e0' }}>
-            Total Quality Management System
+          <div className="brand-title">
+            <img className="brand-logo" src={logoUrl} alt="PDI" />
+            <div>
+              <strong style={{ fontSize: 18 }}>TQM</strong>
+              <div className="small" style={{ color: '#c9d1e0' }}>
+                Total Quality Management
+              </div>
+            </div>
           </div>
         </div>
         <div className="field">

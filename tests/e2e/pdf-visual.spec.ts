@@ -15,7 +15,7 @@ import { makePng } from '../fixtures/images.js';
  */
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const FIXTURES = path.join(ROOT, 'tests/fixtures/pdf-snapshots');
-const LOGO = path.join(ROOT, 'assets/brand/pdi_logo_reference_only.png');
+const LOGO = path.join(ROOT, 'assets/brand/pdi-logo.png');
 
 for (const file of readdirSync(FIXTURES).filter((f) => f.endsWith('.json')).sort()) {
   const name = file.replace(/\.json$/, '');

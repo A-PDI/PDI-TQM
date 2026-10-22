@@ -27,7 +27,7 @@ export const CAPABILITIES = {
   'containment.verify': { description: 'Verify physical segregation/hold of affected material', sensitive: false },
   'material.disposition': { description: 'Decide material disposition (return, scrap, rework, repair, use-as-is)', sensitive: true },
   'disposition.verify': { description: 'Verify that a disposition was carried out (reinspection or objective evidence)', sensitive: true },
-  'material.release': { description: 'Release verified material from a TQMS hold', sensitive: true },
+  'material.release': { description: 'Release verified material from a TQM hold', sensitive: true },
   'concession.request': { description: 'Request a deviation/concession', sensitive: false },
   'concession.approve': { description: 'Approve or reject deviations/concessions', sensitive: true },
   'scar.manage': { description: 'Issue SCARs and record supplier responses', sensitive: false },

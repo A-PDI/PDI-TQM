@@ -28,7 +28,7 @@ export async function renderRecordReport(s: RecordReportSnapshot, logo: Buffer |
     size: 'LETTER',
     margins: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN },
     bufferPages: true,
-    info: { Title: `${s.title} ${s.number}`, Author: 'PDI Quality Control', Subject: s.docCode, Creator: 'PDI TQMS', CreationDate: new Date(s.generatedAt) },
+    info: { Title: `${s.title} ${s.number}`, Author: 'PDI Quality Control', Subject: s.docCode, Creator: 'PDI TQM', CreationDate: new Date(s.generatedAt) },
   });
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
@@ -44,8 +44,7 @@ export async function renderRecordReport(s: RecordReportSnapshot, logo: Buffer |
     doc.rect(MARGIN, MARGIN, CONTENT_W, h).fill(C.navy);
     if (first) {
       if (logo) {
-        doc.roundedRect(MARGIN + 10, MARGIN + 9, 98, 36, 3).fill(C.white);
-        doc.image(logo, MARGIN + 12, MARGIN + 10, { fit: [94, 34], align: 'center', valign: 'center' });
+        doc.image(logo, MARGIN + 10, MARGIN + 8, { fit: [98, 38], align: 'center', valign: 'center' });
       }
       font('Helvetica-Bold', 13, C.white).text(pdfText(s.title.toUpperCase()), MARGIN + 110, MARGIN + 14, { width: CONTENT_W - 220, align: 'center' });
       font('Helvetica', 7.5, '#C9D1E0').text(pdfText(`${s.docCode} · ${s.number} · Edition ${s.edition}`), MARGIN, MARGIN + 34, { width: CONTENT_W, align: 'center' });

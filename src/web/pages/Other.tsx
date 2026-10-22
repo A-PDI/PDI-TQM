@@ -429,7 +429,7 @@ export function NotFound() {
     <div className="card">
       <h1>Page not found</h1>
       <p>
-        This address does not match a TQMS page. <Link to="/">Go to My Work</Link>.
+        This address does not match a TQM page. <Link to="/">Go to My Work</Link>.
       </p>
     </div>
   );

@@ -51,7 +51,7 @@ export async function renderInspectionReport(input: RenderInput): Promise<Render
       Title: `Incoming Quality Inspection ${s.inspection.number}`,
       Author: 'PDI Quality Control',
       Subject: `${s.form.formNumber} ${s.form.component}`,
-      Creator: 'PDI TQMS',
+      Creator: 'PDI TQM',
       CreationDate: new Date(s.generatedAt),
     },
   });
@@ -79,8 +79,7 @@ export async function renderInspectionReport(input: RenderInput): Promise<Render
     doc.rect(MARGIN, MARGIN, CONTENT_W, h).fill(C.navy);
     if (first) {
       if (input.logo) {
-        doc.roundedRect(MARGIN + 10, MARGIN + 9, 98, 36, 3).fill(C.white);
-        doc.image(input.logo, MARGIN + 12, MARGIN + 10, { fit: [94, 34], align: 'center', valign: 'center' });
+        doc.image(input.logo, MARGIN + 10, MARGIN + 8, { fit: [98, 38], align: 'center', valign: 'center' });
       } else {
         font('Helvetica-Bold', 22, C.white).text('PDI', MARGIN + 14, MARGIN + 15, { lineBreak: false });
       }

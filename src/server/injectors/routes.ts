@@ -349,7 +349,7 @@ export function registerInjectorRoutes(app: FastifyInstance, svc: Services) {
     const ids = parseIds(req.query);
     const c = await comparison(db, ids);
     const rows: unknown[][] = [
-      [`# PDI TQMS injector comparison; generated ${new Date().toISOString()}; ${BENCH_ADAPTER} data; values as recorded`],
+      [`# PDI TQM injector comparison; generated ${new Date().toISOString()}; ${BENCH_ADAPTER} data; values as recorded`],
       ['Condition', 'Parameter', 'Unit', ...c.injectors.flatMap((i) => [`${i.serialNumber} first`, `${i.serialNumber} latest`])],
       ...c.rows.map((r) => [r.condition, r.parameter, r.unit ?? '', ...r.values.flatMap((v) => [v.first?.value ?? '', v.latest?.value ?? ''])]),
     ];
@@ -466,7 +466,7 @@ export function registerInjectorRoutes(app: FastifyInstance, svc: Services) {
     );
     const header = ['Serial', 'Part', 'Machine', 'Test plan', 'Tested at', 'Origin', 'Import', 'Machine verdict', 'PDI evaluation', 'Condition', 'Parameter', 'Unit', 'Value', 'Row machine verdict', 'Lower', 'Upper', 'Row PDI evaluation'];
     const body = [
-      [`# PDI TQMS injector test export; period ${q.from} to ${q.to} (${config.displayTimeZone}); generated ${new Date().toISOString()}; ${METRICS_VERSION}`],
+      [`# PDI TQM injector test export; period ${q.from} to ${q.to} (${config.displayTimeZone}); generated ${new Date().toISOString()}; ${METRICS_VERSION}`],
       header,
       ...rows.map((r) => Object.values(r)),
     ];

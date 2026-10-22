@@ -17,7 +17,7 @@ async function main() {
   if (initialized) app.log.info({ volumeId: initialized }, 'initialized a freshly attached evidence volume');
   await pairEvidenceVolume(db, svc.storage).catch((err) => app.log.error({ err }, 'could not pair evidence volume'));
   const readiness = await checkReadiness(svc);
-  if (!readiness.ready) app.log.error({ checks: readiness.checks }, 'TQMS is NOT READY — see readiness checks');
+  if (!readiness.ready) app.log.error({ checks: readiness.checks }, 'TQM is NOT READY — see readiness checks');
 
   let stopReminders: (() => void) | null = null;
   if (config.jobsEnabled) {
