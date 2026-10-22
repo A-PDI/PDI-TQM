@@ -235,3 +235,38 @@ test('Form editor: draft a new revision, add a row, submit; another person relea
   await expect(quality.getByText('released', { exact: true }).first()).toBeVisible();
   await expect(quality.getByText('gasket_seat_condition', { exact: true })).toBeVisible(); // new row keyed from its name
 });
+
+test('Custom form saved as a template at launch: someone else releases it, then it is offered for new inspections', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop', 'desktop walkthrough');
+  const inspector = await pageAs(browser, 'jordan.rivera@example.com');
+  await inspector.getByRole('link', { name: 'New Inspection' }).click();
+  const dialog = inspector.getByRole('dialog', { name: 'New Inspection' });
+  await dialog.getByRole('combobox', { name: 'Part Number' }).fill('OE-PRK');
+  await inspector.getByRole('option', { name: /TQ-PRK-3003/ }).click();
+  await dialog.getByLabel('Inspection Form').selectOption('ONE_OFF');
+  await dialog.getByLabel('Component').fill('Oil Cooler Sample (fictional)');
+  await dialog.getByLabel('Why a one-off form is needed').fill('First sample from a new supplier (fictional)');
+  await dialog.getByLabel(/^Measurements/).fill('Overall Length | mm | 362.0\nStep Length | | 346.0');
+  await dialog.getByLabel('Save this form as a template for future inspections').check();
+  await dialog.getByLabel('Template form number').fill('PDI-IQI-');
+  await expect(dialog.getByText('Use a new number like PDI-IQI-032 or PDI-IQI-010-S.')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Start inspection' })).toBeDisabled();
+  await dialog.getByLabel('Template form number').fill('PDI-IQI-E2E-S');
+  await dialog.getByRole('button', { name: 'Start inspection' }).click();
+  await expect(inspector.locator('.wb-title')).toHaveText(/TQ-PRK-3003/);
+
+  const quality = await pageAs(browser, 'casey.morgan@example.com');
+  await quality.goto('/forms');
+  const row = quality.getByRole('row', { name: /PDI-IQI-E2E-S/ });
+  await expect(row.getByText('Not yet released')).toBeVisible();
+  await row.getByRole('link', { name: 'Original' }).click();
+  await quality.getByRole('button', { name: 'Release…' }).click();
+  const rel = quality.getByRole('dialog', { name: 'Release form revision' });
+  await rel.getByLabel('Release rationale').fill('Checked against the sample drawing (fictional)');
+  await rel.getByRole('button', { name: 'Release' }).click();
+  await expect(quality.getByText('released', { exact: true }).first()).toBeVisible();
+
+  await inspector.goto('/');
+  await inspector.getByRole('link', { name: 'New Inspection' }).click();
+  await expect(inspector.getByRole('dialog', { name: 'New Inspection' }).getByLabel('Inspection Form').locator('option', { hasText: 'PDI-IQI-E2E-S' })).toHaveCount(1);
+});

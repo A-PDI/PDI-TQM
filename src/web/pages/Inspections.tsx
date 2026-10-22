@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { FORM_NUMBER } from '../../shared/forms';
 import { ApiError, api, fmtDate } from '../api';
 import { useAuth } from '../auth';
 import { Dialog, LoadState, OutcomeBadge, type PartOption, PartTypeahead, StatusBadge, useLoad } from '../components/ui';
@@ -230,7 +231,8 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
   const [sampling, setSampling] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [oneOff, setOneOff] = useState({ component: '', reason: '', receivingFrom: '', visual: '', dimensional: '' });
+  const [oneOff, setOneOff] = useState({ component: '', reason: '', receivingFrom: '', visual: '', dimensional: '', saveTemplate: false, templateNumber: '' });
+  const templateNumberOk = !oneOff.saveTemplate || FORM_NUMBER.test(oneOff.templateNumber.trim().toUpperCase());
   const isOneOff = formId === 'ONE_OFF';
   const lines = (text: string) =>
     text
@@ -264,7 +266,7 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
     unitCount >= 1 &&
     unitCount <= 100 &&
     received &&
-    (!isOneOff || (oneOff.component.trim() && oneOff.reason.trim().length >= 10 && (oneOff.receivingFrom || forms.data?.find((f) => f.formNumber === options?.suggestedFormNumber)) && (oneOff.visual.trim() || oneOff.dimensional.trim())));
+    (!isOneOff || (oneOff.component.trim() && oneOff.reason.trim().length >= 10 && (oneOff.receivingFrom || forms.data?.find((f) => f.formNumber === options?.suggestedFormNumber)) && (oneOff.visual.trim() || oneOff.dimensional.trim()) && templateNumberOk));
   const selectedSource = options?.sources.find((s) => s.id === sourceId);
 
   const start = async () => {
@@ -289,7 +291,8 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
             reason: oneOff.reason,
             receivingFromRevisionId: oneOff.receivingFrom || forms.data?.find((f) => f.formNumber === options?.suggestedFormNumber)?.revisionId,
             visualRows: lines(oneOff.visual).map(([name, acceptance]) => ({ name, acceptance: acceptance || undefined })),
-            dimensionalRows: lines(oneOff.dimensional).map(([name, unit]) => ({ name, unit: unit || undefined })),
+            dimensionalRows: lines(oneOff.dimensional).map(([name, unit, spec]) => ({ name, unit: unit || 'mm', specText: spec || undefined })),
+            saveAsTemplate: oneOff.saveTemplate ? { formNumber: oneOff.templateNumber.trim().toUpperCase() } : null,
           },
         });
         navigate(`/inspections/${created.id}`);
@@ -353,14 +356,14 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
               {f.revisionLabel ? ` (Rev ${f.revisionLabel})` : ''}
             </option>
           ))}
-          <option value="ONE_OFF">One-off inspection (no catalogue form)…</option>
+          <option value="ONE_OFF">Custom form (one-off; can be saved as a template)…</option>
         </select>
         {options?.suggestedFormNumber && <div className="field-hint">Suggested for this part: {options.suggestedFormNumber}</div>}
       </div>
       {isOneOff && (
         <fieldset className="card" style={{ margin: '0 0 12px' }}>
           <legend className="small" style={{ fontWeight: 600 }}>
-            One-off form — always independently reviewed; never becomes a released template
+            Custom form — this inspection is always independently reviewed
           </legend>
           <div className="field">
             <label htmlFor="oo-component">Component</label>
@@ -386,10 +389,33 @@ function LaunchDialog({ open, onClose }: { open: boolean; onClose: () => void })
             <textarea id="oo-visual" value={oneOff.visual} onChange={(e) => setOneOff({ ...oneOff, visual: e.target.value })} />
           </div>
           <div className="field">
-            <label htmlFor="oo-dim">Measurements (one per line: name | unit)</label>
-            <textarea id="oo-dim" value={oneOff.dimensional} onChange={(e) => setOneOff({ ...oneOff, dimensional: e.target.value })} />
-            <div className="field-hint">No limits are invented: readings are recorded as observations for Engineering review.</div>
+            <label htmlFor="oo-dim">Measurements (one per line: name | unit | nominal or spec)</label>
+            <textarea id="oo-dim" value={oneOff.dimensional} onChange={(e) => setOneOff({ ...oneOff, dimensional: e.target.value })} placeholder={'Overall Length | mm | 362.0'} />
+            <div className="field-hint">Unit defaults to mm. No limits are invented: readings are recorded as observations for Engineering review.</div>
           </div>
+          <div className="field">
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 600 }}>
+              <input type="checkbox" checked={oneOff.saveTemplate} onChange={(e) => setOneOff({ ...oneOff, saveTemplate: e.target.checked })} /> Save this form as a template for future inspections
+            </label>
+          </div>
+          {oneOff.saveTemplate && (
+            <div className="field">
+              <label htmlFor="oo-template-number">Template form number</label>
+              <input
+                id="oo-template-number"
+                type="text"
+                placeholder="e.g. PDI-IQI-010-S"
+                value={oneOff.templateNumber}
+                aria-invalid={!templateNumberOk}
+                onChange={(e) => setOneOff({ ...oneOff, templateNumber: e.target.value })}
+              />
+              <div className={templateNumberOk ? 'field-hint' : 'field-error'}>
+                {templateNumberOk
+                  ? 'Goes to review; it can start new inspections once someone with form-publishing authority (not you) releases it.'
+                  : 'Use a new number like PDI-IQI-032 or PDI-IQI-010-S.'}
+              </div>
+            </div>
+          )}
         </fieldset>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>

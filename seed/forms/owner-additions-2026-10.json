@@ -1,0 +1,200 @@
+{
+  "source": {
+    "file": "incoming-inspection-forms.xlsx (owner spreadsheet, rows PDI-IQI-0014 Head Bolt and PDI-IQI-0013 Bellow Kit)",
+    "sha256": "3a08f176e27072de5ff9537f5edfd606b7186263e164e0b2e10fa4a1c534c654",
+    "release": "Owner inspection spreadsheet (22 Oct 2026); numbered PDI-IQI-030 and PDI-IQI-031 by owner decision; measurements in mm"
+  },
+  "entries": [
+    {
+      "formNumber": "PDI-IQI-030",
+      "component": "Head Bolt",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-030",
+        "component": "Head Bolt",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "outer_carton_condition",
+                "name": "Outer Carton Condition",
+                "acceptance": "Carton undamaged — no crushing, tears, moisture staining, or exposed contents"
+              },
+              {
+                "key": "box_package_label",
+                "name": "Box / Package Label",
+                "acceptance": "Label present; part number, description, and quantity match purchase order exactly"
+              },
+              {
+                "key": "part_marking",
+                "name": "Part Marking",
+                "acceptance": "PDI logo and part number permanently marked on part; matches purchase order"
+              },
+              {
+                "key": "quantity_matches_po",
+                "name": "Quantity matches PO",
+                "acceptance": "Physical count matches packing slip and purchase order line item; no shorts or mixed counts"
+              },
+              {
+                "key": "corrosion_contamination_protection",
+                "name": "Corrosion / Contamination Protection",
+                "acceptance": "Parts wrapped in VCI film or oil-coated; no visible rust, oxidation, or contamination on arrival"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "surface_condition",
+                "name": "Surface Condition",
+                "acceptance": "Surfaces to be free of damage"
+              },
+              {
+                "key": "oxidation_markings",
+                "name": "Oxidation/Markings",
+                "acceptance": "Parts to be free of Oxidation"
+              },
+              {
+                "key": "thread_quality_no_damage",
+                "name": "Thread Quality/No Damage",
+                "acceptance": "Threads should be undamaged"
+              },
+              {
+                "key": "fit_finish",
+                "name": "Fit & Finish",
+                "acceptance": "Consistent finish / no sharp edges"
+              }
+            ]
+          },
+          {
+            "key": "C",
+            "letter": "C",
+            "title": "DIMENSIONAL INSPECTION",
+            "pattern": "dimensional",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "body_diameter",
+                "name": "Body Diameter",
+                "unit": "mm",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "flange_head_diameter",
+                "name": "Flange Head Diameter",
+                "unit": "mm",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "head_size",
+                "name": "Head Size",
+                "unit": "mm",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "shoulder_length",
+                "name": "Shoulder Length",
+                "unit": "mm",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              },
+              {
+                "key": "thread_length",
+                "name": "Thread Length",
+                "unit": "mm",
+                "limitNote": "Not supplied; resolve to authorized product specification"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "formNumber": "PDI-IQI-031",
+      "component": "Bellows Kit",
+      "revisionLabel": null,
+      "sequence": 1,
+      "availability": "ACTIVE",
+      "definition": {
+        "schemaVersion": 1,
+        "formNumber": "PDI-IQI-031",
+        "component": "Bellows Kit",
+        "revisionLabel": null,
+        "sections": [
+          {
+            "key": "A",
+            "letter": "A",
+            "title": "RECEIVING & DOCUMENTATION VERIFICATION",
+            "pattern": "pfn_checklist",
+            "scope": "inspection",
+            "optional": false,
+            "rows": [
+              {
+                "key": "po_traveler_present",
+                "name": "PO / Traveler present"
+              },
+              {
+                "key": "quantity_matches_po",
+                "name": "Quantity matches PO"
+              },
+              {
+                "key": "part_number_matches_po",
+                "name": "Part number matches PO"
+              },
+              {
+                "key": "parts_properly_packaged_no_damage",
+                "name": "Parts properly packaged / no damage"
+              },
+              {
+                "key": "certificates_paperwork_present",
+                "name": "Certificates / paperwork present"
+              }
+            ]
+          },
+          {
+            "key": "B",
+            "letter": "B",
+            "title": "VISUAL INSPECTION",
+            "pattern": "pass_fail_checklist",
+            "scope": "unit",
+            "optional": false,
+            "rows": [
+              {
+                "key": "assembly_integrity",
+                "name": "Assembly Integrity"
+              },
+              {
+                "key": "hardware",
+                "name": "Hardware"
+              },
+              {
+                "key": "oxidation_markings",
+                "name": "Oxidation/Markings"
+              },
+              {
+                "key": "fit_finish",
+                "name": "Fit & Finish"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

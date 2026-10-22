@@ -58,6 +58,8 @@ export async function createInspection(
     lotNumber?: string | null;
     lotSize?: number | null;
     samplingNote?: string | null;
+    /** Runs inside the creating transaction, so related records commit or roll back with the inspection. */
+    afterCreate?: (tx: DbClient, created: { id: string; number: string; userId: string; formRevisionId: string }) => Promise<void>;
   },
 ): Promise<{ id: string; number: string }> {
   const auth = await requireCapability(db, req, 'inspection.perform', { action: 'inspection.create', consequential: false });
@@ -170,6 +172,7 @@ export async function createInspection(
       after: { unitCount: input.unitCount, poNumber: input.poNumber ?? null, sourceId: source?.id ?? null, baselineRevisionId: baseline?.revisionId ?? null },
       requestId: req.id,
     });
+    await input.afterCreate?.(tx, { id, number, userId: auth.userId, formRevisionId });
     return { id, number };
   });
 }
