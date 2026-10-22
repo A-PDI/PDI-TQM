@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createBackup, verifyBackup } from '../../src/server/backup.js';
 import { readinessProbe } from '../../src/server/backup-probe.js';
 import { GOOD_ROWS, benchCsv } from '../fixtures/bench.js';
+import { makePdf } from '../fixtures/documents.js';
 import { makePng } from '../fixtures/images.js';
 import { type Harness, type Session, TEST_DB, formRevisionId, passAll, save, startHarness, version } from './harness.js';
 
@@ -43,6 +44,9 @@ beforeAll(async () => {
   expect((await quality.send('POST', `/api/inspections/${inspectionId}/review`, { decision: 'CONFIRM', expectedVersion: await version(quality, inspectionId), comment: 'ok (fictional)' })).status).toBe(200);
   await h.svc.worker!.drain();
   expect((await inspector.upload('/api/injectors/imports', benchCsv([{ serial: 'INJ-BKP-1', testedAt: '2026-10-20T08:00:00Z', rows: GOOD_ROWS }]), 'bkp.csv', 'text/csv')).status).toBe(201);
+  const admin = await h.login('admin');
+  const docName = 'OPS-06_Nonconformance_Report_Rev03.pdf';
+  expect((await admin.upload('/api/documents/import?effectiveFrom=2026-11-01', await makePdf(docName), docName, 'application/pdf')).status).toBe(201);
 });
 afterAll(async () => {
   await h?.close();
@@ -56,7 +60,8 @@ const verify = (dir: string, keep = false) =>
 describe('application-consistent backup and isolated restore (AT-21)', () => {
   it('a backup restores into an isolated database and storage root with every evidence link, hash and record intact', async () => {
     const { dir, manifest } = await backup();
-    expect(manifest.evidence.count).toBeGreaterThanOrEqual(3); // photo, report PDF, bench file
+    expect(manifest.evidence.count).toBeGreaterThanOrEqual(4); // photo, report PDF, bench file, controlled document
+    expect(manifest.database.counts.controlled_document_revision).toBe(1);
     expect(manifest.database.counts.audit_event).toBeGreaterThanOrEqual(10);
     const report = await verify(dir, true);
     expect(report.checks.filter((c) => !c.ok)).toEqual([]);
@@ -89,6 +94,9 @@ describe('application-consistent backup and isolated restore (AT-21)', () => {
       const objectRel = path.join('objects', row.storage_key.slice(0, 2), row.storage_key);
       expect(readFileSync(path.join(report.restoredStorageRoot!, objectRel)).equals(readFileSync(path.join(h.storageRoot, objectRel)))).toBe(true);
       expect((await restored.query(`SELECT count(*)::int AS n FROM injector_test`)).rows[0].n).toBe(1);
+      const doc = (await restored.query(`SELECT f.storage_key FROM controlled_document_revision r JOIN file_object f ON f.id = r.file_id`)).rows[0];
+      const docRel = path.join('objects', doc.storage_key.slice(0, 2), doc.storage_key);
+      expect(readFileSync(path.join(report.restoredStorageRoot!, docRel)).equals(readFileSync(path.join(h.storageRoot, docRel)))).toBe(true);
     } finally {
       await restored.end();
       const admin = new pg.Client({ connectionString: TEST_DB });

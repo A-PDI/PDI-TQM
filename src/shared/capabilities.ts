@@ -44,6 +44,7 @@ export const CAPABILITIES = {
   'reports.export': { description: 'Export operational data', sensitive: false },
   'admin.users': { description: 'Manage user accounts and authority grants', sensitive: true },
   'admin.system': { description: 'View system health, jobs and audit', sensitive: true },
+  'documents.control': { description: 'Import and release controlled quality-system documents', sensitive: true },
 } as const;
 
 export type Capability = keyof typeof CAPABILITIES;
@@ -133,6 +134,6 @@ export const ROLE_BUNDLES: Record<string, { label: string; capabilities: Capabil
   },
   administrator: {
     label: 'Administrator',
-    capabilities: ['records.read', 'admin.users', 'admin.system'],
+    capabilities: ['records.read', 'admin.users', 'admin.system', 'documents.control'],
   },
 };
