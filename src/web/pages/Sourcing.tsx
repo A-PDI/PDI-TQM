@@ -6,6 +6,7 @@ import { useAuth } from '../auth';
 import { FileLinks, GateList, SourceStatusBadge, UploadEvidence, useBusy } from '../components/sourcing';
 import { Dialog, LoadState, type PartOption, PartTypeahead, useLoad } from '../components/ui';
 import { HubTabs } from './MasterData';
+import { ControlledFormsPanel } from '../components/controlled';
 
 interface SupplierOption {
   id: string;
@@ -654,6 +655,7 @@ export function SourcingDetail() {
           {banner}
         </Dialog>
       )}
+      <ControlledFormsPanel entity="SOURCING_REQUEST" entityId={id} />
     </>
   );
 }

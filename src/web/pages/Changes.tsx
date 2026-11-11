@@ -17,6 +17,7 @@ import { useAuth } from '../auth';
 import { HistoryCard, type HistoryRow, RecordPdfs, type Rendition, StateBadge, UserSelect, addDays, todayIso, useDirectory } from '../components/quality';
 import { FileLinks, type FileRef, SourceStatusBadge, UploadEvidence, useBusy } from '../components/sourcing';
 import { Dialog, LoadState, OutcomeBadge, type PartOption, PartTypeahead, useLoad } from '../components/ui';
+import { ControlledFormsPanel } from '../components/controlled';
 
 export function ChangeList() {
   const navigate = useNavigate();
@@ -599,6 +600,7 @@ export function ChangeDetail() {
         <h2>Controlled record</h2>
         <RecordPdfs renditions={data.renditions} issueUrl={`/api/changes/${id}/report`} docCode="OPS-04" canIssue={p.manage} onIssued={reload} />
       </section>
+      <ControlledFormsPanel entity="CHANGE" entityId={id} />
       <HistoryCard history={data.history} />
 
       {dialog === 'impact' && <ImpactDialog change={c} existing={data.impact} onClose={() => setDialog(null)} onDone={done} />}

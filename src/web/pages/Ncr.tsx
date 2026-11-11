@@ -8,6 +8,7 @@ import { Dialog, LoadState, useLoad } from '../components/ui';
 import type { EffectiveSourceStatus } from '../../shared/sourcing';
 import { RequestConcessionDialog } from './Concessions';
 import { IssueScarDialog } from './Scars';
+import { ControlledFormsPanel } from '../components/controlled';
 
 export function NcrList() {
   const navigate = useNavigate();
@@ -540,6 +541,7 @@ export function NcrDetail() {
         )}
         <RecordPdfs renditions={data.renditions} issueUrl={`/api/ncrs/${id}/report`} docCode="OPS-06" canIssue={p.manage || closed} onIssued={reload} />
       </section>
+      <ControlledFormsPanel entity="NCR" entityId={id} />
       <HistoryCard history={data.history} />
 
       {dialog?.kind === 'scope' && <ScopeDialog ncrId={id} lot={(n.lot_number as string) ?? ''} po={(n.po_number as string) ?? ''} inspectionId={n.inspection_id as string | null} onClose={() => setDialog(null)} onDone={done} />}

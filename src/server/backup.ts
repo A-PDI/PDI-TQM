@@ -44,6 +44,12 @@ const COUNTED_TABLES = [
   'controlled_document_revision',
   'inspection_bench_test',
   'bench_pending',
+  'controlled_template',
+  'controlled_record',
+  'controlled_record_binding',
+  'controlled_record_signature',
+  'controlled_output_validation',
+  'controlled_attachment_check',
 ] as const;
 
 export interface BackupFile {
@@ -119,7 +125,11 @@ async function copyHashed(from: string, to: string): Promise<{ sha256: string; s
 
 async function tableCounts(client: pg.ClientBase): Promise<Record<string, number>> {
   const counts: Record<string, number> = {};
-  for (const t of COUNTED_TABLES) counts[t] = (await client.query<{ n: number }>(`SELECT count(*)::int AS n FROM ${t}`)).rows[0]!.n;
+  for (const t of COUNTED_TABLES) {
+    // A backup taken before a migration added a table restores without it; only tables present are counted.
+    const present = (await client.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [`public.${t}`])).rows[0]!.ok;
+    if (present) counts[t] = (await client.query<{ n: number }>(`SELECT count(*)::int AS n FROM ${t}`)).rows[0]!.n;
+  }
   return counts;
 }
 

@@ -5,6 +5,7 @@ import { api, fmtDate, fmtDateTime } from '../api';
 import { HistoryCard, type HistoryRow, QualityTabs, RecordPdfs, type Rendition, StateBadge, addDays, todayIso } from '../components/quality';
 import { FileLinks, type FileRef, UploadEvidence, useBusy } from '../components/sourcing';
 import { Dialog, LoadState, useLoad } from '../components/ui';
+import { ControlledFormsPanel } from '../components/controlled';
 
 interface ConcessionRow {
   id: string;
@@ -252,6 +253,7 @@ export function ConcessionDetail() {
         <h2>Controlled record</h2>
         <RecordPdfs renditions={data.renditions} issueUrl={`/api/concessions/${id}/report`} docCode="OPS-05" canIssue={data.permissions.report} onIssued={reload} />
       </section>
+      <ControlledFormsPanel entity="CONCESSION" entityId={id} />
       <HistoryCard history={data.history} />
     </>
   );

@@ -26,6 +26,8 @@ import { registerBenchRoutes } from './injectors/bench-routes.js';
 import { registerInjectorRoutes } from './injectors/routes.js';
 import { registerReportRoutes } from './reports/routes.js';
 import { registerControlledDocumentRoutes } from './documents/routes.js';
+import { registerControlledRoutes } from './controlled/routes.js';
+import { controlledRenderHandler } from './controlled/service.js';
 import { registerStageRoutes } from './inspections/stages.js';
 import { registerCoreRoutes } from './routes-core.js';
 import { recordReportHandler } from './sourcing/approval-report.js';
@@ -113,7 +115,12 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
   });
   svc.worker = new JobWorker(
     db,
-    { inspection_report: inspectionReportHandler(svc), record_report: recordReportHandler(svc), reminder_sweep: reminderSweepHandler(svc) },
+    {
+      inspection_report: inspectionReportHandler(svc),
+      record_report: recordReportHandler(svc),
+      reminder_sweep: reminderSweepHandler(svc),
+      controlled_render: controlledRenderHandler(svc),
+    },
     app.log,
   );
 
@@ -194,6 +201,7 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
   registerBenchRoutes(app, svc);
   registerReportRoutes(app, svc);
   registerControlledDocumentRoutes(app, svc);
+  registerControlledRoutes(app, svc);
   registerStageRoutes(app, svc);
 
   if (existsSync(path.join(config.webDistDir, 'index.html'))) {

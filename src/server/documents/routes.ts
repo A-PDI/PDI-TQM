@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
+import { CONTROLLED_TYPE_BY_CODE } from '../../shared/controlled-forms.js';
 import { DOCUMENT_USAGE, FILENAME_RULE, type ParsedDocumentName, parseDocumentFilename } from '../../shared/documents.js';
 import { RECORD_TYPES } from '../../shared/sourcing.js';
 import { audit } from '../audit.js';
+import { templateFor } from '../controlled/service.js';
 import { requireCapability } from '../auth.js';
 import { type Queryable, many, one, withTransaction } from '../db.js';
 import { AppError, badRequest, conflict, notFound, unprocessable } from '../errors.js';
@@ -47,6 +49,12 @@ function withStatus(revisions: RevisionRow[], asOf: string): Array<RevisionRow &
   });
 }
 
+/** How the type is handled in TQM: category A (FORM) or B (ATTACHMENT), and the module it belongs to. */
+function controlledInfo(typeCode: string | null) {
+  const t = typeCode ? CONTROLLED_TYPE_BY_CODE[typeCode] : undefined;
+  return t ? { category: t.category, family: t.family, module: t.module, moduleRoute: t.moduleRoute, entity: t.entity, rationale: t.rationale } : null;
+}
+
 export function registerControlledDocumentRoutes(app: FastifyInstance, svc: Services) {
   const { db, storage, config } = svc;
 
@@ -69,7 +77,10 @@ export function registerControlledDocumentRoutes(app: FastifyInstance, svc: Serv
         ORDER BY d.kind = 'LIBRARY', d.type_code, d.kind <> 'FORM', d.number`,
       [asOf],
     );
-    return { asOf, documents: rows.map((r) => ({ ...r, usage: r.typeCode ? (DOCUMENT_USAGE[r.typeCode as string] ?? null) : null })) };
+    return {
+      asOf,
+      documents: rows.map((r) => ({ ...r, usage: r.typeCode ? (DOCUMENT_USAGE[r.typeCode as string] ?? null) : null, controlled: r.kind === 'FORM' ? controlledInfo(r.typeCode as string | null) : null })),
+    };
   });
 
   app.get('/api/documents/:id', async (req) => {
@@ -99,10 +110,34 @@ export function registerControlledDocumentRoutes(app: FastifyInstance, svc: Serv
     const related = doc.typeCode
       ? await many(db, `SELECT id, number, kind, title FROM controlled_document WHERE type_code = $1 AND id <> $2 ORDER BY kind = 'CONTINUATION', number`, [doc.typeCode, id])
       : [];
+    const statused = withStatus(revisions, asOf);
+    const inForce = statused.find((r) => r.status === 'CURRENT');
+    let template: unknown = null;
+    if (inForce && doc.kind !== 'LIBRARY') {
+      try {
+        const t = await templateFor(db, storage, inForce.id);
+        template = {
+          revisionLabel: inForce.revisionLabel,
+          interactive: t.interactive,
+          reason: t.reason,
+          title: t.title,
+          controlLine: t.controlLine,
+          footer: t.footer,
+          pages: t.pages.length,
+          fields: t.fields.length,
+          sections: t.sections.map((x) => x.title),
+          schedules: t.schedules.map((x) => ({ key: x.key, title: x.title, capacity: x.capacity, printedRows: x.rowLabels?.length ?? 0, columns: x.columns.length })),
+        };
+      } catch (err) {
+        req.log.warn({ err }, 'template derivation failed');
+      }
+    }
     return {
       ...doc,
       asOf,
-      revisions: withStatus(revisions, asOf),
+      controlled: doc.kind === 'FORM' ? controlledInfo(doc.typeCode) : null,
+      template,
+      revisions: statused,
       related,
       usage: doc.typeCode ? (DOCUMENT_USAGE[doc.typeCode] ?? null) : null,
       evidenceType: doc.typeCode && RECORD_TYPES[doc.typeCode] ? RECORD_TYPES[doc.typeCode] : null,
@@ -210,7 +245,7 @@ async function storeRevision(svc: Services, req: FastifyRequest, actorId: string
       const label = t.revisionLabel.toUpperCase();
       const same = await one<{ sha256: string }>(tx, 'SELECT sha256 FROM controlled_document_revision WHERE document_id = $1 AND upper(revision_label) = $2', [doc.id, label]);
       if (same) {
-        if (same.sha256 === staged.sha256) return { status: 'UNCHANGED' as const, documentId: doc.id, number: doc.number, revisionLabel: label };
+        if (same.sha256 === staged.sha256) return { status: 'UNCHANGED' as const, documentId: doc.id, number: doc.number, revisionLabel: label, revisionId: null as string | null };
         throw conflict(`${doc.number} Rev ${label} is already recorded with a different file; issue a new revision instead`);
       }
       const latest = await one<{ effective_from: string; revision_label: string }>(
@@ -242,9 +277,13 @@ async function storeRevision(svc: Services, req: FastifyRequest, actorId: string
         after: { revisionId: rev!.id, fileId: file!.id, sha256: staged.sha256, file: name },
         requestId: req.id,
       });
-      return { status: created ? ('CREATED' as const) : ('ADDED_REVISION' as const), documentId: doc.id, number: doc.number, revisionLabel: label };
+      return { status: created ? ('CREATED' as const) : ('ADDED_REVISION' as const), documentId: doc.id, number: doc.number, revisionLabel: label, revisionId: rev!.id };
     });
     if (result.status === 'UNCHANGED') await storage.removeOrphan(storageKey);
+    else if (result.revisionId) {
+      // Derive the data-entry definition now so the first record does not wait for it; failures only log.
+      await templateFor(db, storage, result.revisionId).catch((err) => req.log.warn({ err }, 'template derivation failed'));
+    }
     return result;
   } catch (err) {
     await storage.removeOrphan(storageKey);

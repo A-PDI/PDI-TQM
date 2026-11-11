@@ -41,6 +41,7 @@ npm run build && npm run test:e2e   # Playwright desktop (1440), phone (390) and
 PERF_SCALE=5 npx vitest run tests/integration/performance.test.ts   # optional: ~15 years of fictional volume
 ```
 
+- Controlled documents: the approved PDFs are not in the repository. `tests/fixtures/controlled-templates.json` records their structure and SHA-256; regenerate it after PDI releases new revisions with `npx tsx scripts/controlled-templates-fixture.ts <folder with the PDFs>`, and check the real files with `CONTROLLED_DOCS_DIR=<folder> npx vitest run tests/unit/controlled-approved.test.ts`.
 - Visual baselines live in `tests/e2e/*-snapshots/` and render with the pinned fonts in `tests/fixtures/fonts.conf`. After an intended UI or report change: `npm test`, `npx tsx scripts/capture-pdf-fixtures.ts`, then `npx playwright test --project=visual --update-snapshots`, and review the image diffs before committing.
 
 - `TEST_DATABASE_URL` (default `postgres://tqms:tqms_local_dev@localhost:5432/tqms_test`) is **dropped and recreated** by the tests.

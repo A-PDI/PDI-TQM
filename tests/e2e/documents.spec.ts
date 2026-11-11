@@ -1,5 +1,6 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { type Browser, type Page, expect, test } from '@playwright/test';
+import { buildStandIn, templateFixture } from '../fixtures/controlled-templates.js';
 import { makePdf } from '../fixtures/documents.js';
 
 /** Document Library: an administrator imports owner-named PDFs in one go; everyone can read and open them. */
@@ -22,7 +23,12 @@ test('an administrator imports the controlled document set; files that break the
   await expect(admin.getByRole('heading', { name: 'Document Library', level: 1 })).toBeVisible();
   await admin.getByRole('button', { name: 'Import documents' }).click();
   const names = ['OPS-07_Supplier_Corrective_Action_Request_Rev03.pdf', 'OPS-07_actions_Continuation_Rev03.pdf', 'PDI_Library_User_Guide_Rev03.pdf', 'Scanned form.pdf'];
-  await admin.getByLabel('PDF files').setInputFiles(await Promise.all(names.map(async (name) => ({ name, mimeType: 'application/pdf', buffer: await makePdf(name) }))));
+  // The OPS-07 files carry the approved templates' structure (other specs may have imported the same files: unchanged).
+  const bytesFor = async (name: string) => {
+    const t = templateFixture().find((e) => e.fileName === name);
+    return t ? buildStandIn(t.schema) : makePdf(name);
+  };
+  await admin.getByLabel('PDF files').setInputFiles(await Promise.all(names.map(async (name) => ({ name, mimeType: 'application/pdf', buffer: await bytesFor(name) }))));
   await admin.getByRole('button', { name: 'Import 4 files' }).click();
   await expect(admin.getByRole('status').filter({ hasText: '3 imported or already present, 1 not imported' })).toBeVisible();
   await expect(admin.getByRole('dialog').getByText(/Scanned form\.pdf.*Name files/)).toBeVisible();
