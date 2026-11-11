@@ -57,7 +57,9 @@ test('policy register', async ({ browser }) => {
 
 test('launch dialog explaining what is still needed', async ({ browser }) => {
   const page = await signIn(browser, { width: 1440, height: 900 });
-  await page.goto('/inspections?new=1');
+  // The list behind the modal is filtered to nothing: how many inspections earlier tests created changes the
+  // page height and, with it, how the dialog rasterizes (the baseline compares the dialog, not the list).
+  await page.goto('/inspections?q=zz-visual-baseline&new=1');
   const dialog = page.getByRole('dialog', { name: 'New Inspection' });
   await dialog.getByLabel(/Number of Items/).fill('150');
   // A modal dialog renders above Playwright's mask overlay, so the date (defaults to today) is fixed instead.

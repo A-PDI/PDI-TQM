@@ -32,6 +32,7 @@ const forms = () => import('./pages/Forms');
 const injectors = () => import('./pages/Injectors');
 const reports = () => import('./pages/Reports');
 const documents = () => import('./pages/Documents');
+const controlled = () => import('./pages/Controlled');
 
 function Gate() {
   const { me, loading } = useAuth();
@@ -85,6 +86,8 @@ const router = createBrowserRouter([
           { path: '/injectors/:id', element: page(injectors, 'InjectorDetail') },
           { path: '/documents', element: page(documents, 'DocumentList') },
           { path: '/documents/:id', element: page(documents, 'DocumentDetail') },
+          { path: '/controlled', element: page(controlled, 'ControlledIndex') },
+          { path: '/controlled/:id', element: page(controlled, 'ControlledRecord') },
           { path: '/reports', element: page(reports, 'Reports') },
           { path: '/trace', element: page(reports, 'Trace') },
           { path: '/search', element: page(other, 'Search') },

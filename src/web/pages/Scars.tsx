@@ -5,6 +5,7 @@ import { api, fmtDate, fmtDateTime } from '../api';
 import { HistoryCard, type HistoryRow, QualityTabs, RecordPdfs, type Rendition, StateBadge, UserSelect, addDays, todayIso, useDirectory } from '../components/quality';
 import { FileLinks, type FileRef, UploadEvidence, useBusy } from '../components/sourcing';
 import { Dialog, LoadState, OutcomeBadge, useLoad } from '../components/ui';
+import { ControlledFormsPanel } from '../components/controlled';
 
 const CHANNELS = ['EMAIL', 'PORTAL', 'MEETING', 'CALL', 'MAIL', 'OTHER'];
 
@@ -308,6 +309,7 @@ export function ScarDetail() {
         <h2>Controlled record</h2>
         <RecordPdfs renditions={data.renditions} issueUrl={`/api/scars/${id}/report`} docCode="OPS-07" canIssue={data.permissions.manage || data.scar.status === 'CLOSED'} onIssued={reload} />
       </section>
+      <ControlledFormsPanel entity="SCAR" entityId={id} />
       <HistoryCard history={data.history} />
 
       <ResponseDialog open={dialog === 'response'} onClose={() => setDialog(null)} scarId={id} onDone={done} />

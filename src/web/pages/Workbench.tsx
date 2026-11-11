@@ -19,6 +19,7 @@ import { type GoverningLimit, formatLimit } from '../../shared/measurement';
 import { ApiError, api, fmtDate, fmtDateTime } from '../api';
 import { Dialog, LoadState, OutcomeBadge, type PartOption, PartTypeahead, StatusBadge, useLoad } from '../components/ui';
 import { RequestConcessionDialog } from './Concessions';
+import { ControlledFormsPanel } from '../components/controlled';
 
 export interface Detail {
   id: string;
@@ -713,6 +714,7 @@ export function Workbench() {
       </section>
 
       <GeneralPhotos detail={detail} photos={photos} editable={editable} uploadPhoto={uploadPhoto} removePhoto={removePhoto} />
+      {(detail.status === 'READY_FOR_REVIEW' || detail.status === 'COMPLETED') && <ControlledFormsPanel entity="INSPECTION" entityId={id} />}
       <HistoryPanel id={id} detail={detail} />
 
       <Dialog

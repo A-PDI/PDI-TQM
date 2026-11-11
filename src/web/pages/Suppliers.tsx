@@ -7,6 +7,7 @@ import { FileLinks, QualificationBadge, SourceStatusBadge, UploadEvidence, useBu
 import { type QualityContext, QualityContextCard } from '../components/quality';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
 import { NewCommitmentDialog } from './Commitments';
+import { ControlledFormsPanel } from '../components/controlled';
 
 const Synthetic = ({ on }: { on: boolean }) => (on ? <span className="badge badge-synthetic">fictional</span> : null);
 
@@ -769,6 +770,7 @@ export function SupplierDetail() {
         </div>
         {banner}
       </Dialog>
+      <ControlledFormsPanel entity="SUPPLIER" entityId={id} />
     </>
   );
 }

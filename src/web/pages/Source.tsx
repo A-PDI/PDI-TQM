@@ -5,6 +5,7 @@ import { api, fmtDate, fmtDateTime } from '../api';
 import { FileLinks, GateList, QualificationBadge, SourceStatusBadge, UploadEvidence, useBusy } from '../components/sourcing';
 import { type QualityContext, QualityContextCard } from '../components/quality';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
+import { ControlledFormsPanel } from '../components/controlled';
 
 interface Fai {
   id: string;
@@ -753,6 +754,7 @@ export function Source() {
           </div>
         )}
       </Dialog>
+      <ControlledFormsPanel entity="SOURCE" entityId={id} />
     </>
   );
 }

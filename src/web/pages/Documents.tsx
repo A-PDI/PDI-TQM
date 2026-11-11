@@ -7,6 +7,20 @@ import { useBusy } from '../components/sourcing';
 import { Dialog, LoadState, StatusBadge, useLoad } from '../components/ui';
 
 type Usage = { how: 'GENERATED' | 'RECORDED'; route: string; screen: string } | null;
+type Controlled = { category: 'FORM' | 'ATTACHMENT'; family: string; module: string; moduleRoute: string; entity: string; rationale: string } | null;
+interface TemplateSummary {
+  revisionLabel: string;
+  interactive: boolean;
+  reason: string | null;
+  title: string | null;
+  controlLine: string | null;
+  footer: string[];
+  pages: number;
+  fields: number;
+  sections: string[];
+  schedules: Array<{ key: string; title: string | null; capacity: number; printedRows: number; columns: number }>;
+}
+const HANDLING: Record<string, string> = { FORM: 'A — completed in TQM; controlled PDF generated', ATTACHMENT: 'B — attached document with required signatures' };
 
 interface DocumentRow {
   id: string;
@@ -22,6 +36,7 @@ interface DocumentRow {
   pendingEffective: string | null;
   revisionCount: number;
   usage: Usage;
+  controlled: Controlled;
 }
 
 interface Revision {
@@ -52,6 +67,8 @@ interface DocumentDetail {
   related: Array<{ id: string; number: string; kind: string; title: string }>;
   usage: Usage;
   evidenceType: string | null;
+  controlled: Controlled;
+  template: TemplateSummary | null;
 }
 
 const KIND_TEXT: Record<string, string> = { FORM: 'Form', CONTINUATION: 'Continuation sheet', LIBRARY: 'Library document' };
@@ -66,12 +83,12 @@ function RevisionStatus({ r }: { r: Pick<Revision, 'status' | 'effectiveFrom'> }
   return <StatusBadge status="SUPERSEDED" />;
 }
 
-function UsageNote({ usage }: { usage: Usage }) {
-  if (!usage) return <span className="muted">—</span>;
+function UsageNote({ usage, controlled }: { usage: Usage; controlled?: Controlled }) {
+  if (!usage && !controlled) return <span className="muted">—</span>;
   return (
     <>
-      <Link to={usage.route}>{usage.screen}</Link>
-      <div className="small muted">{usage.how === 'GENERATED' ? 'App produces this record and its PDF' : 'Recorded in the app'}</div>
+      {usage ? <Link to={usage.route}>{usage.screen}</Link> : <Link to={controlled!.moduleRoute}>{controlled!.module}</Link>}
+      <div className="small muted">{controlled ? HANDLING[controlled.category] : usage!.how === 'GENERATED' ? 'App produces this record and its PDF' : 'Recorded in the app'}</div>
     </>
   );
 }
@@ -96,11 +113,16 @@ export function DocumentList() {
           <h1>Document Library</h1>
           <div className="small muted">Controlled quality-system forms and documents, owned by administrators. The current revision is the latest one already in effect.</div>
         </div>
-        {can('documents.control') && (
-          <button type="button" className="btn btn-primary" onClick={() => setImportOpen(true)}>
-            Import documents
-          </button>
-        )}
+        <div className="row-actions">
+          <Link className="btn" to="/controlled">
+            Controlled records
+          </Link>
+          {can('documents.control') && (
+            <button type="button" className="btn btn-primary" onClick={() => setImportOpen(true)}>
+              Import documents
+            </button>
+          )}
+        </div>
       </div>
       <div className="card row-actions">
         <label htmlFor="doc-q" className="sr-only">
@@ -173,7 +195,7 @@ export function DocumentList() {
                     )}
                   </td>
                   <td data-label="Used in the app">
-                    <UsageNote usage={d.usage} />
+                    <UsageNote usage={d.usage} controlled={d.controlled} />
                   </td>
                 </tr>
               ))}
@@ -342,6 +364,39 @@ export function DocumentDetail() {
           )}
         </div>
       </div>
+      {(data.controlled || data.template) && (
+        <section className="card" aria-labelledby="doc-workflow">
+          <h2 id="doc-workflow">Controlled workflow</h2>
+          {data.controlled && (
+            <p style={{ marginTop: 0 }}>
+              {HANDLING[data.controlled.category]} · <Link to={data.controlled.moduleRoute}>{data.controlled.module}</Link>
+              <span className="small muted"> — {data.controlled.rationale}</span>
+            </p>
+          )}
+          {data.template &&
+            (data.template.interactive ? (
+              <>
+                <p className="small" style={{ marginTop: 0 }}>
+                  Rev {data.template.revisionLabel} drives the data-entry screen: {data.template.fields} fields on {data.template.pages} page(s)
+                  {data.template.schedules.length ? `, ${data.template.schedules.length} schedule(s)` : ''}. Document control: {[data.template.controlLine, ...data.template.footer].filter(Boolean).join(' · ')}
+                </p>
+                {data.template.schedules.length > 0 && (
+                  <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
+                    {data.template.schedules.map((s) => (
+                      <li key={s.key}>
+                        {s.title ?? s.key}: {s.capacity} row(s) per sheet{s.printedRows ? `, ${s.printedRows} printed checklist items` : ''}, {s.columns} column(s)
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <p className="small muted" style={{ marginBottom: 0 }}>
+                Rev {data.template.revisionLabel}: {data.template.reason}
+              </p>
+            ))}
+        </section>
+      )}
       <h2>Revision history</h2>
       <div className="table-wrap">
         <table className="data stack">
