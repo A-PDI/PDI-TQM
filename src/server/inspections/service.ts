@@ -15,6 +15,8 @@ import { parseReading } from '../../shared/measurement.js';
 import { audit } from '../audit.js';
 import { type AuthContext, recheckCapability, requireCapability } from '../auth.js';
 import type { Config } from '../config.js';
+import type { Capability } from '../../shared/capabilities.js';
+import { actorOf, decideEvent, openEventRecord, openRecordFor, returnEventRecord, submitEventRecord } from '../controlled/events.js';
 import { type Db, type DbClient, many, one, withTransaction } from '../db.js';
 import { badRequest, conflict, forbidden, unprocessable } from '../errors.js';
 import { enqueueJob } from '../jobs.js';
@@ -182,6 +184,8 @@ export async function createInspection(
       requestId: req.id,
     });
     await input.afterCreate?.(tx, { id, number, userId: auth.userId, formRevisionId });
+    // The inspection's controlled report (OPS-02) opens with it, prepared by the inspector of record.
+    await openEventRecord(tx, 'OPS-02', id, await actorOf(tx, inspectorId), req.id);
     return { id, number };
   });
 }
@@ -476,8 +480,13 @@ export async function savePartial(db: Db, req: FastifyRequest, id: string, expec
   });
 }
 
-async function issueReportEdition(tx: DbClient, config: Config, id: string, extras: { review?: boolean; amendmentNo?: number }) {
+async function issueReportEdition(tx: DbClient, config: Config, id: string, extras: { review?: boolean; amendmentNo?: number; controlledNumber?: string | null }) {
   const state = await loadInspection(tx, id);
+  // When the lot's controlled record is an OPS-02 report, this PDF is its supporting worksheet only.
+  const controlled =
+    extras.controlledNumber ??
+    (await one<{ number: string }>(tx, `SELECT number FROM controlled_record WHERE type_code = 'OPS-02' AND entity_type = 'INSPECTION' AND entity_id = $1 AND event_bound AND status = 'COMPLETED' ORDER BY completed_at DESC LIMIT 1`, [id]))?.number ??
+    null;
   const editionRow = await one<{ n: number }>(
     tx,
     `SELECT count(*)::int AS n FROM report_snapshot WHERE subject_type = 'INSPECTION' AND subject_id = $1`,
@@ -516,6 +525,9 @@ async function issueReportEdition(tx: DbClient, config: Config, id: string, extr
       : null,
     amendment: amendment ? { number: amendment.amendment_no, reason: amendment.reason, by: amendment.by, at: amendment.amended_at.toISOString() } : null,
   });
+  if (controlled) {
+    snapshot.notice = `INSPECTION WORKSHEET - NOT THE CONTROLLED RECORD. The controlled Incoming Inspection Report for this lot is ${controlled} (OPS-02), signed by the Receiving Quality approver in TQM.${extras.amendmentNo ? ' This amendment edition does not change that approved record.' : ''}`;
+  }
   const sha = snapshotHash(snapshot);
   const inserted = await one<{ id: string }>(
     tx,
@@ -542,7 +554,14 @@ export async function completeInspection(
     if (ev.errors.length) {
       throw unprocessable(`${ev.errors.length} item(s) must be resolved before completion`, { errors: ev.errors });
     }
-    const needsReview = ev.reviewReasons.length > 0;
+    // With OPS-02 in force, completing the inspection submits its controlled report, and the lot decision
+    // is the Receiving Quality approver's confirmation in review: one approval for every lot.
+    const ops02 = await openRecordFor(tx, 'OPS-02', 'INSPECTION', id, true);
+    if (ops02) await submitEventRecord(tx, ops02.id, { userId: auth.userId, displayName: auth.displayName }, req.id);
+    const reasons = ops02 && !ev.reviewReasons.length
+      ? [{ unitIndex: 0, sectionKey: 'OPS-02', rowKey: null, path: 'Lot decision', message: 'Lot decision on the OPS-02 Incoming Inspection Report — confirmed by the Receiving Quality approver' }]
+      : ev.reviewReasons;
+    const needsReview = reasons.length > 0;
     const status = needsReview ? 'READY_FOR_REVIEW' : 'COMPLETED';
     const updated = await one<{ version: number }>(
       tx,
@@ -551,7 +570,7 @@ export async function completeInspection(
           completed_at = CASE WHEN $2 = 'COMPLETED' THEN now() END,
           version = version + 1, updated_at = now()
         WHERE id = $1 RETURNING version`,
-      [id, status, ev.overall, JSON.stringify(ev.reviewReasons), auth.userId],
+      [id, status, ev.overall, JSON.stringify(reasons), auth.userId],
     );
     await tx.query(
       `UPDATE work_item SET status = 'DONE', closed_at = now(), closed_by = $2, closed_reason = 'Inspection submitted'
@@ -573,9 +592,9 @@ export async function completeInspection(
       entityType: 'inspection',
       entityId: id,
       summary: needsReview
-        ? `${state.row.number} submitted for independent review (${ev.reviewReasons.length} item(s)); reported outcome ${ev.overall}`
+        ? `${state.row.number} submitted for independent review (${reasons.length} item(s)); reported outcome ${ev.overall}`
         : `${state.row.number} completed; outcome ${ev.overall}`,
-      after: { outcome: ev.overall, reviewReasons: ev.reviewReasons.map((r) => `${r.path}: ${r.message}`) },
+      after: { outcome: ev.overall, reviewReasons: reasons.map((r) => `${r.path}: ${r.message}`) },
       requestId: req.id,
     });
     return { status, outcome: ev.overall, version: updated!.version };
@@ -644,7 +663,23 @@ export async function reviewInspection(
         `UPDATE inspection SET status = 'COMPLETED', completed_by = $2, completed_at = now(), version = version + 1, updated_at = now() WHERE id = $1`,
         [id, auth.userId],
       );
-      await issueReportEdition(tx, config, id, { review: true });
+      // The review confirmation is the lot decision on OPS-02: it signs the Receiving Quality approver block.
+      const outcome = state.row.outcome;
+      const controlled = await decideEvent(tx, {
+        code: 'OPS-02',
+        entityType: 'INSPECTION',
+        entityId: id,
+        actor: { userId: auth.userId, displayName: auth.displayName },
+        grants: grants as Capability[],
+        decision: outcome === 'FAIL' ? 'Hold' : 'Accept lot',
+        statement: [
+          `Inspection ${state.row.number} review confirmed; outcome ${outcome ?? 'not recorded'}${outcome === 'FAIL' ? ' — lot held pending NCR disposition' : ''}.`,
+          concession ? `Accepted items under ${concession.number}.` : '',
+          comment ?? '',
+        ].filter(Boolean).join(' '),
+        requestId: req.id,
+      });
+      await issueReportEdition(tx, config, id, { review: true, controlledNumber: controlled?.number ?? null });
     } else {
       await tx.query(
         `UPDATE inspection SET status = 'PARTIAL', outcome = NULL, review_reasons = NULL, submitted_at = NULL, submitted_by = NULL,
@@ -655,6 +690,7 @@ export async function reviewInspection(
         `INSERT INTO work_item (kind, title, subject_type, subject_id, assignee_id) VALUES ('INSPECTION_ASSIGNED', $1, 'INSPECTION', $2, $3)`,
         [`Correct ${state.row.number}: ${comment}`.slice(0, 200), id, state.row.inspector_id],
       );
+      await returnEventRecord(tx, 'OPS-02', 'INSPECTION', id, { userId: auth.userId, displayName: auth.displayName }, comment ?? 'Returned for correction', req.id);
     }
     await audit(tx, {
       actorId: auth.userId,

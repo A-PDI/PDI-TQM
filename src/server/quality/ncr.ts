@@ -19,7 +19,8 @@ import { nextRecordNumber } from '../numbering.js';
 import type { Services } from '../services.js';
 import { loadInspection } from '../inspections/state.js';
 import { effectiveSourceStatuses } from '../sourcing/status.js';
-import { closeWork, history, isActiveUser, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from './common.js';
+import { decideEvent, openEventRecord } from '../controlled/events.js';
+import { closeWork, controlledRecordOf, history, isActiveUser, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from './common.js';
 import { buildNcrReport } from './reports.js';
 import { linkNcrToScar } from './scars.js';
 
@@ -251,7 +252,9 @@ export function registerNcrRoutes(app: FastifyInstance, svc: Services) {
       if (body.recurrenceOfScarId) {
         await linkNcrToScar(tx, req, auth.userId, body.recurrenceOfScarId, ncr!.id, 'RECURRENCE', body.rationale, body.recurrenceResponseDue ?? null);
       }
-      return { id: ncr!.id, number };
+      // The NCR's controlled report (OPS-06) opens with it; closing the NCR is its approval.
+      const controlled = await openEventRecord(tx, 'OPS-06', ncr!.id, { userId: auth.userId, displayName: auth.displayName }, req.id);
+      return { id: ncr!.id, number, controlled };
     });
     return reply.code(201).send(created);
   });
@@ -412,6 +415,7 @@ export function registerNcrRoutes(app: FastifyInstance, svc: Services) {
       inspections,
       history: await history(db, 'ncr', [id]),
       renditions: await renditions(db, 'NCR', id),
+      controlled: await controlledRecordOf(db, 'NCR', id),
       rule: DISPOSITION_RULE,
       permissions: {
         manage: has(auth, 'ncr.manage') && base.status !== 'CLOSED',
@@ -797,6 +801,17 @@ export function registerNcrRoutes(app: FastifyInstance, svc: Services) {
         throw unprocessable(`${ncr.number} cannot close: ${NCR_STATUS_TEXT[status]?.toLowerCase()}. Every affected quantity needs a verified disposition first.`);
       }
       if (!(await recheckCapability(tx, auth.userId, 'ncr.manage'))) throw forbidden();
+      // One approval: closing the NCR signs the OPS-06 material review authority block and generates the controlled PDF.
+      await decideEvent(tx, {
+        code: 'OPS-06',
+        entityType: 'NCR',
+        entityId: id,
+        actor: { userId: auth.userId, displayName: auth.displayName },
+        grants: ['ncr.manage'],
+        decision: 'Close',
+        statement: `Closed after verified disposition of every affected quantity. ${body.note}`,
+        requestId: req.id,
+      });
       await tx.query(`UPDATE ncr SET status = 'CLOSED', closed_by = $2, closed_at = now(), closure_note = $3, version = version + 1 WHERE id = $1`, [id, auth.userId, body.note]);
       await closeWork(tx, ['NCR_ACTION'], 'NCR', id, auth.userId, 'NCR closed');
       const openScars = await many<{ number: string }>(tx, `SELECT s.number FROM scar_ncr x JOIN scar s ON s.id = x.scar_id WHERE x.ncr_id = $1 AND s.status <> 'CLOSED'`, [id]);

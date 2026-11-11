@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { formatDate, pdfText } from './text.js';
-import { C, CONTENT_W, FOOTER_H, MARGIN, PAGE } from './theme.js';
+import { C, CONTENT_W, FOOTER_H, MARGIN, PAGE, SUMMARY_FOOTER, drawNoticeBand } from './theme.js';
 
 /** Structured, immutable content for a PDI-branded controlled record (approval, NCR, SCAR …). */
 export interface RecordReportSnapshot {
@@ -18,6 +18,11 @@ export interface RecordReportSnapshot {
     | { title: string; kind: 'table'; columns: Array<{ header: string; width: number }>; rows: string[][] }
     | { title: string; kind: 'text'; paragraphs: string[] }
   >;
+  /**
+   * Present on editions issued since controlled forms drive the work: this PDF is a summary, not the
+   * controlled document (named when the event has one). Older editions have none and render as issued.
+   */
+  notice?: string;
 }
 
 const BOTTOM = PAGE.height - MARGIN - FOOTER_H;
@@ -47,7 +52,7 @@ export async function renderRecordReport(s: RecordReportSnapshot, logo: Buffer |
         doc.image(logo, MARGIN + 10, MARGIN + 8, { fit: [98, 38], align: 'center', valign: 'center' });
       }
       font('Helvetica-Bold', 13, C.white).text(pdfText(s.title.toUpperCase()), MARGIN + 110, MARGIN + 14, { width: CONTENT_W - 220, align: 'center' });
-      font('Helvetica', 7.5, '#C9D1E0').text(pdfText(`${s.docCode} · ${s.number} · Edition ${s.edition}`), MARGIN, MARGIN + 34, { width: CONTENT_W, align: 'center' });
+      font('Helvetica', 7.5, '#C9D1E0').text(pdfText(`${s.notice ? 'Summary' : s.docCode} · ${s.number} · Edition ${s.edition}`), MARGIN, MARGIN + 34, { width: CONTENT_W, align: 'center' });
     } else {
       font('Helvetica-Bold', 8.5, C.white).text(pdfText(s.title.toUpperCase()), MARGIN + 10, MARGIN + 9, { lineBreak: false });
       font('Helvetica', 7.5, '#C9D1E0').text(pdfText(`${s.number} · continued`), MARGIN, MARGIN + 9.5, { width: CONTENT_W - 10, align: 'right' });
@@ -67,6 +72,7 @@ export async function renderRecordReport(s: RecordReportSnapshot, logo: Buffer |
   };
 
   masthead(true);
+  if (s.notice) y = drawNoticeBand(doc, y, pdfText(s.notice));
   const colW = CONTENT_W / 2;
   for (let r = 0; r < s.meta.length; r += 2) {
     const pair = [s.meta[r]!, s.meta[r + 1]];
@@ -164,7 +170,7 @@ export async function renderRecordReport(s: RecordReportSnapshot, logo: Buffer |
     doc.page.margins.bottom = 0;
     const fy = PAGE.height - MARGIN - 10;
     doc.moveTo(MARGIN, fy - 6).lineTo(MARGIN + CONTENT_W, fy - 6).lineWidth(0.5).strokeColor(C.border).stroke();
-    font('Helvetica', 6.8, C.muted).text(pdfText(`PDI Quality Control · ${s.docCode} · ${s.number} · Edition ${s.edition}`), MARGIN, fy, { width: CONTENT_W / 2, lineBreak: false });
+    font('Helvetica', 6.8, C.muted).text(pdfText(`PDI Quality Control · ${s.notice ? SUMMARY_FOOTER : s.docCode} · ${s.number} · Edition ${s.edition}`), MARGIN, fy, { width: CONTENT_W / 2, lineBreak: false });
     font('Helvetica', 6.8, C.muted).text(`Page ${p - range.start + 1} of ${range.count} · Issued ${formatDate(s.generatedAt, s.displayTimeZone)}`, MARGIN + CONTENT_W / 2, fy, {
       width: CONTENT_W / 2,
       align: 'right',

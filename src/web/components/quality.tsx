@@ -62,44 +62,72 @@ export interface Rendition {
 }
 
 /** Controlled PDF editions of a record; each issue freezes a new numbered edition. */
-export function RecordPdfs({ renditions, issueUrl, docCode, canIssue, onIssued }: { renditions: Rendition[]; issueUrl: string; docCode: string; canIssue: boolean; onIssued: () => void }) {
+/**
+ * Summary PDFs generated from the module record. They are not the controlled document: when the record
+ * has its controlled form, that form's PDF is the controlled output and no summary is issued; earlier
+ * summary editions stay listed for traceability.
+ */
+export function RecordPdfs({
+  renditions,
+  issueUrl,
+  docCode,
+  canIssue,
+  onIssued,
+  controlled = null,
+}: {
+  renditions: Rendition[];
+  issueUrl: string;
+  docCode: string;
+  canIssue: boolean;
+  onIssued: () => void;
+  controlled?: { number: string; status: string; type_code: string } | null;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   return (
-    <div className="row-actions small">
-      {renditions.map((r) =>
-        r.fileId ? (
-          <a key={r.edition} href={`/api/files/${r.fileId}`} target="_blank" rel="noopener noreferrer">
-            {docCode} edition {r.edition} PDF ({r.pageCount} page{r.pageCount === 1 ? '' : 's'})
-          </a>
-        ) : (
-          <span key={r.edition} className="muted">
-            Edition {r.edition} rendering…
-          </span>
-        ),
+    <div className="small">
+      {renditions.length > 0 && <div className="muted">Summary PDFs (not controlled documents; kept for history):</div>}
+      <div className="row-actions">
+        {renditions.map((r) =>
+          r.fileId ? (
+            <a key={r.edition} href={`/api/files/${r.fileId}`} target="_blank" rel="noopener noreferrer">
+              Summary edition {r.edition} ({r.pageCount} page{r.pageCount === 1 ? '' : 's'})
+            </a>
+          ) : (
+            <span key={r.edition} className="muted">
+              Summary edition {r.edition} rendering…
+            </span>
+          ),
+        )}
+        {canIssue && !controlled && (
+          <button
+            type="button"
+            className="btn btn-small"
+            disabled={busy}
+            title={`A summary of this record; not the ${docCode} controlled document`}
+            onClick={async () => {
+              setBusy(true);
+              setError(null);
+              try {
+                await api(issueUrl, { method: 'POST' });
+                onIssued();
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {busy ? 'Issuing…' : 'Issue summary PDF (not controlled)'}
+          </button>
+        )}
+        {error && <span className="field-error">{error}</span>}
+      </div>
+      {controlled && (
+        <div className="muted">
+          The controlled output is {controlled.number} ({controlled.type_code}); see Controlled forms below.
+        </div>
       )}
-      {canIssue && (
-        <button
-          type="button"
-          className="btn btn-small"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            setError(null);
-            try {
-              await api(issueUrl, { method: 'POST' });
-              onIssued();
-            } catch (e) {
-              setError((e as Error).message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          {busy ? 'Issuing…' : `Issue ${docCode} PDF edition`}
-        </button>
-      )}
-      {error && <span className="field-error">{error}</span>}
     </div>
   );
 }

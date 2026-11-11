@@ -83,6 +83,8 @@ export interface InspectionReportSnapshot {
   baseline: { title: string; revisionLabel: string; synthetic: boolean } | null;
   review: { decision: string; reviewer: string; reviewedAt: string; comment: string | null; reasons: string[] } | null;
   amendment: { number: number; reason: string; by: string; at: string } | null;
+  /** Present when the lot's controlled record is an OPS-02 report: this PDF is its supporting worksheet. */
+  notice?: string;
   shared: ReportSection[];
   units: Array<{ unitIndex: number; serial: string | null; outcome: Outcome | null; dispositionNote: string | null; sections: ReportSection[]; bench?: ReportBench }>;
   photos: ReportPhoto[];

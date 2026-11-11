@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
 import type { InspectionReportSnapshot, ReportRow, ReportSection } from '../inspections/report-snapshot.js';
 import { formatDate, formatDateTime, pdfText } from './text.js';
-import { C, CONTENT_W, FOOTER_H, MARGIN, PAGE } from './theme.js';
+import { C, CONTENT_W, FOOTER_H, MARGIN, PAGE, drawNoticeBand } from './theme.js';
 
 const BOTTOM = PAGE.height - MARGIN - FOOTER_H;
 
@@ -357,6 +357,7 @@ export async function renderInspectionReport(input: RenderInput): Promise<Render
 
   // ---- Page 1: masthead, metadata grid, outcome ------------------------------------
   masthead(true);
+  if (s.notice) y = drawNoticeBand(doc, y, pdfText(s.notice));
   const i = s.inspection;
   const meta: Array<[string, string]> = [
     ['PART NUMBER', i.partNumber],
@@ -531,7 +532,7 @@ export async function renderInspectionReport(input: RenderInput): Promise<Render
     doc.page.margins.bottom = 0;
     const fy = PAGE.height - MARGIN - 10;
     doc.moveTo(MARGIN, fy - 6).lineTo(MARGIN + CONTENT_W, fy - 6).lineWidth(0.5).strokeColor(C.border).stroke();
-    font('Helvetica', 6.8, C.muted).text(pdfText(`PDI Quality Control · ${s.inspection.number} · ${s.draft ? 'Draft preview' : `Edition ${s.edition}`}`), MARGIN, fy, {
+    font('Helvetica', 6.8, C.muted).text(pdfText(`PDI Quality Control · ${s.inspection.number} · ${s.draft ? 'Draft preview' : `Edition ${s.edition}`}${s.notice ? ' · Inspection worksheet' : ''}`), MARGIN, fy, {
       width: CONTENT_W / 2,
       lineBreak: false,
     });

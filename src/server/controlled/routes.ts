@@ -6,14 +6,18 @@ import type { Capability } from '../../shared/capabilities.js';
 import {
   CONTROLLED_TYPES,
   CONTROLLED_TYPE_BY_CODE,
+  type ControlledEntity,
   type ControlledTypeDef,
   ENTITY_ROUTES,
+  EVENT_BINDINGS,
   EVIDENCE_SCHEDULE,
   ROW_FILE,
+  ROW_KEY,
   ROW_LABEL,
   type RecordData,
   type TemplateSchema,
   completionProblems,
+  decisionBlock,
   isRealDate,
   valueProblems,
 } from '../../shared/controlled-forms.js';
@@ -23,14 +27,30 @@ import { type AuthContext, recheckCapability, requireAuth } from '../auth.js';
 import { type Queryable, many, one, withTransaction } from '../db.js';
 import { AppError, badRequest, conflict, forbidden, notFound, unprocessable } from '../errors.js';
 import { sanitizeFilename, validateDocument } from '../file-validation.js';
-import { enqueueJob } from '../jobs.js';
 import { nextRecordNumber } from '../numbering.js';
 import type { Services } from '../services.js';
 import { FileTooLargeError } from '../storage.js';
+import {
+  type Step,
+  applyFormDecision,
+  assertDerivedUnchanged,
+  decisionReadiness,
+  derivedFor,
+  enteredOnly,
+  eventProblems,
+  eventStillOpen,
+  freezeAndQueue,
+  independent,
+  lockedPaths,
+  mergeDerived,
+  openEventRecord,
+  openRecordFor,
+  stepsFor,
+  submitEventRecord,
+} from './events.js';
 import { sha256 } from './pdf-text.js';
 import { entityContext, fitToTemplate } from './prefill.js';
 import {
-  type ControlledSnapshot,
   type RecordRow,
   SUBJECT,
   type SignatureRow,
@@ -68,29 +88,15 @@ async function deny(db: Queryable, req: FastifyRequest, auth: AuthContext, actio
   throw forbidden(message);
 }
 
-export interface Step {
-  key: string;
-  label: string;
-  mode: 'INTERNAL' | 'EXTERNAL';
-  capabilities: Capability[];
-  decides: boolean;
-  optional: boolean;
-}
+/**
+ * A record of an event-bound type that is not the event's own record (started before the event was
+ * bound to its form). It stays on file but takes no approval: the event is decided in its module.
+ */
+const superseded = (rec: Pick<RecordRow, 'type_code' | 'event_bound' | 'status'>) =>
+  !!EVENT_BINDINGS[rec.type_code] && !rec.event_bound && (rec.status === 'DRAFT' || rec.status === 'SUBMITTED');
 
-/** The approval blocks printed on the bound template (FORM) or the required acknowledgments (ATTACHMENT). */
-export function stepsFor(def: ControlledTypeDef, schema: TemplateSchema | null): Step[] {
-  if (def.category === 'ATTACHMENT') return def.signatures.map((s) => ({ key: s.key, label: s.label, mode: s.mode, capabilities: s.capabilities, decides: false, optional: false }));
-  return def.steps
-    .filter((s) => !schema || schema.fields.some((f) => f.key === s.field))
-    .map((s) => ({
-      key: s.field,
-      label: schema?.fields.find((f) => f.key === s.field)?.label ?? s.field,
-      mode: 'INTERNAL' as const,
-      capabilities: s.capabilities,
-      decides: s.decides,
-      optional: s.optional,
-    }));
-}
+const SUPERSEDED = (rec: Pick<RecordRow, 'number' | 'type_code'>) =>
+  `${rec.number} was started before ${rec.type_code} was bound to its module event; it takes no approval. Use the record opened by the ${EVENT_BINDINGS[rec.type_code]?.decision?.module ?? 'module record'} (start it from there if it has none) and void this draft.`;
 
 const MAX_TEXT = 20000;
 const MAX_ROWS = 500;
@@ -108,7 +114,7 @@ function sanitizeData(schema: TemplateSchema, input: RecordData): RecordData {
     const rows = input.schedules?.[s.key];
     if (!Array.isArray(rows)) continue;
     if (rows.length > MAX_ROWS) throw badRequest(`${s.title ?? s.key}: at most ${MAX_ROWS} rows`);
-    const keys = new Set([...s.columns.map((c) => c.key), ...(s.rowLabels ? [ROW_LABEL] : [])]);
+    const keys = new Set([...s.columns.map((c) => c.key), ROW_KEY, ...(s.rowLabels ? [ROW_LABEL] : [])]);
     schedules[s.key] = rows
       .filter((r) => !(s.key === EVIDENCE_SCHEDULE && r?.[ROW_FILE]))
       .map((r) => {
@@ -167,7 +173,7 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     requireAuth(req);
     if (!req.auth!.capabilities.has('records.read')) throw forbidden('This action requires the "records.read" authority');
     const q = z
-      .object({ entityType: z.string().max(40).optional(), entityId: uuid.optional(), typeCode: z.string().max(12).optional(), status: z.enum(['DRAFT', 'SUBMITTED', 'COMPLETED', 'VOID']).optional() })
+      .object({ entityType: z.string().max(40).optional(), entityId: uuid.optional(), entityIds: z.string().max(3800).optional(), typeCode: z.string().max(12).optional(), status: z.enum(['DRAFT', 'SUBMITTED', 'COMPLETED', 'VOID']).optional() })
       .parse(req.query);
     const where: string[] = [];
     const params: unknown[] = [];
@@ -177,13 +183,17 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     };
     if (q.entityType) add('c.entity_type = ?', q.entityType);
     if (q.entityId) add('c.entity_id = ?', q.entityId);
+    if (q.entityIds) {
+      const ids = q.entityIds.split(',').filter((x) => uuid.safeParse(x).success).slice(0, 100);
+      add('c.entity_id = ANY(?::uuid[])', ids);
+    }
     if (q.typeCode) add('c.type_code = ?', q.typeCode);
     if (q.status) add('c.status = ?', q.status);
     return many(
       db,
       `SELECT c.id, c.number, c.type_code AS "typeCode", c.category, c.title, c.status, c.entity_type AS "entityType", c.entity_id AS "entityId",
               c.entity_label AS "entityLabel", r.revision_label AS "revisionLabel", u.display_name AS "preparedBy", c.created_at AS "createdAt",
-              c.completed_at AS "completedAt",
+              c.completed_at AS "completedAt", c.event_bound AS "eventBound",
               (SELECT x.file_id FROM report_rendition x WHERE x.subject_type = '${SUBJECT}' AND x.subject_id = c.id ORDER BY x.edition DESC LIMIT 1) AS "outputFileId"
          FROM controlled_record c
          JOIN controlled_document_revision r ON r.id = c.revision_id
@@ -193,6 +203,31 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
         LIMIT 200`,
       params,
     );
+  });
+
+  /**
+   * The event records of one module record and whether each is ready for its module decision, so the
+   * module page can say what stands between the user and the decision.
+   */
+  app.get('/api/controlled/events/:entityType/:entityId', async (req) => {
+    requireAuth(req);
+    const auth = req.auth!;
+    if (!auth.capabilities.has('records.read')) throw forbidden('This action requires the "records.read" authority');
+    const { entityType, entityId } = req.params as { entityType: string; entityId: string };
+    if (!uuid.safeParse(entityId).success || !(entityType in ENTITY_ROUTES)) throw notFound('Module record');
+    const out = [];
+    for (const b of Object.values(EVENT_BINDINGS).filter((x) => x.entity === entityType)) {
+      const ready = await decisionReadiness(db, b.code, entityType as ControlledEntity, entityId, auth.userId);
+      const last = await one<{ id: string; number: string; status: string; output: string | null }>(
+        db,
+        `SELECT c.id, c.number, c.status,
+                (SELECT x.file_id FROM report_rendition x WHERE x.subject_type = '${SUBJECT}' AND x.subject_id = c.id ORDER BY x.edition DESC LIMIT 1) AS output
+           FROM controlled_record c WHERE c.type_code = $1 AND c.entity_type = $2 AND c.entity_id = $3 AND c.event_bound ORDER BY c.created_at DESC LIMIT 1`,
+        [b.code, entityType, entityId],
+      );
+      out.push({ code: b.code, opensWhen: b.opensWhen, decision: b.decision, submitAction: b.submitAction, companion: b.companion, record: last, readiness: ready });
+    }
+    return out;
   });
 
   app.post('/api/controlled/records', async (req, reply) => {
@@ -206,7 +241,7 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     }
     const entityId = def.entity === 'SYSTEM' ? null : (body.entityId ?? null);
     if (def.entity !== 'SYSTEM' && !entityId) throw badRequest(`${def.code} is opened from a ${ENTITY_ROUTES[def.entity].label.toLowerCase()}`);
-    const ctx = await entityContext(db, def.entity, entityId, def.code);
+    const ctx = await entityContext(db, def.entity, entityId, def.code, tz);
     if (!ctx) throw notFound(ENTITY_ROUTES[def.entity].label);
     const asOf = await todayIn(db, tz);
     const base = await revisionInForce(db, def.code, asOf);
@@ -214,6 +249,18 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     const schema = await templateFor(db, storage, base.revisionId);
     if (def.category === 'FORM' && !schema.interactive) {
       throw conflict(`${def.code} Rev ${base.revisionLabel} has no fillable fields (${schema.reason ?? 'not a controlled form'}); import the controlled form PDF`);
+    }
+    // A form bound to a module event is that event's single record: return the open one, or open it now
+    // while the event can still take its decision.
+    if (EVENT_BINDINGS[def.code]) {
+      const open = await openRecordFor(db, def.code, def.entity, entityId!);
+      if (open) return reply.code(200).send({ id: open.id, number: (await loadRecord(db, open.id, tz))!.number, existing: true });
+      if (!(await eventStillOpen(db, def.code, entityId!))) {
+        throw conflict(`This ${ENTITY_ROUTES[def.entity].label.toLowerCase()} has already been decided; its ${def.code} can no longer be completed in TQM`);
+      }
+      const opened = await withTransaction(db, (tx) => openEventRecord(tx, def.code, entityId!, { userId: auth.userId, displayName: auth.displayName }, req.id));
+      if (!opened) throw conflict(`${def.code} could not be opened on Rev ${base.revisionLabel}`);
+      return reply.code(201).send(opened);
     }
     const bindings = await bindingsInForce(db, def, base, schema, asOf);
     const data = def.category === 'FORM' ? fitToTemplate(schema, ctx, { prepared_by: `${auth.displayName} / PDI` }) : { fields: {}, schedules: {} };
@@ -266,7 +313,9 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
       const baseCols = new Set(schema.schedules.find((x) => x.key === key)?.columns.map((c) => c.key) ?? []);
       if (sched) continuationSchemas[key] = { capacity: sched.capacity, labelColumn: sched.columns.find((c) => !baseCols.has(c.key))?.key ?? null, documentNumber: b.documentNumber, revisionLabel: b.revisionLabel };
     }
-    const steps = stepsFor(def, schema);
+    const bound = rec.event_bound;
+    const binding = bound ? (EVENT_BINDINGS[rec.type_code] ?? null) : null;
+    const steps = stepsFor(def, schema, bound);
     const current = sigs.filter((s) => s.cycle === rec.cycle);
     const outputs = await many(
       db,
@@ -278,9 +327,16 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     const job = rec.status === 'COMPLETED' && def.category === 'FORM' && !outputs.length
       ? await one<{ status: string; last_error: string | null }>(db, `SELECT status, last_error FROM job WHERE idempotency_key = $1`, [`controlled_render:${id}:1`])
       : null;
-    const composed = def.category === 'FORM' ? composeData(schema, rec, files, sigs, rec.submitted_on) : null;
+    // An open event record shows the module's current facts (locked) with the entries made on the form.
+    const live = bound && rec.status === 'DRAFT' ? await eventProblems(db, rec, schema) : null;
+    const derived = live?.derived ?? (bound && rec.entity_id ? await derivedFor(db, rec, schema) : null);
+    const data = live?.merged ?? rec.data;
+    const composed = def.category === 'FORM' ? composeData(schema, { ...rec, data }, files, sigs, rec.submitted_on, bound ? decisionBlock(rec.type_code) : 'approver1') : null;
     const isAuthor = holdsAny(auth, def.authors);
-    const signable = rec.status === 'SUBMITTED' ? nextSteps(def, steps, current).filter((s) => s.mode === 'INTERNAL' && holdsAny(auth, s.capabilities) && independent(rec, current, auth.userId)) : [];
+    const old = superseded(rec);
+    const signable = rec.status === 'SUBMITTED' && !old ? nextSteps(def, steps, current).filter((s) => s.mode === 'INTERNAL' && holdsAny(auth, s.capabilities) && independent(rec, current, auth.userId)) : [];
+    const readiness = binding?.decision && rec.entity_id && rec.status === 'SUBMITTED' ? await decisionReadiness(db, rec.type_code, binding.entity, rec.entity_id, auth.userId) : null;
+    const route = derived?.route ?? ENTITY_ROUTES[rec.entity_type as keyof typeof ENTITY_ROUTES]?.route(rec.entity_id ?? '') ?? null;
     return {
       id: rec.id,
       number: rec.number,
@@ -288,9 +344,15 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
       category: rec.category,
       title: rec.title,
       status: rec.status,
-      entity: { type: rec.entity_type, id: rec.entity_id, label: rec.entity_label, route: ENTITY_ROUTES[rec.entity_type as keyof typeof ENTITY_ROUTES]?.route(rec.entity_id ?? '') ?? null },
+      entity: { type: rec.entity_type, id: rec.entity_id, label: rec.entity_label, route },
       module: { name: def.module, route: def.moduleRoute },
       rationale: def.rationale,
+      eventBound: bound,
+      binding,
+      superseded: old ? SUPERSEDED(rec) : null,
+      readiness,
+      locked: derived && rec.status === 'DRAFT' ? lockedPaths(schema, derived) : [],
+      ownedSchedules: derived?.owned ?? [],
       recordRevision: rec.record_revision,
       cycle: rec.cycle,
       version: rec.version,
@@ -304,21 +366,21 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
       schema,
       continuations: continuationSchemas,
       narrative: bindings.some((b) => b.role === 'NARRATIVE'),
-      data: rec.data,
+      data,
       composed,
       attachments: files,
       steps: steps.map((s) => ({ ...s, signature: current.find((x) => x.role_key === s.key) ?? null })),
       history: sigs.filter((s) => s.cycle !== rec.cycle),
       outputs,
       renderJob: job,
-      problems: def.category === 'FORM' && rec.status === 'DRAFT' ? completionProblems(schema, rec.data) : [],
+      problems: def.category === 'FORM' && rec.status === 'DRAFT' ? (live?.problems ?? completionProblems(schema, rec.data)) : [],
       can: {
-        edit: rec.status === 'DRAFT' && isAuthor,
-        submit: rec.status === 'DRAFT' && isAuthor,
-        void: rec.status === 'DRAFT' && isAuthor,
+        edit: rec.status === 'DRAFT' && isAuthor && !old,
+        submit: rec.status === 'DRAFT' && isAuthor && !old && !binding?.submitAction,
+        void: rec.status === 'DRAFT' && isAuthor && !bound,
         sign: signable.map((s) => s.key),
         attest: rec.status === 'SUBMITTED' && def.category === 'ATTACHMENT' && isAuthor ? steps.filter((s) => s.mode === 'EXTERNAL' && !current.some((x) => x.role_key === s.key)).map((s) => s.key) : [],
-        return: rec.status === 'SUBMITTED' && (rec.submitted_by === auth.userId || steps.some((s) => holdsAny(auth, s.capabilities))),
+        return: rec.status === 'SUBMITTED' && !binding?.submitAction && (rec.submitted_by === auth.userId || steps.some((s) => holdsAny(auth, s.capabilities))),
       },
     };
   });
@@ -334,15 +396,23 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
       const def = CONTROLLED_TYPE_BY_CODE[rec.type_code]!;
       if (!holdsAny(auth, def.authors)) await deny(db, req, auth, 'controlled.save', id, `Editing ${def.code} requires ${def.authors.join(' or ')}`);
       if (rec.category !== 'FORM') throw conflict('This record is an attached document; add files instead');
+      if (superseded(rec)) throw conflict(SUPERSEDED(rec));
       if (rec.status !== 'DRAFT') throw conflict(`The record is ${rec.status.toLowerCase()}; return it to draft before editing`);
       if (rec.version !== body.expectedVersion) throw conflict('The record was changed by someone else; reload to see the latest');
       const schema = await templateFor(tx, storage, rec.revision_id);
-      const data = sanitizeData(schema, body.data);
-      const problems = valueProblems(schema, data);
+      let data = sanitizeData(schema, body.data);
+      let check = data;
+      if (rec.event_bound) {
+        // Facts the module holds are entered in the module; only what the form adds is stored here.
+        const derived = await derivedFor(tx, rec, schema);
+        data = enteredOnly(schema, derived, data);
+        check = mergeDerived(schema, derived, data);
+      }
+      const problems = valueProblems(schema, check);
       if (problems.length) throw unprocessable('Some entries are not valid', problems);
       await tx.query(`UPDATE controlled_record SET data = $2, version = version + 1, updated_at = now() WHERE id = $1`, [id, JSON.stringify(data)]);
       await audit(tx, { actorId: auth.userId, action: 'controlled.save', entityType: 'controlled_record', entityId: id, summary: `${rec.number} draft saved`, requestId: req.id });
-      return { version: rec.version + 1, problems: completionProblems(schema, data) };
+      return { version: rec.version + 1, problems: completionProblems(schema, check) };
     });
   });
 
@@ -355,8 +425,15 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     if (!rec) throw notFound('Controlled record');
     const def = CONTROLLED_TYPE_BY_CODE[rec.type_code]!;
     if (!holdsAny(auth, def.authors)) await deny(db, req, auth, 'controlled.submit', id, `Submitting ${def.code} requires ${def.authors.join(' or ')}`);
+    if (superseded(rec)) throw conflict(SUPERSEDED(rec));
     if (rec.status !== 'DRAFT') throw conflict(`The record is already ${rec.status.toLowerCase()}`);
     if (rec.version !== body.expectedVersion) throw conflict('The record was changed by someone else; reload to see the latest');
+    if (rec.event_bound) {
+      const binding = EVENT_BINDINGS[rec.type_code]!;
+      if (binding.submitAction) throw conflict(`${rec.number} is submitted when you ${binding.submitAction.label.toLowerCase()} in the ${binding.decision?.module ?? 'module'}`);
+      const out = await withTransaction(db, (tx) => submitEventRecord(tx, id, { userId: auth.userId, displayName: auth.displayName }, req.id, body.expectedVersion));
+      return { version: out.version, status: 'SUBMITTED' };
+    }
     const files = await attachments(db, id, tz);
     let dataHash: string;
     if (rec.category === 'FORM') {
@@ -403,10 +480,16 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     if (!pre) throw notFound('Controlled record');
     const def = CONTROLLED_TYPE_BY_CODE[pre.type_code]!;
     const schema = await baseSchemaOf(pre);
-    const steps = stepsFor(def, schema);
+    const steps = stepsFor(def, schema, pre.event_bound);
     const step = steps.find((s) => s.key === body.step);
     if (!step || step.mode !== 'INTERNAL') throw badRequest('Unknown approval step');
     if (!holdsAny(auth, step.capabilities)) await deny(db, req, auth, 'controlled.sign', id, `${step.label} requires ${step.capabilities.join(' or ')}`);
+    if (superseded(pre)) throw conflict(SUPERSEDED(pre));
+    // One approval path: the module decision signs its own block; it is never signed a second time here.
+    if (step.module) {
+      await audit(db, { actorId: auth.userId, action: 'controlled.sign', outcome: 'DENIED', entityType: 'controlled_record', entityId: id, summary: `Refused: ${step.label} is signed by ${step.module.action}`, requestId: req.id });
+      throw conflict(`${step.label} is signed when you ${step.module.label.toLowerCase()} on the ${step.module.module}; it is not signed separately`);
+    }
     const decisionField = schema.fields.find((f) => f.key === 'pdi_decision');
     if (step.decides) {
       if (!body.decision || !decisionField?.options?.includes(body.decision) || /^return$/i.test(body.decision)) {
@@ -429,12 +512,13 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
       const current = (await signatures(tx, id)).filter((s) => s.cycle === rec.cycle);
       if (!nextSteps(def, steps, current).some((s) => s.key === step.key)) throw conflict(current.some((s) => s.role_key === step.key) ? `${step.label} is already signed` : 'The deciding approval is signed first');
       if (!independent(rec, current, auth.userId)) throw forbidden('Approval must be independent: the preparer, the submitter and another approver of this record cannot sign (POL-01)');
+      await assertDerivedUnchanged(tx, rec, schema);
       const today = await todayIn(tx, tz);
       const details = Object.fromEntries(Object.entries(body.details ?? {}).filter(([, v]) => v));
       await tx.query(
         `INSERT INTO controlled_record_signature (record_id, cycle, role_key, role_label, mode, signer_id, signer_name, signed_on, decision, statement, details, data_sha256, grants_used)
          VALUES ($1,$2,$3,$4,'INTERNAL',$5,$6,$7,$8,$9,$10,$11,$12)`,
-        [id, rec.cycle, step.key, step.label, auth.userId, auth.displayName, today, step.decides ? body.decision : (body.decision ?? null), step.decides ? body.conditions : (body.statement ?? null), JSON.stringify(details), rec.data_sha256, step.capabilities.filter((c) => auth.capabilities.has(c))],
+        [id, rec.cycle, step.key, step.label, auth.userId, auth.displayName, today, step.decides ? body.decision : null, step.decides ? body.conditions : (body.statement ?? null), JSON.stringify(step.decides ? details : {}), rec.data_sha256, step.capabilities.filter((c) => auth.capabilities.has(c))],
       );
       if (step.decides && body.secondApproval === 'NOT_REQUIRED') {
         const optional = steps.find((s) => s.optional && s.key !== step.key);
@@ -458,7 +542,10 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
         after: { step: step.key, dataSha256: rec.data_sha256 },
         requestId: req.id,
       });
-      if (done && rec.category === 'FORM') await freezeAndQueue(tx, rec, schema, after, today);
+      if (done && rec.category === 'FORM') {
+        await freezeAndQueue(tx, rec, schema, after, today);
+        await applyFormDecision(tx, rec, after.find((s) => s.decision)?.decision ?? null, { userId: auth.userId, displayName: auth.displayName }, req.id);
+      }
       return { completed: done, version: rec.version + 1 };
     });
     return result;
@@ -507,8 +594,10 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     const pre = await loadRecord(db, id, tz);
     if (!pre) throw notFound('Controlled record');
     const def = CONTROLLED_TYPE_BY_CODE[pre.type_code]!;
-    const steps = stepsFor(def, def.category === 'FORM' ? await baseSchemaOf(pre) : null);
+    const steps = stepsFor(def, def.category === 'FORM' ? await baseSchemaOf(pre) : null, pre.event_bound);
     if (pre.submitted_by !== auth.userId && !steps.some((s) => holdsAny(auth, s.capabilities))) await deny(db, req, auth, 'controlled.return', id, 'Only the submitter or an approver can return the record');
+    const submitAction = pre.event_bound ? EVENT_BINDINGS[pre.type_code]?.submitAction : null;
+    if (submitAction) throw conflict(`${pre.number} returns to draft with the ${EVENT_BINDINGS[pre.type_code]!.decision!.module} (return it for correction there)`);
     return withTransaction(db, async (tx) => {
       const rec = (await loadRecord(tx, id, tz, { lock: true }))!;
       if (rec.status !== 'SUBMITTED') throw conflict(`The record is ${rec.status.toLowerCase()}, not awaiting approval`);
@@ -528,6 +617,8 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     if (!pre) throw notFound('Controlled record');
     const def = CONTROLLED_TYPE_BY_CODE[pre.type_code]!;
     if (!holdsAny(auth, def.authors)) await deny(db, req, auth, 'controlled.void', id, `Voiding ${def.code} requires ${def.authors.join(' or ')}`);
+    // The event's own record is voided only with its event (cancelled, withdrawn); otherwise the event would lose its approval path.
+    if (pre.event_bound) throw conflict(`${pre.number} belongs to its ${ENTITY_ROUTES[pre.entity_type as ControlledEntity]?.label.toLowerCase() ?? 'module record'} and is voided only if that is cancelled or withdrawn`);
     return withTransaction(db, async (tx) => {
       const rec = (await loadRecord(tx, id, tz, { lock: true }))!;
       if (rec.status !== 'DRAFT') throw conflict('Only a draft can be voided');
@@ -546,6 +637,7 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     if (!pre) throw notFound('Controlled record');
     const def = CONTROLLED_TYPE_BY_CODE[pre.type_code]!;
     if (!holdsAny(auth, def.authors)) await deny(db, req, auth, 'controlled.attach', id, `Adding files to ${def.code} requires ${def.authors.join(' or ')}`);
+    if (superseded(pre)) throw conflict(SUPERSEDED(pre));
     if (pre.status !== 'DRAFT') throw conflict('Files can be added only while the record is a draft');
     const caption = z.string().trim().max(300).optional().parse((req.query as { caption?: string }).caption);
     const health = await storage.check();
@@ -614,36 +706,16 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     });
   });
 
-  /** Freezes the printed content and queues the controlled PDF; runs inside the completing transaction. */
-  async function freezeAndQueue(tx: Queryable, rec: RecordRow, schema: TemplateSchema, sigs: SignatureRow[], today: string) {
-    const files = await attachments(tx, rec.id, tz);
-    const signed = await loadRecord(tx, rec.id, tz);
-    const snapshot: ControlledSnapshot = {
-      kind: 'CONTROLLED_FORM',
-      schemaVersion: 1,
-      docCode: rec.type_code,
-      number: rec.number,
-      title: rec.title,
-      recordRevision: rec.record_revision,
-      cycle: rec.cycle,
-      preparedBy: rec.prepared_by_name,
-      completedDate: signed?.submitted_on ?? today,
-      generatedAt: new Date().toISOString(),
-      bindings: await recordBindings(tx, rec.id),
-      data: composeData(schema, rec, files, sigs, signed?.submitted_on ?? today),
-    };
-    const snap = await one<{ id: string }>(
-      tx,
-      `INSERT INTO report_snapshot (subject_type, subject_id, edition, snapshot, sha256) VALUES ($1, $2, 1, $3, $4) RETURNING id`,
-      [SUBJECT, rec.id, JSON.stringify(snapshot), sha256(canonicalJson(snapshot))],
-    );
-    await enqueueJob(tx, 'controlled_render', `controlled_render:${rec.id}:1`, { snapshotId: snap!.id });
-  }
 }
 
-/** Steps that may be signed now: the deciding approval first, then the others in any order. */
+/**
+ * Steps that may be signed on the record now. On an event record the module decision signs its block,
+ * so only the concurrence blocks are signed here (in any order, before that decision). Otherwise the
+ * deciding approval comes first, then the others in any order.
+ */
 function nextSteps(def: ControlledTypeDef, steps: Step[], current: Array<Pick<SignatureRow, 'role_key'>>): Step[] {
   const pending = steps.filter((s) => !current.some((x) => x.role_key === s.key));
+  if (steps.some((s) => s.module)) return pending.filter((s) => !s.module);
   if (def.category === 'FORM') {
     const decider = steps.find((s) => s.decides);
     if (decider && pending.includes(decider)) return [decider];
@@ -653,12 +725,6 @@ function nextSteps(def: ControlledTypeDef, steps: Step[], current: Array<Pick<Si
 
 function complete(steps: Step[], current: Array<Pick<SignatureRow, 'role_key'>>): boolean {
   return steps.every((s) => current.some((x) => x.role_key === s.key));
-}
-
-/** POL-01: the preparer, the submitter and anyone who already signed this cycle cannot sign again. */
-function independent(rec: Pick<RecordRow, 'prepared_by' | 'submitted_by'>, current: Array<Pick<SignatureRow, 'signer_id' | 'mode'>>, userId: string): boolean {
-  if (rec.prepared_by === userId || rec.submitted_by === userId) return false;
-  return !current.some((s) => s.mode === 'INTERNAL' && s.signer_id === userId);
 }
 
 /** Whether an attached PDF is the bound template revision filled in (same field tree), or another format. */

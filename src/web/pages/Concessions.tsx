@@ -101,6 +101,8 @@ export function ConcessionList() {
 }
 
 interface ConcessionDetailData {
+  /** The record's controlled form (event record), when it has one: its PDF is the controlled output. */
+  controlled?: { number: string; status: string; type_code: string } | null;
   concession: Record<string, string | number | null> & { id: string; number: string; status: string; version: number; state: ConcessionState; stateText: string; used: number };
   uses: Array<{ id: string; quantity: number; usedAt: string; usedBy: string; inspectionNumber: string | null; inspectionId: string | null; ncrNumber: string | null; ncrId: string | null; outcome: string | null }>;
   files: FileRef[];
@@ -251,7 +253,7 @@ export function ConcessionDetail() {
       </section>
       <section className="card">
         <h2>Controlled record</h2>
-        <RecordPdfs renditions={data.renditions} issueUrl={`/api/concessions/${id}/report`} docCode="OPS-05" canIssue={data.permissions.report} onIssued={reload} />
+        <RecordPdfs renditions={data.renditions} issueUrl={`/api/concessions/${id}/report`} docCode="OPS-05" canIssue={data.permissions.report} onIssued={reload} controlled={data.controlled ?? null} />
       </section>
       <ControlledFormsPanel entity="CONCESSION" entityId={id} />
       <HistoryCard history={data.history} />

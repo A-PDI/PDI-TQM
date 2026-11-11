@@ -125,6 +125,8 @@ interface Decision {
   verifications: Array<{ id: string; result: string; method: string; note: string; verifiedAt: string; verifiedBy: string; inspectionId: string | null; inspectionNumber: string | null }>;
 }
 interface NcrData {
+  /** The record's controlled form (event record), when it has one: its PDF is the controlled output. */
+  controlled?: { number: string; status: string; type_code: string } | null;
   ncr: Record<string, string | number | null> & { id: string; number: string; status: string; statusText: string; version: number; part_id: string | null; supplier_id: string | null; source_id: string | null; site_id: string | null };
   files: Array<FileRef & { caption: string | null; mimeType: string }>;
   scopes: Scope[];
@@ -539,7 +541,7 @@ export function NcrDetail() {
             {n.status !== 'VERIFIED_RESOLVED' && <span className="small muted">Closing needs every affected quantity dispositioned and verified.</span>}
           </div>
         )}
-        <RecordPdfs renditions={data.renditions} issueUrl={`/api/ncrs/${id}/report`} docCode="OPS-06" canIssue={p.manage || closed} onIssued={reload} />
+        <RecordPdfs renditions={data.renditions} issueUrl={`/api/ncrs/${id}/report`} docCode="OPS-06" canIssue={p.manage || closed} onIssued={reload} controlled={data.controlled ?? null} />
       </section>
       <ControlledFormsPanel entity="NCR" entityId={id} />
       <HistoryCard history={data.history} />
