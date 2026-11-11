@@ -4,6 +4,8 @@ export type AppEnv = 'development' | 'test' | 'staging' | 'production';
 
 export interface Config {
   appEnv: AppEnv;
+  /** Shown beside the app name outside production (e.g. "TEST"), so a test system is never taken for production. */
+  environmentLabel: string | null;
   port: number;
   host: string;
   databaseUrl: string;
@@ -53,6 +55,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   return {
     appEnv,
+    environmentLabel: env.ENVIRONMENT_LABEL?.trim().slice(0, 40) || null,
     port: intEnv(env, 'PORT', 3000),
     host: env.HOST ?? '0.0.0.0',
     databaseUrl: required(env, 'DATABASE_URL'),

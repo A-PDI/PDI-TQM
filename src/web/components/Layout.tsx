@@ -32,7 +32,7 @@ export function Layout() {
         <div className="brand">
           <img className="brand-logo" src={logoUrl} alt="PDI" /> <span>TQM</span>
         </div>
-        {showEnv && <span className="env-badge">{me.environment.toUpperCase()}</span>}
+        {showEnv && <span className="env-badge">{(me.environmentLabel || me.environment).toUpperCase()}</span>}
         <nav aria-label="Main navigation">
           <ul className="nav">
             {NAV.map((n) =>

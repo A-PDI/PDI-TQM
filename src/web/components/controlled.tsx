@@ -178,14 +178,8 @@ export function ControlledFormsPanel({ entity, entityId, title = 'Controlled for
  */
 function EventStatus({ e }: { e: EventRow }) {
   const r = e.record;
-  if (!r) {
-    if (e.companion) return null;
-    return (
-      <p className="small muted" style={{ marginTop: 0 }}>
-        {e.code}: no controlled record — this record was opened before {e.code} was in force, so it is decided without one.
-      </p>
-    );
-  }
+  // No record yet (the event has not reached its opening point, or it began before the form was in force).
+  if (!r) return null;
   const decision = e.decision ? `${e.decision.label} on this ${e.decision.module}` : 'its PDI decision';
   let next: string;
   if (r.status === 'COMPLETED') next = `Approved through ${e.decision ? e.decision.label.toLowerCase() : 'its PDI decision'}; the controlled PDF is generated from the bound revision.`;

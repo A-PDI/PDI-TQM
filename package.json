@@ -19,6 +19,8 @@
     "catalogue:import": "tsx scripts/import-appendix-a.ts",
     "bootstrap:admin": "tsx src/server/cli/bootstrap-admin.ts",
     "seed:demo": "tsx src/server/cli/seed-demo.ts",
+    "seed:pilot": "tsx src/server/cli/seed-pilot.ts",
+    "seed:pilot:prod": "node dist/server/server/cli/seed-pilot.js",
     "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.web.json --noEmit && tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",

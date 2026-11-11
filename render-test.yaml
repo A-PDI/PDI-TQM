@@ -1,0 +1,59 @@
+# Render Blueprint: isolated TEST environment for the solo-developer pilot (fictional data only).
+#
+# Separate from everything else in the workspace: its own project, web service, PostgreSQL database
+# and document disk. It shares nothing with the existing QMS services, with tqms-staging (render.yaml)
+# or with any future production TQM environment, and it is not a production system.
+#
+# - Auto-deploys every commit on main (the image is built from ./Dockerfile).
+# - Pre-deploy: forward-only migrations, reference data and the fictional demo personas.
+# - On start, PILOT_SEED creates the pilot sample records once (see docs/construction/TEST_ENVIRONMENT.md),
+#   after the controlled templates (copies of the approved set) are imported into the Document Library.
+# - TQMS_DEMO_PASSWORD is entered when the Blueprint is approved (sync: false); it is never committed.
+projects:
+  - name: pdi-tqm-test
+    environments:
+      - name: test
+        services:
+          - type: web
+            name: tqm-test
+            runtime: docker
+            dockerfilePath: ./Dockerfile
+            branch: main
+            autoDeployTrigger: commit
+            region: oregon
+            plan: 0.5c-512mb        # a persistent disk requires a paid instance
+            numInstances: 1         # the document disk attaches to one instance
+            healthCheckPath: /health/ready
+            preDeployCommand: node dist/server/server/cli/migrate.js && node dist/server/server/cli/seed-demo.js
+            disk:
+              name: tqm-test-documents
+              mountPath: /app/data
+              sizeGB: 2
+            envVars:
+              - key: APP_ENV
+                value: staging      # deployed, non-production runtime (secure cookies, proxy-aware)
+              - key: ENVIRONMENT_LABEL
+                value: TEST
+              - key: DATABASE_URL
+                fromDatabase:
+                  name: tqm-test-db
+                  property: connectionString
+              - key: STORAGE_ROOT
+                value: /app/data
+              - key: DISPLAY_TIMEZONE
+                value: America/Chicago
+              - key: SECURE_COOKIES
+                value: "true"
+              - key: PILOT_SEED
+                value: "true"
+              - key: TQMS_DEMO_PASSWORD
+                sync: false         # 12+ characters; shared by the demo personas in this environment only
+              # CARBONZAPP_API_KEY is deliberately absent: the test environment never calls the real bench cloud.
+        databases:
+          - name: tqm-test-db
+            plan: 0.1c-256mb
+            postgresMajorVersion: "17"
+            region: oregon
+            databaseName: tqm_test
+            user: tqm_test
+            ipAllowList: []          # no external connections

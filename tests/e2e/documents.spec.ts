@@ -17,7 +17,7 @@ async function pageAs(browser: Browser, email: string): Promise<Page> {
 }
 
 test('an administrator imports the controlled document set; files that break the naming rule are listed, not lost', async ({ browser }, info) => {
-  test.skip(info.project.name !== 'desktop', 'desktop walkthrough');
+  test.skip(info.project.name !== 'controlled', 'runs once, after the module walkthroughs');
   const admin = await pageAs(browser, 'avery.patel@example.com');
   await admin.getByRole('link', { name: 'Documents', exact: true }).click();
   await expect(admin.getByRole('heading', { name: 'Document Library', level: 1 })).toBeVisible();

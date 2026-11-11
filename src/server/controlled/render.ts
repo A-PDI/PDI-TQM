@@ -69,6 +69,9 @@ export interface ExpectedText {
 export class RenderProblem extends Error {}
 
 const NARRATIVE_MAX = 3366;
+/** Visual capacity of the narrative text box, used when several short overflows share one sheet. */
+const NARRATIVE_LINES = 28;
+const NARRATIVE_LINE_CHARS = 105;
 const AUTO_ROW = '_auto';
 const ENTRY_PT = 9;
 const ENTRY_PT_MULTILINE = 8.5;
@@ -98,23 +101,42 @@ export function planSheets(req: RenderRequest): PlannedSheet[] {
   const { base, data, number } = req;
   const baseSchema = base.schema;
   const fields = { ...data.fields };
-  const narratives: Array<{ sheetId: string; ref: string; text: string }> = [];
+  // Overflowing text continues on narrative sheets. Short overflows (an identifier wider than its box)
+  // share a sheet, each under the label and field it continues; long text gets sheets of its own.
+  const narratives: Array<{ sheetId: string; refs: string[]; text: string }> = [];
   let narrativeSeq = 0;
+  const openNarrative = () => {
+    narrativeSeq += 1;
+    const sheet = { sheetId: `${number}-N${two(narrativeSeq)}`, refs: [] as string[], text: '' };
+    narratives.push(sheet);
+    return sheet;
+  };
+  const lines = (text: string) => text.split('\n').reduce((n, l) => n + Math.max(1, Math.ceil(l.length / NARRATIVE_LINE_CHARS)), 0);
 
-  // Text longer than the template allows continues on a narrative sheet, with a pointer in the field.
   const overflow = (ref: string, label: string, text: string, max: number | null): string => {
     const value = toWinAnsi(text);
     if (!max || value.length <= max) return value;
     if (!req.narrative) throw new RenderProblem(`${label} is longer than the template allows (${max} characters) and no narrative continuation sheet is released`);
-    const ids: string[] = [];
-    for (let i = 0; i < value.length; i += NARRATIVE_MAX) {
-      narrativeSeq += 1;
-      const sheetId = `${number}-N${two(narrativeSeq)}`;
-      ids.push(sheetId);
-      narratives.push({ sheetId, ref, text: value.slice(i, i + NARRATIVE_MAX) });
+    const entry = toWinAnsi(`${label} (${ref}):\n${value}`);
+    let first: string;
+    if (entry.length <= NARRATIVE_MAX && lines(entry) <= NARRATIVE_LINES) {
+      let sheet = narratives[narratives.length - 1];
+      const joined = sheet?.text ? `${sheet.text}\n\n${entry}` : entry;
+      if (!sheet || joined.length > NARRATIVE_MAX || lines(joined) > NARRATIVE_LINES) sheet = openNarrative();
+      sheet.text = sheet.text ? `${sheet.text}\n\n${entry}` : entry;
+      sheet.refs.push(ref);
+      first = sheet.sheetId;
+    } else {
+      first = '';
+      for (let i = 0; i < value.length; i += NARRATIVE_MAX) {
+        const sheet = openNarrative();
+        sheet.refs.push(ref);
+        sheet.text = value.slice(i, i + NARRATIVE_MAX);
+        first ||= sheet.sheetId;
+      }
     }
-    const pointer = ` [continued on ${ids[0]}]`;
-    return pointer.length + 8 <= max ? `${value.slice(0, max - pointer.length)}${pointer}` : clip(`See ${ids[0]}`, max);
+    const pointer = ` [continued on ${first}]`;
+    return pointer.length + 8 <= max ? `${value.slice(0, max - pointer.length)}${pointer}` : clip(`See ${first}`, max);
   };
 
   const baseValues: Record<string, string> = {};
@@ -193,7 +215,7 @@ export function planSheets(req: RenderRequest): PlannedSheet[] {
     const textField = [...s.fields].filter((f) => f.input === 'multiline').sort((a, b) => (b.maxLength ?? 0) - (a.maxLength ?? 0))[0];
     const refField = s.fields.find((f) => /section|field|row/i.test(f.label) && f.input !== 'multiline');
     if (textField) values[textField.name] = n.text;
-    if (refField) values[refField.name] = clip(n.ref, refField.maxLength);
+    if (refField) values[refField.name] = clip(n.refs.length > 1 ? `${n.refs.length} entries, each labelled below` : n.refs[0]!, refField.maxLength);
     return { kind: 'NARRATIVE' as const, template: t, sheetId: n.sheetId, sequence: `${i + 1} of ${narratives.length}`, schedule: null, values };
   });
 
