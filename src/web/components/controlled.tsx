@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { ControlledEntity } from '../../shared/controlled-forms';
+import type { ControlledEntity, EventBinding } from '../../shared/controlled-forms';
 import { api, fmtDate } from '../api';
 import { useBusy } from './sourcing';
 import { useLoad } from './ui';
@@ -34,6 +34,18 @@ export interface ControlledRecordRow {
   createdAt: string;
   completedAt: string | null;
   outputFileId: string | null;
+  eventBound: boolean;
+}
+
+/** The controlled record of a module event and what stands between the user and the module decision. */
+export interface EventRow {
+  code: string;
+  opensWhen: string;
+  decision: EventBinding['decision'];
+  submitAction: EventBinding['submitAction'];
+  companion: boolean;
+  record: { id: string; number: string; status: string; output: string | null } | null;
+  readiness: { recordId: string; number: string; ready: boolean; reason: string | null } | null;
 }
 
 export const RECORD_STATUS: Record<string, { text: string; cls: string }> = {
@@ -55,15 +67,18 @@ export const categoryText = (c: string) => (c === 'FORM' ? 'Completed in TQM' : 
  * Controlled documents for one module record: the records opened from it, and the approved revision
  * of each document type that belongs here, ready to start.
  */
-export function ControlledFormsPanel({ entity, entityId, title = 'Controlled forms' }: { entity: ControlledEntity; entityId: string | null; title?: string }) {
+export function ControlledFormsPanel({ entity, entityId, title = 'Controlled forms', compact = false, hideWhenEmpty = false }: { entity: ControlledEntity; entityId: string | null; title?: string; compact?: boolean; hideWhenEmpty?: boolean }) {
   const navigate = useNavigate();
   const types = useLoad<{ types: ControlledTypeRow[] }>('/api/controlled/types');
   const query = entity === 'SYSTEM' ? `entityType=SYSTEM` : `entityType=${entity}&entityId=${entityId}`;
   const records = useLoad<ControlledRecordRow[]>(`/api/controlled/records?${query}`);
+  const events = useLoad<EventRow[]>(entity === 'SYSTEM' || !entityId ? null : `/api/controlled/events/${entity}/${entityId}`);
   const { busy, run, banner } = useBusy();
   const [pick, setPick] = useState('');
   const available = (types.data?.types ?? []).filter((t) => t.entity === entity);
   const startable = available.filter((t) => t.canPrepare && t.revision && (t.category === 'ATTACHMENT' || t.interactive));
+  const nothing = !records.data?.length && !available.some((t) => t.revision);
+  if (hideWhenEmpty && (nothing || !records.data || !types.data)) return null;
   const start = (code: string) =>
     run(async () => {
       const r = await api<{ id: string }>('/api/controlled/records', { body: { typeCode: code, entityId } });
@@ -71,9 +86,10 @@ export function ControlledFormsPanel({ entity, entityId, title = 'Controlled for
     });
 
   return (
-    <section className="card" aria-labelledby={`controlled-${entity}`}>
-      <h2 id={`controlled-${entity}`}>{title}</h2>
+    <section className="card" aria-labelledby={`controlled-${entity}-${entityId ?? 'all'}`}>
+      <h2 id={`controlled-${entity}-${entityId ?? 'all'}`}>{title}</h2>
       {banner}
+      {events.data?.map((e) => <EventStatus key={e.code} e={e} />)}
       {records.data && records.data.length > 0 ? (
         <div className="table-wrap" style={{ marginBottom: 10 }}>
           <table className="data stack">
@@ -92,6 +108,7 @@ export function ControlledFormsPanel({ entity, entityId, title = 'Controlled for
                     <Link to={`/controlled/${r.id}`}>{r.number}</Link>
                     <div className="small muted">
                       {r.preparedBy} · {fmtDate(r.createdAt)}
+                      {r.eventBound ? ' · this record’s approval' : ''}
                     </div>
                   </td>
                   <td data-label="Document">
@@ -120,7 +137,7 @@ export function ControlledFormsPanel({ entity, entityId, title = 'Controlled for
       ) : (
         records.data && <p className="small muted" style={{ marginTop: 0 }}>No controlled records yet.</p>
       )}
-      {available.length > 0 && (
+      {available.length > 0 && !compact && (
         <div className="row-actions">
           <label htmlFor={`start-${entity}`} className="sr-only">
             Controlled document to start
@@ -141,7 +158,7 @@ export function ControlledFormsPanel({ entity, entityId, title = 'Controlled for
           </Link>
         </div>
       )}
-      {available.some((t) => !t.revision || (t.category === 'FORM' && t.interactive === false)) && (
+      {!compact && available.some((t) => !t.revision || (t.category === 'FORM' && t.interactive === false)) && (
         <p className="small muted" style={{ marginBottom: 0 }}>
           Not available here until an approved revision is released in the Document Library:{' '}
           {available
@@ -152,5 +169,52 @@ export function ControlledFormsPanel({ entity, entityId, title = 'Controlled for
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * The event's own controlled record: opened with the event, approved by the module decision. Says what
+ * is still needed before that decision, so the form and the decision are one sequence.
+ */
+function EventStatus({ e }: { e: EventRow }) {
+  const r = e.record;
+  // No record yet (the event has not reached its opening point, or it began before the form was in force).
+  if (!r) return null;
+  const decision = e.decision ? `${e.decision.label} on this ${e.decision.module}` : 'its PDI decision';
+  let next: string;
+  if (r.status === 'COMPLETED') next = `Approved through ${e.decision ? e.decision.label.toLowerCase() : 'its PDI decision'}; the controlled PDF is generated from the bound revision.`;
+  else if (r.status === 'VOID') next = 'Void with this record.';
+  else if (e.readiness?.ready) next = `Ready for ${decision}.`;
+  else if (e.readiness?.reason) next = e.readiness.reason;
+  else if (r.status === 'DRAFT' && e.submitAction) next = `Complete it; it is submitted when you ${e.submitAction.label.toLowerCase()}.`;
+  else next = r.status === 'DRAFT' ? `Complete and submit it for decision; ${decision} signs it.` : `Awaiting ${decision}.`;
+  return (
+    <div className={`notice${r.status === 'COMPLETED' ? ' notice-ok' : e.readiness && !e.readiness.ready ? ' notice-warn' : ''}`} role="status" aria-label={`${e.code} approval record`}>
+      <strong>
+        <Link to={`/controlled/${r.id}`}>{r.number}</Link>
+      </strong>{' '}
+      <RecordStatus status={r.status} /> — {next}
+      {r.output && (
+        <>
+          {' '}
+          <a href={`/api/files/${r.output}`} target="_blank" rel="noreferrer">
+            Controlled PDF
+          </a>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** The event records of one module record, without the rest of the panel (e.g. each first article on its source). */
+export function EventRecordStatus({ entity, entityId }: { entity: ControlledEntity; entityId: string }) {
+  const events = useLoad<EventRow[]>(`/api/controlled/events/${entity}/${entityId}`);
+  if (!events.data?.some((e) => e.record)) return null;
+  return (
+    <div style={{ marginTop: 6 }}>
+      {events.data.map((e) => (
+        <EventStatus key={e.code} e={e} />
+      ))}
+    </div>
   );
 }

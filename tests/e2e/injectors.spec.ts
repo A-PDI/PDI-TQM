@@ -102,7 +102,7 @@ test('Stage 4 walkthrough: bench import → repair → retest → compare → sh
   await quality.getByRole('button', { name: 'Freeze evaluation' }).click();
   await expect(quality.getByRole('heading', { name: /^SHP-\d{4}-\d{5}/ })).toContainText('all pass');
   await expect(quality.getByText('this evaluation does not release material')).toBeVisible();
-  await expect(quality.getByRole('link', { name: /VAL-03 edition 1 PDF/ })).toBeVisible({ timeout: 30_000 });
+  await expect(quality.getByRole('link', { name: /Summary edition 1/ })).toBeVisible({ timeout: 30_000 });
 
   await quality.goto('/injectors/analytics');
   await expect(quality.getByRole('heading', { name: 'Injector analytics' })).toBeVisible();

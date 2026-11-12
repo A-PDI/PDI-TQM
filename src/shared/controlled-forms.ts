@@ -101,6 +101,8 @@ export interface RecordData {
 /** Row keys that are not template columns. `_label` names an added checklist row; `_fileId` links an attached file. */
 export const ROW_LABEL = '_label';
 export const ROW_FILE = '_fileId';
+/** Identity of a row that comes from the module record (inspection reading, NCR scope, FAI characteristic…). */
+export const ROW_KEY = '_key';
 
 export const EVIDENCE_SCHEDULE = 'evidence';
 export const EVIDENCE_CONTINUATION = 'PDI-Evidence-Continuation';
@@ -113,12 +115,14 @@ export const SIGNATURE_FIELD = /^(approver\d|approval\d_date|pdi_authorization_r
 export const DECISION_SECTION = /^PDI review and authori[sz]ation$/i;
 
 export type ControlledCategory = 'FORM' | 'ATTACHMENT';
-export type ControlledEntity = 'SOURCING_REQUEST' | 'SUPPLIER' | 'SOURCE' | 'CHANGE' | 'INSPECTION' | 'CONCESSION' | 'NCR' | 'SCAR' | 'SYSTEM';
+export type ControlledEntity = 'SOURCING_REQUEST' | 'SUPPLIER' | 'SOURCE' | 'FAI' | 'CHANGE' | 'INSPECTION' | 'CONCESSION' | 'NCR' | 'SCAR' | 'SYSTEM';
 
 export const ENTITY_ROUTES: Record<ControlledEntity, { label: string; route: (id: string) => string }> = {
   SOURCING_REQUEST: { label: 'Sourcing request', route: (id) => `/sourcing/${id}` },
   SUPPLIER: { label: 'Supplier', route: (id) => `/suppliers/${id}` },
   SOURCE: { label: 'Exact source', route: (id) => `/sources/${id}` },
+  // A first article is shown on its source; the server resolves the source when it returns the route.
+  FAI: { label: 'First article', route: () => '/sources' },
   CHANGE: { label: 'Change', route: (id) => `/changes/${id}` },
   INSPECTION: { label: 'Inspection', route: (id) => `/inspections/${id}` },
   CONCESSION: { label: 'Concession', route: (id) => `/quality/concessions/${id}` },
@@ -239,7 +243,7 @@ export const CONTROLLED_TYPES: ControlledTypeDef[] = [
     'Specification revisions are part of change control.'),
   form('VAL-01', 'Validation', 'Exact sources', '/sources', 'SOURCE', ['sourcing.manage', 'engineering.author'], [step(1, [ENG]), step(2, [VD])],
     'PDI plans the qualification tests for the source.'),
-  form('VAL-02', 'FAI', 'Exact sources (first articles)', '/sources', 'SOURCE', ['sourcing.manage'], [step(1, [ENG]), step(2, [VD])],
+  form('VAL-02', 'FAI', 'Exact sources (first articles)', '/sources', 'FAI', ['sourcing.manage'], [step(1, [ENG]), step(2, [VD])],
     'First-article measurements are recorded and decided in the app.'),
   form('VAL-03', 'Validation', 'Exact sources', '/sources', 'SOURCE', ['sourcing.manage', 'injector.test'], [step(1, [ENG]), step(2, [VD])],
     'PDI records functional test results against the plan.'),
@@ -274,11 +278,11 @@ export const CONTROLLED_TYPES: ControlledTypeDef[] = [
     'Impact and requalification are decided in change control.'),
   form('OPS-05', 'Concession', 'Concessions', '/quality/concessions', 'CONCESSION', ['concession.request'], [step(1, [ENG]), step(2, ['concession.approve'])],
     'Deviation scope, quantities and expiry are controlled in the app.'),
-  form('OPS-06', 'Nonconformance', 'Nonconformance reports', '/quality/ncrs', 'NCR', ['ncr.manage'], [step(1, ['material.disposition']), step(2, [ENG], { optional: true })],
+  form('OPS-06', 'Nonconformance', 'Nonconformance reports', '/quality/ncrs', 'NCR', ['ncr.manage'], [step(1, ['ncr.manage']), step(2, [ENG], { optional: true })],
     'Containment and disposition are executed in the NCR module.'),
-  form('OPS-07', 'Corrective action', 'Supplier corrective actions', '/quality/scars', 'SCAR', ['scar.manage'], [step(1, ['scar.verify'])],
+  form('OPS-07', 'Corrective action', 'Supplier corrective actions', '/quality/scars', 'SCAR', ['scar.manage'], [step(1, ['scar.close'])],
     'SCAR responses and verification are tracked in the app.'),
-  form('OPS-08', 'Corrective action', 'Supplier corrective actions (8D)', '/quality/scars', 'SCAR', ['scar.manage'], [step(1, ['scar.verify']), step(2, [ENG], { optional: true })],
+  form('OPS-08', 'Corrective action', 'Supplier corrective actions (8D)', '/quality/scars', 'SCAR', ['scar.manage'], [step(1, ['scar.close']), step(2, [ENG], { optional: true })],
     'The 8D is recorded against the SCAR and verified by PDI.'),
   form('OPS-09', 'Performance', 'Suppliers', '/suppliers', 'SUPPLIER', ['supplier.manage', 'reports.export'], [step(1, [SQ]), step(2, ['sourcing.manage'])],
     'PDI computes the scorecard from approved source metrics.'),
@@ -288,6 +292,54 @@ export const CONTROLLED_TYPES: ControlledTypeDef[] = [
 ];
 
 export const CONTROLLED_TYPE_BY_CODE: Record<string, ControlledTypeDef> = Object.fromEntries(CONTROLLED_TYPES.map((t) => [t.code, t]));
+
+/**
+ * One approval path per module event (owner request, 11 Nov 2026). The event's controlled record is
+ * opened in the same transaction as the event, bound to the revisions then in force; facts the module
+ * holds are carried onto the form and cannot be retyped; and the module's own decision signs the
+ * form's deciding approval block, completes the record and generates the controlled PDF. Other
+ * approval blocks on the form (concurrence) are signed on the record before that decision.
+ */
+export interface EventBinding {
+  code: string;
+  entity: ControlledEntity;
+  /** The module event that opens the record. */
+  opensWhen: string;
+  /** Module action that submits the record; null when the preparer submits the completed form for decision. */
+  submitAction: { action: string; label: string } | null;
+  /** Module decision that signs the deciding block; null when the form's deciding approval is the decision and drives the module. */
+  decision: { action: string; label: string; module: string; block: 'approver1' | 'approver2' } | null;
+  /** When a "when required" concurrence must be signed; otherwise the deciding approver records it as not required. */
+  requiredWhen: string | null;
+  /** Not opened automatically: started from the module record when the document is used, then decided with it. */
+  companion: boolean;
+}
+
+const bind = (
+  code: string,
+  entity: ControlledEntity,
+  opensWhen: string,
+  submitAction: EventBinding['submitAction'],
+  decision: EventBinding['decision'],
+  opts: { requiredWhen?: string; companion?: boolean } = {},
+): EventBinding => ({ code, entity, opensWhen, submitAction, decision, requiredWhen: opts.requiredWhen ?? null, companion: opts.companion ?? false });
+
+export const EVENT_BINDINGS: Record<string, EventBinding> = Object.fromEntries(
+  [
+    bind('INT-01', 'SOURCING_REQUEST', 'the sourcing request is started', null, null),
+    bind('VAL-11', 'SOURCE', 'approval of the source is requested', null, { action: 'source.decide', label: 'Decide source approval', module: 'exact source', block: 'approver2' }),
+    bind('VAL-02', 'FAI', 'the first-article sample is registered', null, { action: 'fai.decide', label: 'Decide first article', module: 'first article', block: 'approver2' }),
+    bind('OPS-02', 'INSPECTION', 'the inspection is launched', { action: 'inspection.complete', label: 'Complete inspection' }, { action: 'inspection.review', label: 'Confirm review', module: 'inspection', block: 'approver1' }),
+    bind('OPS-04', 'CHANGE', 'the change is proposed', null, { action: 'change.decide', label: 'Decide change', module: 'change', block: 'approver2' }),
+    bind('OPS-05', 'CONCESSION', 'the concession is requested', null, { action: 'concession.decide', label: 'Decide concession', module: 'concession', block: 'approver2' }),
+    bind('OPS-06', 'NCR', 'the NCR is confirmed', null, { action: 'ncr.close', label: 'Close NCR', module: 'NCR', block: 'approver1' }, { requiredWhen: 'a repair or use-as-is disposition was decided' }),
+    bind('OPS-07', 'SCAR', 'the SCAR is issued', null, { action: 'scar.close', label: 'Close SCAR', module: 'SCAR', block: 'approver1' }),
+    bind('OPS-08', 'SCAR', 'an 8D is started from the SCAR', null, { action: 'scar.close', label: 'Close SCAR', module: 'SCAR', block: 'approver1' }, { companion: true }),
+  ].map((b) => [b.code, b]),
+);
+
+/** The block whose signer records the PDI decision: the module decision's block, else the first approver. */
+export const decisionBlock = (code: string): string => EVENT_BINDINGS[code]?.decision?.block ?? 'approver1';
 
 export type RecordStatus = 'DRAFT' | 'SUBMITTED' | 'COMPLETED' | 'VOID';
 

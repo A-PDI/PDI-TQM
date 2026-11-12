@@ -714,7 +714,8 @@ export function Workbench() {
       </section>
 
       <GeneralPhotos detail={detail} photos={photos} editable={editable} uploadPhoto={uploadPhoto} removePhoto={removePhoto} />
-      {(detail.status === 'READY_FOR_REVIEW' || detail.status === 'COMPLETED') && <ControlledFormsPanel entity="INSPECTION" entityId={id} />}
+      {/* The inspection's OPS-02 is completed alongside it and submitted when the inspection is completed. */}
+      <ControlledFormsPanel entity="INSPECTION" entityId={id} hideWhenEmpty />
       <HistoryPanel id={id} detail={detail} />
 
       <Dialog

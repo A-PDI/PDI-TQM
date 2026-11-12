@@ -422,22 +422,27 @@ describe('AT-06 / NEG-01 / NEG-06 / NEG-08 / AT-14 / AT-15 — concern to NCR, d
     expect(d.scars.map((s: { relation: string }) => s.relation)).toEqual(['RECURRENCE']);
   });
 
-  it('controlled NCR, SCAR and concession PDFs are issued as numbered editions', async () => {
+  it('summary NCR, SCAR and concession PDFs (no controlled form in force) are numbered editions marked as not controlled', async () => {
     ok(await quality.send('POST', `/api/ncrs/${ncrId}/report`), 201);
     const ncrPdf = await pdfText('NCR', ncrId, 'ncr-ops-06.pdf');
     expect(ncrPdf).toContain('NONCONFORMANCE REPORT');
-    expect(ncrPdf).toMatch(/OPS-06/);
+    // Demoted: never presented as the OPS-06 controlled document.
+    expect(ncrPdf).toContain('SUMMARY REPORT - NOT A CONTROLLED DOCUMENT');
+    expect(ncrPdf).toContain('Summary - not a controlled document');
+    expect(ncrPdf).not.toMatch(/OPS-06/);
     expect(ncrPdf).toContain('LOT-Q1');
     expect(ncrPdf).toMatch(/Use as is/);
     expect(ncrPdf).toMatch(/Return to supplier/);
     ok(await purchasing.send('POST', `/api/scars/${scarId}/report`), 201);
     const scarPdf = await pdfText('SCAR', scarId, 'scar-ops-07.pdf');
     expect(scarPdf).toContain('SUPPLIER CORRECTIVE ACTION REQUEST');
+    expect(scarPdf).toContain('SUMMARY REPORT - NOT A CONTROLLED DOCUMENT');
     expect(scarPdf).toMatch(/Masking fixture/);
     expect(scarPdf).toMatch(/EFFECTIVENESS/);
     ok(await manager.send('POST', `/api/concessions/${concessionId}/report`), 201);
     const devPdf = await pdfText('CONCESSION', concessionId, 'concession-ops-05.pdf');
     expect(devPdf).toContain('TEMPORARY DEVIATION / CONCESSION');
+    expect(devPdf).toContain('SUMMARY REPORT - NOT A CONTROLLED DOCUMENT');
     expect(devPdf).toMatch(/1 used of 1/);
     // A second issue is a new edition; the first stays unchanged.
     ok(await quality.send('POST', `/api/ncrs/${ncrId}/report`), 201);

@@ -6,6 +6,7 @@ import { has, recheckCapability, requireCapability } from '../auth.js';
 import { type DbClient, many, one, withTransaction } from '../db.js';
 import { conflict, forbidden, notFound, unprocessable } from '../errors.js';
 import { nextRecordNumber } from '../numbering.js';
+import { openEventRecord, voidEventRecords } from '../controlled/events.js';
 import type { Services } from '../services.js';
 import { evaluateGates } from './gates.js';
 import { effectiveSourceStatuses } from './status.js';
@@ -97,7 +98,9 @@ export function registerSourcingRoutes(app: FastifyInstance, svc: Services) {
         [`${number}: ${body.title}`.slice(0, 200), r!.id, ownerId, body.targetDate ?? null],
       );
       await audit(tx, { actorId: auth.userId, action: 'sourcing.create', entityType: 'sourcing_request', entityId: r!.id, summary: `${number} started (path ${body.pathway})`, requestId: req.id });
-      return { id: r!.id, number };
+      // The request's controlled Product Sourcing Request (INT-01) opens with it; its intake decision drives the request.
+      const controlled = await openEventRecord(tx, 'INT-01', r!.id, { userId: auth.userId, displayName: auth.displayName }, req.id);
+      return { id: r!.id, number, controlled };
     });
     return reply.code(201).send(created);
   });
@@ -383,6 +386,7 @@ export function registerSourcingRoutes(app: FastifyInstance, svc: Services) {
         auth.userId,
         body.reason,
       ]);
+      await voidEventRecords(tx, 'SOURCING_REQUEST', id, { userId: auth.userId, displayName: auth.displayName }, `Sourcing request cancelled: ${body.reason}`, req.id);
       await audit(tx, { actorId: auth.userId, action: 'sourcing.cancel', entityType: 'sourcing_request', entityId: id, summary: `${r.number} cancelled`, reason: body.reason, requestId: req.id });
       return { status: 'CANCELLED' };
     });

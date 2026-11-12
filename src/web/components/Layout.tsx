@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { QuickCapture } from './QuickCapture';
+import { useKeyboardScrollRegions } from './ui';
 import logoUrl from '../assets/pdi-logo.png';
 
 const NAV: Array<{ to: string; label: string; built: boolean; stage?: string; also?: string[] }> = [
@@ -18,6 +19,7 @@ const NAV: Array<{ to: string; label: string; built: boolean; stage?: string; al
 
 export function Layout() {
   const { me, signOut, can } = useAuth();
+  useKeyboardScrollRegions();
   const [menuOpen, setMenuOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -32,7 +34,7 @@ export function Layout() {
         <div className="brand">
           <img className="brand-logo" src={logoUrl} alt="PDI" /> <span>TQM</span>
         </div>
-        {showEnv && <span className="env-badge">{me.environment.toUpperCase()}</span>}
+        {showEnv && <span className="env-badge">{(me.environmentLabel || me.environment).toUpperCase()}</span>}
         <nav aria-label="Main navigation">
           <ul className="nav">
             {NAV.map((n) =>

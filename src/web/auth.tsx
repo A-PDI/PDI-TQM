@@ -7,6 +7,8 @@ export interface Me {
   capabilities: Capability[];
   csrfToken: string;
   environment: string;
+  /** e.g. "TEST": names a non-production system (never set in production). */
+  environmentLabel?: string | null;
   displayTimeZone: string;
 }
 

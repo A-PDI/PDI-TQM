@@ -5,7 +5,7 @@ import { api, fmtDate, fmtDateTime } from '../api';
 import { FileLinks, GateList, QualificationBadge, SourceStatusBadge, UploadEvidence, useBusy } from '../components/sourcing';
 import { type QualityContext, QualityContextCard } from '../components/quality';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
-import { ControlledFormsPanel } from '../components/controlled';
+import { ControlledFormsPanel, EventRecordStatus } from '../components/controlled';
 
 interface Fai {
   id: string;
@@ -256,6 +256,7 @@ export function Source() {
                   ) : (
                     <span className="badge badge-review">open</span>
                   )}
+                  <EventRecordStatus entity="FAI" entityId={x.id} />
                   {x.correctiveRationale && <div className="small">Corrective rationale: {x.correctiveRationale}</div>}
                   {x.defects && <div className="small">Defects: {x.defects}</div>}
                   {x.conditions && <div className="small">Conditions: {x.conditions}</div>}

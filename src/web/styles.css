@@ -241,3 +241,5 @@ details.section > summary { list-style: none; }
 details.section > summary::-webkit-details-marker { display: none; }
 details.section > summary h3::before { content: '▸ '; }
 details.section[open] > summary h3::before { content: '▾ '; }
+/* Module facts on an event record: shown as they will print, entered in the module. */
+.cf-locked { background: var(--section); color: var(--text); border-style: dashed; }

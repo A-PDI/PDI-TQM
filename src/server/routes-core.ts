@@ -64,6 +64,7 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
       capabilities: [...auth.capabilities].sort(),
       csrfToken: auth.csrfToken,
       environment: config.appEnv,
+      environmentLabel: config.appEnv === 'production' ? null : config.environmentLabel,
       displayTimeZone: config.displayTimeZone,
     };
   });

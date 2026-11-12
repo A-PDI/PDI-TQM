@@ -7,7 +7,8 @@ import { type Queryable, many, one, withTransaction } from '../db.js';
 import { conflict, forbidden, notFound, unprocessable } from '../errors.js';
 import { nextRecordNumber } from '../numbering.js';
 import type { Services } from '../services.js';
-import { closeWork, history, isoDate, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from './common.js';
+import { decideEvent, openEventRecord, voidEventRecords } from '../controlled/events.js';
+import { closeWork, controlledRecordOf, history, isoDate, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from './common.js';
 import { buildConcessionReport } from './reports.js';
 
 export interface ConcessionRow {
@@ -20,6 +21,7 @@ export interface ConcessionRow {
   lot_number: string;
   quantity_limit: number;
   characteristic: string;
+  conditions: string | null;
   status: string;
   valid_from: string;
   valid_until: string;
@@ -110,17 +112,19 @@ export function registerConcessionRoutes(app: FastifyInstance, svc: Services) {
     );
     const used = await usedOf(db, id);
     const state = concessionState(c, used, today());
+    const controlled = await controlledRecordOf(db, 'CONCESSION', id);
     return {
       concession: { ...detail, used, state, stateText: CONCESSION_STATE_TEXT[state] },
       uses,
       files: await linkedFiles(db, 'CONCESSION', id),
       history: await history(db, 'concession', [id]),
       renditions: await renditions(db, 'CONCESSION', id),
+      controlled,
       permissions: {
         decide: has(auth, 'concession.approve') && c.status === 'REQUESTED' && c.requested_by !== auth.userId,
         decideBlockedReason: c.status === 'REQUESTED' && c.requested_by === auth.userId && has(auth, 'concession.approve') ? 'You requested this concession; someone else must decide it.' : null,
         withdraw: c.status === 'REQUESTED' && (c.requested_by === auth.userId || has(auth, 'concession.approve')),
-        report: has(auth, 'concession.request') || has(auth, 'concession.approve'),
+        report: !controlled && (has(auth, 'concession.request') || has(auth, 'concession.approve')),
       },
     };
   });
@@ -198,7 +202,9 @@ export function registerConcessionRoutes(app: FastifyInstance, svc: Services) {
         requestId: req.id,
       });
       if (body.ncrId) await audit(tx, { actorId: auth.userId, action: 'concession.request', entityType: 'ncr', entityId: body.ncrId, summary: `Concession ${number} requested`, requestId: req.id });
-      return { id: c!.id, number };
+      // The concession's controlled request form (OPS-05) opens with it; its decision is this concession's decision.
+      const controlled = await openEventRecord(tx, 'OPS-05', c!.id, { userId: auth.userId, displayName: auth.displayName }, req.id);
+      return { id: c!.id, number, controlled };
     });
     return reply.code(201).send(created);
   });
@@ -227,6 +233,18 @@ export function registerConcessionRoutes(app: FastifyInstance, svc: Services) {
         );
         if (overlap) throw conflict(`${overlap.number} already covers this lot and characteristic for overlapping dates`);
       }
+      // One approval: this decision signs the OPS-05 approval block and generates the controlled PDF.
+      await decideEvent(tx, {
+        code: 'OPS-05',
+        entityType: 'CONCESSION',
+        entityId: id,
+        actor: { userId: auth.userId, displayName: auth.displayName },
+        grants: ['concession.approve'],
+        decision: body.decision === 'REJECTED' ? 'Reject' : c.conditions ? 'Conditional' : 'Approve',
+        statement: [body.rationale, body.decision === 'APPROVED' && c.conditions ? `Conditions: ${c.conditions}` : ''].filter(Boolean).join(' '),
+        details: body.decision === 'APPROVED' ? { approved_quantity: String(c.quantity_limit), approval_expiry: c.valid_until, effective_lot: c.lot_number } : {},
+        requestId: req.id,
+      });
       await tx.query(
         `UPDATE concession SET status = $2, decided_by = $3, decided_at = now(), decision_rationale = $4, grants_used = $5, version = version + 1 WHERE id = $1`,
         [id, body.decision, auth.userId, body.rationale, ['concession.approve']],
@@ -251,6 +269,7 @@ export function registerConcessionRoutes(app: FastifyInstance, svc: Services) {
       const c = await loadConcession(tx, id, true);
       if (c.status !== 'REQUESTED') throw conflict(`${c.number} is already ${c.status.toLowerCase()}`);
       await tx.query(`UPDATE concession SET status = 'WITHDRAWN', version = version + 1 WHERE id = $1`, [id]);
+      await voidEventRecords(tx, 'CONCESSION', id, { userId: auth.userId, displayName: auth.displayName }, `Concession withdrawn: ${body.reason}`, req.id);
       await closeWork(tx, ['CONCESSION_DECISION'], 'CONCESSION', id, auth.userId, 'Withdrawn');
       await audit(tx, { actorId: auth.userId, action: 'concession.withdraw', entityType: 'concession', entityId: id, summary: `${c.number} withdrawn`, reason: body.reason, requestId: req.id });
       return { status: 'WITHDRAWN' };

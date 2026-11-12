@@ -190,3 +190,50 @@ export function PartTypeahead({ value, onSelect, autoFocus }: { value: PartOptio
     </div>
   );
 }
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * WCAG 2.1.1: a table wrapper that scrolls sideways (narrow screens, wide tables) must be reachable by
+ * keyboard. When it scrolls and holds nothing focusable, it becomes a labelled, focusable region so
+ * arrow keys can scroll it; otherwise it is left alone (no extra tab stops).
+ */
+export function useKeyboardScrollRegions() {
+  useEffect(() => {
+    let frame = 0;
+    const apply = () => {
+      frame = 0;
+      for (const el of document.querySelectorAll<HTMLElement>('.table-wrap')) {
+        const scrolls = el.scrollWidth > el.clientWidth + 1;
+        const own = el.dataset.kbRegion === '1';
+        const reachable = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE)).some((x) => x !== el);
+        if (scrolls && !reachable) {
+          if (!own) {
+            const heading = el.closest('section, .card')?.querySelector('h1, h2, h3')?.textContent?.trim();
+            el.tabIndex = 0;
+            el.setAttribute('role', 'region');
+            el.setAttribute('aria-label', heading ? `${heading} (scrollable table)` : 'Scrollable table');
+            el.dataset.kbRegion = '1';
+          }
+        } else if (own) {
+          el.removeAttribute('tabindex');
+          el.removeAttribute('role');
+          el.removeAttribute('aria-label');
+          delete el.dataset.kbRegion;
+        }
+      }
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('resize', schedule);
+    schedule();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', schedule);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+}

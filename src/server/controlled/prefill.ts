@@ -1,15 +1,19 @@
-import type { ControlledEntity, RecordData, TemplateSchema } from '../../shared/controlled-forms.js';
+import { type ControlledEntity, ROW_KEY, type RecordData, type TemplateSchema } from '../../shared/controlled-forms.js';
 import { type Queryable, many, one } from '../db.js';
 
 /**
- * Starting values for a new controlled record, taken from the module record it is opened from, so
- * the preparer confirms operational facts instead of retyping them. Only keys that exist on the
- * bound template revision are filled; everything stays editable until submission.
+ * Facts the module record holds, mapped onto the controlled form. On a record opened by a module event
+ * they are carried over and locked (the module is where they are entered); on other records they are
+ * starting values. Rows that come from the module carry a stable `_key` so supplementary entries on
+ * them (equipment, verification…) stay attached to the right row. Only keys that exist on the bound
+ * template revision are kept.
  */
 export interface EntityContext {
   label: string;
   fields: Record<string, string>;
   schedules: Record<string, Array<Record<string, string>>>;
+  /** The module page that shows the record (a first article is shown on its source). */
+  route?: string;
 }
 
 const d = (v: unknown) => (v ? String(v instanceof Date ? v.toISOString() : v).slice(0, 10) : '');
@@ -79,7 +83,7 @@ const SEVERITY_CLASS: Record<string, string> = { CRITICAL: 'Critical', HIGH: 'Ma
 const RESPONSE_RESULT: Record<string, string> = { P: 'Pass', F: 'Fail', A: 'Hold', N: 'NA' };
 
 /** Reads the module record; null when it does not exist. */
-export async function entityContext(db: Queryable, entity: ControlledEntity, id: string | null, typeCode: string): Promise<EntityContext | null> {
+export async function entityContext(db: Queryable, entity: ControlledEntity, id: string | null, typeCode: string, tz = 'UTC'): Promise<EntityContext | null> {
   switch (entity) {
     case 'SYSTEM':
       return { label: 'Quality system', fields: {}, schedules: {} };
@@ -89,30 +93,18 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
       if (!r) return null;
       const fields = sourceHeader(r);
       const schedules: EntityContext['schedules'] = {};
-      if (typeCode === 'VAL-02') {
-        const fai = await one<{ id: string; number: string; lot_number: string | null; received_date: string; description: string | null }>(
+      if (typeCode === 'VAL-11') {
+        const risk = await one<{ number: string | null; result: string; score: number }>(
           db,
-          `SELECT id, number, lot_number, received_date, description FROM fai_sample WHERE source_id = $1 ORDER BY sequence DESC LIMIT 1`,
+          `SELECT r.number, ra.result, ra.score FROM risk_assessment ra JOIN sourcing_request r ON r.id = ra.sourcing_request_id
+            WHERE r.source_id = $1 ORDER BY ra.assessed_at DESC LIMIT 1`,
           [id],
         );
-        if (fai) {
-          const results = await many<{ char_key: string; char_name: string; unit: string | null; lower_limit: string | null; upper_limit: string | null; value_text: string | null; visual_result: string | null; evaluation: string }>(
-            db,
-            `SELECT char_key, char_name, unit, lower_limit, upper_limit, value_text, visual_result, evaluation FROM fai_result WHERE fai_id = $1 ORDER BY char_key`,
-            [fai.id],
-          );
-          Object.assign(fields, { lot: s(fai.lot_number), inspection_date: d(fai.received_date), fai_reason: s(fai.description), plan_ref: fai.number, evaluated_characteristics: String(results.length) });
-          schedules.measurements = results.map((x) => ({
-            characteristic_id: `${x.char_key} ${x.char_name}`,
-            sample_id: fai.number,
-            lower_limit: s(x.lower_limit),
-            upper_limit: s(x.upper_limit),
-            units: s(x.unit),
-            actual: s(x.value_text),
-            attribute_result: x.visual_result === 'CONFORMS' ? 'Conforms' : x.visual_result === 'DOES_NOT_CONFORM' ? 'Does not conform' : '',
-            result: x.evaluation === 'WITHIN' || x.evaluation === 'CONFORMS' ? 'Pass' : x.evaluation === 'NO_LIMIT' ? 'NE' : 'Fail',
-          }));
-        }
+        Object.assign(fields, {
+          sourcing_path: r.pathway,
+          approved_configuration: r.configuration,
+          ...(risk ? { risk_ref: `${risk.number} risk ${risk.result} (score ${risk.score})` } : {}),
+        });
       }
       if (['ENG-04', 'ENG-08', 'PRS-001', 'OPS-01'].includes(typeCode) && r.baseline_revision_id) {
         const chars = await many<{ char_key: string; name: string; char_type: string; unit: string | null; lower_limit: string | null; upper_limit: string | null; limit_text: string | null; method: string | null; special: boolean }>(
@@ -126,6 +118,56 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
         else schedules.requirements = chars.map((c) => ({ requirement_id: c.char_key, source: fields.baseline_ref ?? '', requirement: `${c.name}: ${limits(c)}`, criticality: c.special ? 'Critical' : 'Normal', verification: s(c.method) }));
       }
       return { label: `${r.part_number} · ${r.supplier_name} · ${r.site_code}`, fields, schedules };
+    }
+    case 'FAI': {
+      if (!id) return null;
+      const fai = await one<{ id: string; number: string; source_id: string; sample_type: string; lot_number: string | null; serial_numbers: string | null; received_date: string; description: string | null; recorder: string }>(
+        db,
+        `SELECT f.id, f.number, f.source_id, f.sample_type, f.lot_number, f.serial_numbers, f.received_date, f.description, u.display_name AS recorder
+           FROM fai_sample f JOIN app_user u ON u.id = f.recorded_by WHERE f.id = $1`,
+        [id],
+      );
+      if (!fai) return null;
+      const r = await sourceRow(db, fai.source_id);
+      if (!r) return null;
+      const results = await many<{ char_key: string; char_name: string; unit: string | null; lower_limit: string | null; upper_limit: string | null; value_text: string | null; visual_result: string | null; evaluation: string; recorder: string; recorded_at: string }>(
+        db,
+        `SELECT x.char_key, x.char_name, x.unit, x.lower_limit, x.upper_limit, x.value_text, x.visual_result, x.evaluation, u.display_name AS recorder, x.recorded_at
+           FROM fai_result x JOIN app_user u ON u.id = x.recorded_by WHERE x.fai_id = $1 ORDER BY x.char_key`,
+        [id],
+      );
+      const required = (await one<{ n: number }>(db, `SELECT count(*)::int AS n FROM baseline_characteristic c JOIN fai_sample f ON f.baseline_revision_id = c.revision_id WHERE f.id = $1`, [id]))!.n;
+      const failed = results.filter((x) => x.evaluation === 'OUTSIDE' || x.evaluation === 'DOES_NOT_CONFORM').length;
+      const lastMeasured = results.reduce<string>((m, x) => (d(x.recorded_at) > m ? d(x.recorded_at) : m), '');
+      const fields: Record<string, string> = {
+        ...sourceHeader(r),
+        lot: s(fai.lot_number),
+        fai_reason: [fai.sample_type.replaceAll('_', ' ').toLowerCase(), fai.description].filter(Boolean).join(': '),
+        plan_ref: fai.number,
+        required_characteristics: String(required),
+        evaluated_characteristics: String(results.length),
+        failed_characteristics: String(failed),
+        not_evaluated: String(Math.max(0, required - results.length)),
+        ...(results.length ? { inspection_date: lastMeasured, inspector: [...new Set(results.map((x) => x.recorder))].join(', ') } : {}),
+      };
+      return {
+        label: `${fai.number} ${r.part_number} · ${r.supplier_name}`,
+        route: `/sources/${fai.source_id}`,
+        fields,
+        schedules: {
+          measurements: results.map((x) => ({
+            [ROW_KEY]: x.char_key,
+            characteristic_id: `${x.char_key} ${x.char_name}`,
+            sample_id: fai.serial_numbers || fai.number,
+            lower_limit: s(x.lower_limit),
+            upper_limit: s(x.upper_limit),
+            units: s(x.unit),
+            actual: s(x.value_text),
+            attribute_result: x.visual_result === 'CONFORMS' ? 'Conforms' : x.visual_result === 'DOES_NOT_CONFORM' ? 'Does not conform' : '',
+            result: x.evaluation === 'WITHIN' || x.evaluation === 'CONFORMS' ? 'Pass' : x.evaluation === 'NO_LIMIT' ? 'NE' : 'Fail',
+          })),
+        },
+      };
     }
     case 'SOURCING_REQUEST': {
       if (!id) return null;
@@ -183,12 +225,12 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
     }
     case 'INSPECTION': {
       if (!id) return null;
-      const r = await one<{ number: string; part_id: string | null; part_number: string; supplier_id: string | null; site_id: string | null; po_number: string | null; date_received: string; lot_number: string | null; lot_size: number | null; unit_count: number; inspector: string; outcome: string | null; baseline_snapshot: { baselineTitle: string; revisionLabel: string; characteristics: Array<{ charKey: string; name: string; formRowRef: string | null; unit: string | null; lower: string | null; upper: string | null; nominal: string | null }> } | null; form_snapshot: { formNumber?: string } }>(
+      const r = await one<{ number: string; part_id: string | null; part_number: string; supplier_id: string | null; site_id: string | null; po_number: string | null; date_received: string; lot_number: string | null; lot_size: number | null; unit_count: number; inspector: string; outcome: string | null; started_on: string; baseline_snapshot: { baselineTitle: string; revisionLabel: string; characteristics: Array<{ charKey: string; name: string; formRowRef: string | null; unit: string | null; lower: string | null; upper: string | null; nominal: string | null }> } | null; form_snapshot: { formNumber?: string } }>(
         db,
         `SELECT i.number, i.part_id, i.part_number, i.supplier_id, i.site_id, i.po_number, i.date_received, i.lot_number, i.lot_size, i.unit_count,
-                u.display_name AS inspector, i.outcome, i.baseline_snapshot, i.form_snapshot
+                u.display_name AS inspector, i.outcome, i.baseline_snapshot, i.form_snapshot, (i.created_at AT TIME ZONE $2)::date::text AS started_on
            FROM inspection i JOIN app_user u ON u.id = i.inspector_id WHERE i.id = $1`,
-        [id],
+        [id, tz],
       );
       if (!r) return null;
       const units = await many<{ unit_index: number; serial_number: string | null }>(db, 'SELECT unit_index, serial_number FROM inspection_unit WHERE inspection_id = $1', [id]);
@@ -204,7 +246,15 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
         [id],
       );
       const chars = r.baseline_snapshot?.characteristics ?? [];
-      const nonconforming = new Set(readings.filter((x) => x.status === 'F').map((x) => x.unit_index)).size;
+      // Latest answer of every item (amendments supersede earlier answers).
+      const failed = await many<{ unit_index: number }>(
+        db,
+        `SELECT x.unit_index FROM inspection_response x
+          WHERE x.inspection_id = $1 AND x.status = 'F'
+            AND x.amendment_no = (SELECT max(y.amendment_no) FROM inspection_response y WHERE y.inspection_id = x.inspection_id AND y.unit_index = x.unit_index AND y.section_key = x.section_key AND y.row_key = x.row_key)`,
+        [id],
+      );
+      const nonconforming = new Set(failed.map((x) => x.unit_index)).size;
       const fields: Record<string, string> = {
         ...(await partySite(db, r.supplier_id, r.site_id, r.part_id)),
         pdi_part: r.part_number,
@@ -218,7 +268,10 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
         inspection_plan: s(r.form_snapshot?.formNumber),
         sampled_qty: String(r.unit_count),
         inspector: r.inspector,
+        inspection_date: r.started_on,
         nonconforming_units: String(nonconforming),
+        defect_count: String(failed.length),
+        held_units: String(nonconforming),
       };
       return {
         label: `${r.number} ${r.part_number}`,
@@ -227,6 +280,7 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
           measurements: readings.map((x) => {
             const c = chars.find((k) => k.formRowRef !== null && (k.formRowRef === x.row_key || k.formRowRef.split(':').pop() === x.row_key));
             return {
+              [ROW_KEY]: `${x.unit_index}|${x.section_key}|${x.row_key}|${x.reading_key}`,
               characteristic_id: `${x.row_key}${x.reading_key === 'a1' ? '' : ` ${x.reading_key}`}`,
               sample_id: serial.get(x.unit_index) || `Unit ${x.unit_index}`,
               nominal: s(c?.nominal),
@@ -268,7 +322,8 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
       return {
         label: `${r.number} lot ${r.lot_number}`,
         fields,
-        schedules: { limited_lots: [{ lot: r.lot_number, requested: String(r.quantity_limit), used: String(r.used), remaining: String(Math.max(0, r.quantity_limit - r.used)), traceability: s(r.po_number) }] },
+        // The concession authorizes exactly the requested quantity; its decision approves or rejects it.
+        schedules: { limited_lots: [{ [ROW_KEY]: 'lot', lot: r.lot_number, requested: String(r.quantity_limit), authorized: String(r.quantity_limit), used: String(r.used), remaining: String(Math.max(0, r.quantity_limit - r.used)), traceability: s(r.po_number) }] },
       };
     }
     case 'NCR': {
@@ -314,6 +369,7 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
             const dec = decisions.filter((k) => k.scope_id === x.id);
             const last = dec[dec.length - 1];
             return {
+              [ROW_KEY]: x.id,
               location: s(x.location) || 'PDI',
               lot: `${x.lot_number}${x.serial_numbers.length ? ` / ${x.serial_numbers.join(', ')}` : ''}`,
               quantity: String(x.quantity),
@@ -348,7 +404,35 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
         effectiveness_plan: s(r.effectiveness_plan),
       };
       if (typeCode === 'OPS-08') Object.assign(fields, { problem_description: r.problem_statement, team: r.owner });
-      return { label: `${r.number} ${r.title}`, fields, schedules: {} };
+      // The supplier's latest response and PDI's verification of this cycle, as recorded in the SCAR.
+      const resp = await one<{ representative: string; containment: string; root_cause: string; corrective_action: string; prevention: string | null; team: string | null }>(
+        db,
+        `SELECT representative, containment, root_cause, corrective_action, prevention, team FROM scar_response
+          WHERE scar_id = $1 AND cycle = (SELECT cycle FROM scar WHERE id = $1) ORDER BY revision DESC LIMIT 1`,
+        [id],
+      );
+      const verified = await many<{ kind: string; method: string; evidence: string; verifier: string; verified_on: string }>(
+        db,
+        `SELECT v.kind, v.method, v.evidence, u.display_name AS verifier, (v.verified_at AT TIME ZONE $2)::date::text AS verified_on
+           FROM scar_verification v JOIN app_user u ON u.id = v.verified_by
+          WHERE v.scar_id = $1 AND v.result = 'VERIFIED' AND v.cycle = (SELECT cycle FROM scar WHERE id = $1) ORDER BY v.verified_at`,
+        [id, tz],
+      );
+      const effective = verified.find((v) => v.kind === 'EFFECTIVENESS');
+      const implemented = verified.find((v) => v.kind === 'IMPLEMENTATION');
+      const schedules: EntityContext['schedules'] = {};
+      if (resp) {
+        Object.assign(fields, { containment: resp.containment, ...(typeCode === 'OPS-08' && resp.team ? { team: resp.team } : {}) });
+        schedules.verified_causes = [{ [ROW_KEY]: 'root_cause', cause: resp.root_cause }];
+        const status = effective ? 'Verified' : implemented ? 'Done' : 'Open';
+        const verifiedBy = effective ? `${effective.verifier} ${effective.verified_on}` : '';
+        schedules.actions = [
+          { [ROW_KEY]: 'corrective', action_id: 'CA-1', action: resp.corrective_action, owner: resp.representative, status, evidence: s(implemented?.evidence), verified_by: verifiedBy },
+          ...(resp.prevention ? [{ [ROW_KEY]: 'preventive', action_id: 'PA-1', action: resp.prevention, owner: resp.representative, status, verified_by: verifiedBy }] : []),
+        ];
+      }
+      if (effective) fields.actual_effectiveness = `${effective.method}: ${effective.evidence}`;
+      return { label: `${r.number} ${r.title}`, fields, schedules };
     }
     default:
       return null;
@@ -368,9 +452,9 @@ export function fitToTemplate(schema: TemplateSchema, ctx: EntityContext, extra:
   const schedules: RecordData['schedules'] = {};
   for (const sc of schema.schedules) {
     const rows = ctx.schedules[sc.key];
-    if (!rows?.length) continue;
+    if (!rows) continue;
     schedules[sc.key] = rows.map((row) => {
-      const out: Record<string, string> = {};
+      const out: Record<string, string> = row[ROW_KEY] ? { [ROW_KEY]: row[ROW_KEY] } : {};
       for (const c of sc.columns) {
         const v = row[c.key];
         if (v === undefined || v === '') continue;

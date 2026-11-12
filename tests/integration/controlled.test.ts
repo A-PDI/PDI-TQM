@@ -174,159 +174,189 @@ async function outputText(recordId: string, sample: string) {
   return { text: execFileSync('pdftotext', ['-layout', out, '-']).toString(), pages: Number(/Pages:\s+(\d+)/.exec(execFileSync('pdfinfo', [out]).toString())![1]), row: r, bytes: file.raw };
 }
 
-describe('OPS-06 from an NCR: one workflow across the base form and its continuation sheets', () => {
+/** Containment, segregation, return-to-supplier and its verification for every scope: the NCR is then ready to close. */
+async function resolveScopes(ncrId: string) {
+  const d = ok(await quality.get(`/api/ncrs/${ncrId}`));
+  for (const s of d.scopes as Array<{ id: string; quantity: number; serial_numbers: string[] | null; state: string }>) {
+    if (s.state !== 'ON_HOLD') continue;
+    ok(await manager.send('POST', `/api/scopes/${s.id}/authorize-containment`, { note: 'Hold all (fictional)' }));
+    ok(await quality.send('POST', `/api/scopes/${s.id}/verify-segregation`, { note: 'Tagged and caged (fictional)' }));
+    const dec = ok(await manager.send('POST', `/api/scopes/${s.id}/dispositions`, { outcome: 'RETURN_TO_SUPPLIER', quantity: s.quantity, serialNumbers: s.serial_numbers ?? [], rationale: 'Supplier to replace (fictional)' }), 201);
+    ok(await quality.send('POST', `/api/dispositions/${dec.id}/verify`, { result: 'VERIFIED', method: 'Return shipment', note: 'RMA shipped with carrier receipt (fictional)' }), 201);
+  }
+  return ok(await quality.get(`/api/ncrs/${ncrId}`));
+}
+
+const recordOf = async (entityType: string, entityId: string) => {
+  const list = ok(await quality.get(`/api/controlled/records?entityType=${entityType}&entityId=${entityId}`)) as unknown as Array<Record<string, any>>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  return list.filter((r) => r.eventBound);
+};
+
+describe('OPS-06 from an NCR: one approval path across the base form and its continuation sheets', () => {
   let ncr: { ncrId: string; ncrNumber: string };
   let recordId: string;
   let number: string;
 
-  it('quality opens OPS-06 from the NCR, bound to the revisions in force, prefilled from the NCR', async () => {
+  it('confirming the NCR opens its OPS-06, bound to the revisions in force, with the NCR’s facts carried over and locked', async () => {
     ncr = await makeNcr('LOT-CF1');
-    // An inspector cannot prepare an NCR record (ncr.manage); the refusal is audited.
-    expect((await inspector.send('POST', '/api/controlled/records', { typeCode: 'OPS-06', entityId: ncr.ncrId })).status).toBe(403);
-    const created = ok(await quality.send('POST', '/api/controlled/records', { typeCode: 'OPS-06', entityId: ncr.ncrId }), 201);
-    recordId = created.id;
-    number = created.number;
+    const records = await recordOf('NCR', ncr.ncrId);
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({ typeCode: 'OPS-06', status: 'DRAFT', preparedBy: 'Riley Chen', revisionLabel: '03' });
+    recordId = records[0]!.id;
+    number = records[0]!.number;
     expect(number).toMatch(/^OPS-06-\d{4}-\d{5}$/);
+    // One record per event: starting OPS-06 again returns the NCR's own record; an inspector cannot prepare one.
+    expect(ok(await quality.send('POST', '/api/controlled/records', { typeCode: 'OPS-06', entityId: ncr.ncrId }))).toMatchObject({ id: recordId, existing: true });
+    expect((await inspector.send('POST', '/api/controlled/records', { typeCode: 'OPS-06', entityId: ncr.ncrId })).status).toBe(403);
+
     const rec = ok(await quality.get(`/api/controlled/records/${recordId}`));
-    expect(rec).toMatchObject({ status: 'DRAFT', category: 'FORM', entity: { type: 'NCR', id: ncr.ncrId, route: `/quality/ncrs/${ncr.ncrId}` } });
+    expect(rec).toMatchObject({ status: 'DRAFT', eventBound: true, binding: { decision: { action: 'ncr.close', block: 'approver1' } }, entity: { type: 'NCR', id: ncr.ncrId, route: `/quality/ncrs/${ncr.ncrId}` } });
+    expect(rec.can).toMatchObject({ edit: true, submit: true, void: false });
     expect(rec.bindings.map((b: { role: string; documentNumber: string; revisionLabel: string }) => `${b.role} ${b.documentNumber} ${b.revisionLabel}`)).toEqual([
       'BASE OPS-06 03',
       'CONTINUATION OPS-06/containment 03',
       'NARRATIVE PDI-Narrative-Continuation 03',
       'EVIDENCE PDI-Evidence-Continuation 03',
     ]);
-    expect(rec.data.fields).toMatchObject({ supplier_id: 'NWR', pdi_part: 'TQ-PRK-3003', project_ref: ncr.ncrNumber, defect_class: 'Major', detection_point: 'Receiving', population: '2' });
+    expect(rec.data.fields).toMatchObject({ supplier_id: 'NWR', pdi_part: 'TQ-PRK-3003', project_ref: ncr.ncrNumber, defect_class: 'Major', detection_point: 'Receiving', population: '2', prepared_by: 'Riley Chen / PDI' });
     expect(rec.data.schedules.containment).toEqual([expect.objectContaining({ lot: 'LOT-CF1 / LOT-CF1-1, LOT-CF1-2', quantity: '2', hold: 'Ring kits on shelf R-7', disposition: 'Pending', location: 'Receiving shelf R-7' })]);
-    expect(rec.continuations.containment).toEqual({ capacity: 5, labelColumn: null, documentNumber: 'OPS-06/containment', revisionLabel: '03' });
-    expect(rec.steps.map((s: { key: string; label: string; optional: boolean }) => `${s.key} ${s.label} ${s.optional}`)).toEqual([
-      'approver1 Quality / material review authority approver false',
-      'approver2 Engineering when required approver true',
+    expect(rec.locked).toEqual(expect.arrayContaining(['fields.pdi_part', 'fields.defect_class', 'schedules.containment.0.lot', 'schedules.containment.0.disposition']));
+    expect(rec.ownedSchedules).toEqual(['containment']);
+    expect(rec.steps.map((s: { key: string; optional: boolean; module: { action: string } | null }) => `${s.key} ${s.optional} ${s.module?.action ?? 'on the record'}`)).toEqual([
+      'approver1 false ncr.close',
+      'approver2 true on the record',
     ]);
     expect(rec.problems.length).toBeGreaterThan(5);
+    // The event's record is voided only with its event.
+    expect((await quality.send('POST', `/api/controlled/records/${recordId}/void`, { expectedVersion: rec.version, reason: 'Not needed (fictional)' })).status).toBe(409);
   });
 
-  it('submission is refused until every required entry is answered; rows beyond the sheet continue', async () => {
-    const early = await quality.send('POST', `/api/controlled/records/${recordId}/submit`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${recordId}`)).version });
-    expect(early.status).toBe(422);
-    expect(early.json.error.details.map((p: { path: string }) => p.path)).toContain('fields.containment_control');
-
-    const bad = await quality.send('PATCH', `/api/controlled/records/${recordId}`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${recordId}`)).version, data: { fields: { defect_class: 'Catastrophic', detected_date: '2026-02-30' }, schedules: {} } });
+  it('the NCR’s facts cannot be retyped; entries are validated; every affected scope fills the containment ledger', async () => {
+    const bad = await quality.send('PATCH', `/api/controlled/records/${recordId}`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${recordId}`)).version, data: { fields: { exposure: 'Maybe', closure_date: '2026-02-30' }, schedules: {} } });
     expect(bad.status).toBe(422);
     const messages = bad.json.error.details.map((p: { message: string }) => p.message).join(' ');
-    expect(messages).toMatch(/Defect class: choose one of Critical, Major, Minor, Unclassified/);
-    expect(messages).toMatch(/Detection date: use a real date/);
+    expect(messages).toMatch(/choose one of Yes, No, Unknown/);
+    expect(messages).toMatch(/use a real date/);
 
-    const longProblem = `${'Running face coating absent on serial LOT-CF1-2; base metal visible across the full face. '.repeat(9)}End of description.`;
-    expect(longProblem.length).toBeGreaterThan(612);
+    // Seven more affected lots are recorded in the NCR: the ledger holds 6, the rest continue on OPS-06/containment.
+    for (let i = 1; i <= 7; i += 1) {
+      ok(await quality.send('POST', `/api/ncrs/${ncr.ncrId}/scopes`, { label: `Field return bin ${i}`, lotNumber: `LOT-CF1-F${i}`, quantity: 1, serialNumbers: [], location: `Field return bin ${i}`, containmentAction: 'Red tag (fictional)' }), 201);
+    }
+    const longText = `${'Kits caged in Q-2 and every bin tagged; receiving stop placed on supplier NWR for ring kits. '.repeat(7)}End of containment.`;
+    expect(longText.length).toBeGreaterThan(510);
     await fillRequired(quality, recordId, (data) => {
-      data.fields.problem = longProblem;
+      data.fields.containment_control = longText;
+      data.fields.pdi_part = 'RETYPED-PART'; // ignored: the NCR holds the part
       data.schedules.containment = [
-        ...data.schedules.containment.map((r: Record<string, string>) => ({ ...r, disposition: 'Return', authority: 'MRB-11', verification: 'RMA pending' })),
-        ...Array.from({ length: 12 }, (_, i) => ({ location: `Field return bin ${i + 1}`, lot: `LOT-CF1-F${i + 1}`, quantity: '1', hold: `HOLD-F${i + 1}`, disposition: 'Scrap', authority: 'MRB-11', verification: 'Scrap ticket' })),
+        ...data.schedules.containment.map((r: Record<string, string>, i: number) => ({ ...r, verification: `RMA-77${i} (fictional)`, lot: 'RETYPED' })),
+        { location: 'Invented row', lot: 'X', quantity: '9', hold: 'X', disposition: 'Scrap' }, // ignored: rows are the NCR's scopes
       ];
       data.schedules.evidence = [{ evidence_id: 'R01', file_ref: 'Supplier 8D draft (email 2026-11-02)', caption: 'Supplier containment statement', date: today, uploaded_by: 'Casey Morgan' }];
     });
     ok(await quality.upload(`/api/controlled/records/${recordId}/attachments?caption=${encodeURIComponent('Uncoated running face, item 2')}`, makePng(80, 60, [150, 40, 40]), 'coating.png', 'image/png'), 201);
     const rec = ok(await quality.get(`/api/controlled/records/${recordId}`));
+    expect(rec.data.fields.pdi_part).toBe('TQ-PRK-3003');
+    expect(rec.data.schedules.containment).toHaveLength(8);
+    expect(rec.data.schedules.containment[0]).toMatchObject({ lot: 'LOT-CF1 / LOT-CF1-1, LOT-CF1-2', verification: 'RMA-770 (fictional)' });
+    expect(rec.data.schedules.containment[7]).toMatchObject({ lot: 'LOT-CF1-F7', hold: 'Field return bin 7' });
     expect(rec.problems).toEqual([]);
-    expect(rec.composed.schedules.evidence[0]).toMatchObject({ evidence_id: 'E01', caption: 'Uncoated running face, item 2', uploaded_by: 'Casey Morgan' });
-    ok(await quality.send('POST', `/api/controlled/records/${recordId}/submit`, { expectedVersion: rec.version }));
-    // Submitted data is locked, in the API and in the database.
-    expect((await quality.send('PATCH', `/api/controlled/records/${recordId}`, { expectedVersion: rec.version + 1, data: rec.data })).status).toBe(409);
-    await expect(h.pool.query(`UPDATE controlled_record SET data = '{}'::jsonb WHERE id = $1`, [recordId])).rejects.toThrow(/submitted for approval/);
   });
 
-  it('approval is independent and on the template’s own approval block; completion generates the validated output', async () => {
-    const rec = ok(await quality.get(`/api/controlled/records/${recordId}`));
-    // The preparer cannot approve; engineering (the optional second approver) cannot sign before the deciding approval.
-    expect((await quality.send('POST', `/api/controlled/records/${recordId}/sign`, { expectedVersion: rec.version, step: 'approver1', decision: 'Close', conditions: 'x' })).status).toBe(403);
-    expect((await engineering.send('POST', `/api/controlled/records/${recordId}/sign`, { expectedVersion: rec.version, step: 'approver2' })).status).toBe(409);
-    const wrong = await manager.send('POST', `/api/controlled/records/${recordId}/sign`, { expectedVersion: rec.version, step: 'approver1', decision: 'Return', conditions: 'x' });
-    expect(wrong.status).toBe(422);
-    const signed = ok(
-      await manager.send('POST', `/api/controlled/records/${recordId}/sign`, {
-        expectedVersion: rec.version,
-        step: 'approver1',
-        decision: 'Authorize disposition',
-        conditions: 'Return lot LOT-CF1 to supplier; scrap field returns; SCAR to follow (fictional)',
-        secondApproval: 'NOT_REQUIRED',
-      }),
-    );
-    expect(signed.completed).toBe(true);
+  it('closing the NCR is the approval: it needs the submitted form, signs its approval block and generates the validated PDF', async () => {
+    let n = await resolveScopes(ncr.ncrId);
+    expect(n.ncr.status).toBe('VERIFIED_RESOLVED');
+    // The verification entries were made on rows that now show their dispositions; they stay attached by row.
+    let rec = ok(await quality.get(`/api/controlled/records/${recordId}`));
+    expect(rec.data.schedules.containment[3]).toMatchObject({ disposition: 'Return', verification: 'RMA-773 (fictional)' });
+
+    // No decision before the form is submitted.
+    const early = await engineering.send('POST', `/api/ncrs/${ncr.ncrId}/close`, { note: 'Resolved (fictional)', expectedVersion: n.ncr.version });
+    expect(early.status).toBe(422);
+    expect(early.json.error.message).toMatch(new RegExp(`Submit ${number} for decision before you close ncr`));
+    ok(await quality.send('POST', `/api/controlled/records/${recordId}/submit`, { expectedVersion: rec.version }));
+    rec = ok(await quality.get(`/api/controlled/records/${recordId}`));
+    // Submitted data is locked, in the API and in the database.
+    expect((await quality.send('PATCH', `/api/controlled/records/${recordId}`, { expectedVersion: rec.version, data: rec.data })).status).toBe(409);
+    await expect(h.pool.query(`UPDATE controlled_record SET data = '{}'::jsonb WHERE id = $1`, [recordId])).rejects.toThrow(/submitted for approval/);
+    // The approval block is never signed a second time on the record itself.
+    const twice = await manager.send('POST', `/api/controlled/records/${recordId}/sign`, { expectedVersion: rec.version, step: 'approver1', decision: 'Close', conditions: 'x' });
+    expect(twice.status).toBe(409);
+    expect(twice.json.error.message).toMatch(/signed when you close ncr on the NCR/);
+    expect(rec.can.sign).toEqual([]);
+    // Riley Chen confirmed the NCR (prepared OPS-06): not independent, so the NCR stays open.
+    n = ok(await quality.get(`/api/ncrs/${ncr.ncrId}`));
+    expect((await manager.send('POST', `/api/ncrs/${ncr.ncrId}/close`, { note: 'Resolved (fictional)', expectedVersion: n.ncr.version })).status).toBe(403);
+    expect(ok(await quality.get(`/api/ncrs/${ncr.ncrId}`)).ncr.status).toBe('VERIFIED_RESOLVED');
+
+    ok(await engineering.send('POST', `/api/ncrs/${ncr.ncrId}/close`, { note: 'All lots returned and verified (fictional)', expectedVersion: n.ncr.version }));
+    rec = ok(await quality.get(`/api/controlled/records/${recordId}`));
+    expect(rec.status).toBe('COMPLETED');
+    expect(rec.steps.map((s: { key: string; signature: { mode: string; signer_name: string; decision: string | null; module_action: string } }) => `${s.key}:${s.signature.mode}:${s.signature.signer_name}:${s.signature.decision}:${s.signature.module_action}`)).toEqual([
+      'approver1:INTERNAL:Taylor Brooks:Close:ncr.close',
+      'approver2:NOT_REQUIRED:Taylor Brooks:null:ncr.close',
+    ]);
+    // No look-alike OPS-06 summary is issued for an NCR that has its controlled record.
+    const summary = await quality.send('POST', `/api/ncrs/${ncr.ncrId}/report`, {});
+    expect(summary.status).toBe(409);
+    expect(summary.json.error.message).toMatch(new RegExp(`${number} \\(OPS-06\\) is this NCR's controlled record`));
+
     const out = await outputText(recordId, 'controlled-ops-06.pdf');
     expect(out.row.ok).toBe(true);
     expect(out.row.result.checks.map((c: { name: string; ok: boolean }) => `${c.name} ${c.ok}`)).toEqual(['page count true', 'page size true', 'template layout true', 'document control true', 'entered values true', 'references true', 'flattened true']);
-    // Base form (4) + 2 containment sheets (13 rows: 6 on the form, 7 continue 5 per sheet) + 1 narrative sheet
-    // + 1 evidence sheet (photo, manual reference and the 3 continuation sheets: 2 on the form, 3 continue).
-    expect(out.pages).toBe(4 + 2 + 1 + 1);
+    // Base form (4) + 1 containment sheet (8 rows: 6 on the form, 2 continue) + 1 narrative sheet
+    // + 1 evidence sheet (photo, manual reference and the 2 continuation sheets: 2 on the form, 2 continue).
+    expect(out.pages).toBe(4 + 1 + 1 + 1);
     expect(out.row.result.templates.map((t: { documentNumber: string; revisionLabel: string; pages: number }) => `${t.documentNumber} ${t.revisionLabel} ${t.pages}`)).toEqual([
       'OPS-06 03 4',
-      'OPS-06/containment 03 2',
+      'OPS-06/containment 03 1',
       'PDI-Narrative-Continuation 03 1',
       'PDI-Evidence-Continuation 03 1',
     ]);
     const text = out.text.replace(/\s+/g, ' ');
-    for (const expected of [
-      number,
-      'OPS-06 | Rev 0.3 | Effective: pending | Owner: Quality',
-      'PDI-NARR | Rev 0.3 | Effective: pending | Owner: Quality Systems',
-      'PDI-EVID | Rev 0.3 | Effective: pending | Owner: Quality Systems',
-      `${number}-C01`,
-      `${number}-C02`,
-      `${number}-N01`,
-      `${number}-E01`,
-      '2 of 2',
-      'Riley Chen',
-      'NA - not required',
-      'Authorize disposition',
-      'Field return bin 12',
-      'End of description.',
-    ]) {
+    for (const expected of [number, 'OPS-06 | Rev 0.3 | Effective: pending | Owner: Quality', 'PDI-NARR | Rev 0.3 | Effective: pending | Owner: Quality Systems', 'PDI-EVID | Rev 0.3 | Effective: pending | Owner: Quality Systems', `${number}-C01`, `${number}-N01`, `${number}-E01`, 'Taylor Brooks', 'NA - not required', 'Close', 'LOT-CF1-F7', 'End of containment.']) {
       expect(text, expected).toContain(expected);
     }
     expect(execFileSync('pdfinfo', [path.join(OUT, 'controlled-ops-06.pdf')]).toString()).toMatch(/Form:\s+none/);
     // Completed records are frozen in the database.
     await expect(h.pool.query(`UPDATE controlled_record SET title = 'x' WHERE id = $1`, [recordId])).rejects.toThrow(/completed and cannot change/);
     await expect(h.pool.query(`UPDATE controlled_record_binding SET revision_id = revision_id WHERE record_id = $1`, [recordId])).rejects.toThrow(/immutable/);
+    await expect(h.pool.query(`UPDATE controlled_record_signature SET signer_name = 'x' WHERE record_id = $1`, [recordId])).rejects.toThrow(/immutable|cannot/);
   });
 
-  it('a later revision binds new records only; existing records and their PDFs keep the revision they were opened on', async () => {
+  it('a later revision binds new events only; the existing record and its PDF keep the revision it was opened on', async () => {
     const before = (await h.pool.query(`SELECT file_id, sha256 FROM report_rendition WHERE subject_id = $1`, [recordId])).rows;
-    const draft = ok(await quality.send('POST', '/api/controlled/records', { typeCode: 'OPS-06', entityId: ncr.ncrId }), 201);
-
-    // OPS-06 Rev 04 is released, effective today.
+    const earlier = await makeNcr('LOT-CF2');
     const fixture = templateFixture().find((e) => e.number === 'OPS-06')!;
     const rev04 = await buildStandIn(revisedSchema(fixture.schema, '0.3', '0.4'));
     const docId = (await h.pool.query(`SELECT id FROM controlled_document WHERE number = 'OPS-06'`)).rows[0].id;
     ok(await admin.upload(`/api/documents/${docId}/revisions?revisionLabel=04&effectiveFrom=${today}&changeSummary=${encodeURIComponent('Fictional Rev 04 for binding test')}`, rev04, 'OPS-06_Nonconformance_Report_Rev04.pdf', 'application/pdf'), 201);
+    const later = await makeNcr('LOT-CF3');
 
-    const fresh = ok(await quality.send('POST', '/api/controlled/records', { typeCode: 'OPS-06', entityId: ncr.ncrId }), 201);
-    const freshRec = ok(await quality.get(`/api/controlled/records/${fresh.id}`));
-    expect(freshRec.bindings[0]).toMatchObject({ role: 'BASE', revisionLabel: '04' });
-    const draftRec = ok(await quality.get(`/api/controlled/records/${draft.id}`));
-    expect(draftRec.bindings[0]).toMatchObject({ role: 'BASE', revisionLabel: '03' });
+    const [a] = await recordOf('NCR', earlier.ncrId);
+    const [b] = await recordOf('NCR', later.ncrId);
+    expect(ok(await quality.get(`/api/controlled/records/${a!.id}`)).bindings[0]).toMatchObject({ role: 'BASE', revisionLabel: '03' });
+    expect(ok(await quality.get(`/api/controlled/records/${b!.id}`)).bindings[0]).toMatchObject({ role: 'BASE', revisionLabel: '04' });
 
-    // The draft opened under Rev 03 completes on Rev 03; the new record completes on Rev 04.
-    for (const [id, label, footer] of [
-      [draft.id, '03', 'OPS-06 | Rev 0.3 | Effective'],
-      [fresh.id, '04', 'OPS-06 | Rev 0.4 | Effective'],
+    // Each completes through its NCR's closure on the revision it was opened on.
+    for (const [ncrId, id, label, footer] of [
+      [earlier.ncrId, a!.id, '03', 'OPS-06 | Rev 0.3 | Effective'],
+      [later.ncrId, b!.id, '04', 'OPS-06 | Rev 0.4 | Effective'],
     ] as const) {
+      const n = await resolveScopes(ncrId);
       await fillRequired(quality, id);
       ok(await quality.send('POST', `/api/controlled/records/${id}/submit`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${id}`)).version }));
-      ok(await manager.send('POST', `/api/controlled/records/${id}/sign`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${id}`)).version, step: 'approver1', decision: 'Hold', conditions: 'Hold pending engineering review (fictional)', secondApproval: 'REQUIRED' }));
-      ok(await engineering.send('POST', `/api/controlled/records/${id}/sign`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${id}`)).version, step: 'approver2' }));
+      ok(await engineering.send('POST', `/api/ncrs/${ncrId}/close`, { note: 'Returned and verified (fictional)', expectedVersion: n.ncr.version }));
       const out = await outputText(id, `controlled-ops-06-rev${label}.pdf`);
       expect(out.row.result.templates[0]).toMatchObject({ documentNumber: 'OPS-06', revisionLabel: label });
       expect(out.text.replace(/\s+/g, ' ')).toContain(footer);
-      expect(out.text).toContain('Taylor Brooks');
     }
     // The first record's PDF is untouched.
     expect((await h.pool.query(`SELECT file_id, sha256 FROM report_rendition WHERE subject_id = $1`, [recordId])).rows).toEqual(before);
 
     // The validator refuses an output checked against the wrong revision.
-    const rev04Out = (await h.pool.query(`SELECT r.file_id, v.result FROM report_rendition r JOIN controlled_output_validation v ON v.rendition_id = r.id WHERE r.subject_id = $1`, [fresh.id])).rows[0];
+    const rev04Out = (await h.pool.query(`SELECT r.file_id, v.result FROM report_rendition r JOIN controlled_output_validation v ON v.rendition_id = r.id WHERE r.subject_id = $1`, [b!.id])).rows[0];
     const bytes = (await quality.get(`/api/files/${rev04Out.file_id}`)).raw;
-    const plan = rev04Out.result.pages.map((p: { revisionId: string }) => ({ ...p, revisionId: p.revisionId }));
+    const plan = rev04Out.result.pages;
     const rev03Schema = (await h.pool.query(`SELECT t.schema FROM controlled_template t JOIN controlled_document_revision r ON r.id = t.revision_id JOIN controlled_document d ON d.id = r.document_id WHERE d.number = 'OPS-06' AND r.revision_label = '03'`)).rows[0].schema;
     const schemas = new Map<string, any>(); // eslint-disable-line @typescript-eslint/no-explicit-any
     for (const p of plan) schemas.set(p.revisionId, p.documentNumber === 'OPS-06' ? rev03Schema : (await h.pool.query(`SELECT schema FROM controlled_template WHERE revision_id = $1`, [p.revisionId])).rows[0].schema);
@@ -335,16 +365,27 @@ describe('OPS-06 from an NCR: one workflow across the base form and its continua
     expect(check.checks.filter((c) => !c.ok).map((c) => c.name)).toEqual(['template layout', 'document control']);
   });
 
-  it('a returned record starts a new approval cycle; earlier signatures stay on record', async () => {
-    const created = ok(await quality.send('POST', '/api/controlled/records', { typeCode: 'OPS-06', entityId: ncr.ncrId }), 201);
-    await fillRequired(quality, created.id);
-    ok(await quality.send('POST', `/api/controlled/records/${created.id}/submit`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${created.id}`)).version }));
-    ok(await manager.send('POST', `/api/controlled/records/${created.id}/sign`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${created.id}`)).version, step: 'approver1', decision: 'Hold', conditions: 'Hold (fictional)', secondApproval: 'REQUIRED' }));
-    ok(await engineering.send('POST', `/api/controlled/records/${created.id}/return`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${created.id}`)).version, reason: 'Repair instructions missing (fictional)' }));
-    const rec = ok(await quality.get(`/api/controlled/records/${created.id}`));
+  it('NCR changes after submission block the decision until the form is returned; earlier signatures stay on record', async () => {
+    const third = await makeNcr('LOT-CF4');
+    const [r] = await recordOf('NCR', third.ncrId);
+    await fillRequired(quality, r!.id);
+    ok(await quality.send('POST', `/api/controlled/records/${r!.id}/submit`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${r!.id}`)).version }));
+    // Engineering concurs on the submitted form (cycle 1) …
+    ok(await engineering.send('POST', `/api/controlled/records/${r!.id}/sign`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${r!.id}`)).version, step: 'approver2', statement: 'Concur (fictional)' }));
+    // … then the NCR's dispositions change what the form shows: the closure is refused.
+    const n = await resolveScopes(third.ncrId);
+    const stale = await quality.send('POST', `/api/ncrs/${third.ncrId}/close`, { note: 'Resolved (fictional)', expectedVersion: n.ncr.version });
+    expect(stale.status).toBe(409);
+    expect(stale.json.error.message).toMatch(/changed after .* was submitted/);
+    ok(await quality.send('POST', `/api/controlled/records/${r!.id}/return`, { expectedVersion: ok(await quality.get(`/api/controlled/records/${r!.id}`)).version, reason: 'Show the decided dispositions (fictional)' }));
+    let rec = ok(await quality.get(`/api/controlled/records/${r!.id}`));
     expect(rec).toMatchObject({ status: 'DRAFT', cycle: 2 });
-    expect(rec.steps.every((s: { signature: unknown }) => s.signature === null)).toBe(true);
-    expect(rec.history).toEqual([expect.objectContaining({ role_key: 'approver1', signer_name: 'Riley Chen', cycle: 1 })]);
+    expect(rec.data.schedules.containment[0]).toMatchObject({ disposition: 'Return' });
+    expect(rec.history).toEqual([expect.objectContaining({ role_key: 'approver2', signer_name: 'Taylor Brooks', cycle: 1 })]);
+    ok(await quality.send('POST', `/api/controlled/records/${r!.id}/submit`, { expectedVersion: rec.version }));
+    ok(await engineering.send('POST', `/api/ncrs/${third.ncrId}/close`, { note: 'Resolved (fictional)', expectedVersion: ok(await quality.get(`/api/ncrs/${third.ncrId}`)).ncr.version }));
+    rec = ok(await quality.get(`/api/controlled/records/${r!.id}`));
+    expect(rec).toMatchObject({ status: 'COMPLETED', cycle: 2 });
   });
 });
 

@@ -1,6 +1,7 @@
 import { buildApp, checkReadiness, initFreshEvidenceVolume, pairEvidenceVolume } from './app.js';
 import { loadConfig } from './config.js';
 import { createPool } from './db.js';
+import { seedPilot } from './pilot-seed.js';
 import { startReminderSchedule } from './quality/commitments.js';
 
 async function main() {
@@ -25,6 +26,13 @@ async function main() {
     stopReminders = startReminderSchedule(svc);
   }
   await app.listen({ port: config.port, host: config.host });
+
+  // TEST environments only: fictional pilot records, created once through the API (never in production).
+  if (process.env.PILOT_SEED === 'true' && config.appEnv !== 'production' && readiness.ready) {
+    seedPilot(app, svc, { password: process.env.TQMS_DEMO_PASSWORD ?? '', templatesDir: process.env.PILOT_TEMPLATES_DIR ?? null, log: app.log })
+      .then((r) => app.log.info({ pilotSeed: r }, `pilot seed ${r.status.toLowerCase()}${r.reason ? `: ${r.reason}` : ''}`))
+      .catch((err) => app.log.error({ err }, 'pilot seed failed'));
+  }
 
   const shutdown = async (signal: string) => {
     app.log.info({ signal }, 'shutting down');

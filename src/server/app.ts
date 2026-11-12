@@ -26,6 +26,7 @@ import { registerBenchRoutes } from './injectors/bench-routes.js';
 import { registerInjectorRoutes } from './injectors/routes.js';
 import { registerReportRoutes } from './reports/routes.js';
 import { registerControlledDocumentRoutes } from './documents/routes.js';
+import { useControlledServices } from './controlled/events.js';
 import { registerControlledRoutes } from './controlled/routes.js';
 import { controlledRenderHandler } from './controlled/service.js';
 import { registerStageRoutes } from './inspections/stages.js';
@@ -109,6 +110,8 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
     genReqId: () => crypto.randomUUID(),
   });
   const svc: Services = { db, config, storage, logo: existsSync(logoPath) ? readFileSync(logoPath) : null, worker: null, routes: [] };
+  // Module services open, submit and decide the controlled record of each event in their own transactions.
+  useControlledServices(svc);
   // Route inventory: lets the authorization sweep test cover every registered endpoint.
   app.addHook('onRoute', (route) => {
     for (const method of [route.method].flat()) if (method !== 'HEAD') svc.routes.push({ method, url: route.url });

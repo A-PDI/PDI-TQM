@@ -77,7 +77,7 @@ Use `pg_dump`/`pg_restore` of the same major version as the server (the producti
 
 ## Deployment (Render)
 
-`render.yaml` is a **template** for an isolated staging environment; nothing has been provisioned. Applying it creates paid resources and needs PDI owner approval. Order on a new environment:
+`render.yaml` describes the staging environment (`tqms-staging`, manual deploys). `render-test.yaml` describes a separate **test** environment for the pilot — its own project, database and document disk, auto-deployed from `main`, fictional data only, never production; see [docs/construction/TEST_ENVIRONMENT.md](docs/construction/TEST_ENVIRONMENT.md) for its variables, setup, pilot seed (`npm run seed:pilot`) and smoke-test checklist. Applying either creates paid resources and needs PDI owner approval. Order on a new environment:
 
 1. Build: Docker image from `Dockerfile`.
 2. Pre-deploy: `node dist/server/server/cli/migrate.js` (migrations + reference data).

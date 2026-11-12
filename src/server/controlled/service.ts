@@ -135,6 +135,8 @@ export interface RecordRow {
   completed_at: string | null;
   void_reason: string | null;
   version: number;
+  /** Opened by a module event; its deciding block is signed by the module decision. */
+  event_bound: boolean;
 }
 
 export async function loadRecord(db: Queryable, id: string, tz: string, opts: { lock?: boolean } = {}): Promise<RecordRow | null> {
@@ -167,6 +169,8 @@ export interface SignatureRow {
   data_sha256: string;
   recorded_by: string;
   created_at: string;
+  /** Module action that executed this block (event records), else null. */
+  module_action: string | null;
 }
 
 export async function signatures(db: Queryable, recordId: string): Promise<SignatureRow[]> {
@@ -224,9 +228,10 @@ const clip = (v: string, n: number) => (v.length > n ? v.slice(0, n) : v);
 
 /**
  * The values printed on the form: entered data, system identity on every page, the evidence register
- * and, once signed, the decision and approval blocks.
+ * and, once signed, the decision and approval blocks. `decider` is the block whose signer recorded the
+ * PDI decision (the first approver, or on an event record the block its module decision signs).
  */
-export function composeData(schema: TemplateSchema, rec: RecordRow, files: AttachmentRow[], sigs: SignatureRow[], submittedOn: string | null): RecordData {
+export function composeData(schema: TemplateSchema, rec: RecordRow, files: AttachmentRow[], sigs: SignatureRow[], submittedOn: string | null, decider = 'approver1'): RecordData {
   const fields: Record<string, string> = { ...rec.data.fields };
   const has = (k: string) => schema.fields.some((f) => f.key === k);
   if (has('record_id')) fields.record_id = rec.number;
@@ -242,15 +247,15 @@ export function composeData(schema: TemplateSchema, rec: RecordRow, files: Attac
     if (!n) continue;
     if (has(`approver${n}`)) fields[`approver${n}`] = s.mode === 'NOT_REQUIRED' ? 'NA - not required' : s.signer_name;
     if (has(`approval${n}_date`)) fields[`approval${n}_date`] = s.signed_on;
-    if (n === '1') {
+    if (s.role_key === decider) {
       if (s.decision && has('pdi_decision')) fields.pdi_decision = s.decision;
       if (s.statement && has('decision_conditions')) fields.decision_conditions = s.statement;
       for (const [k, v] of Object.entries(s.details ?? {})) if (has(k) && v) fields[k] = v;
     }
   }
   if (current.length && has('pdi_authorization_ref')) {
-    const first = current[0]!;
-    fields.pdi_authorization_ref = clip(`TQM ${rec.number} C${rec.cycle} ${first.id.slice(0, 8)}`, 59);
+    const ref = current.find((s) => s.role_key === decider) ?? current[0]!;
+    fields.pdi_authorization_ref = clip(`TQM ${rec.number} C${rec.cycle} ${ref.id.slice(0, 8)}`, 59);
   }
   const schedules = { ...rec.data.schedules, [EVIDENCE_SCHEDULE]: [...attachmentRows(files), ...(rec.data.schedules[EVIDENCE_SCHEDULE] ?? [])] };
   return { fields, schedules };

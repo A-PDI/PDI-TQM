@@ -7,7 +7,8 @@ import { type Queryable, many, one, withTransaction } from '../db.js';
 import { conflict, forbidden, notFound, unprocessable } from '../errors.js';
 import { nextRecordNumber } from '../numbering.js';
 import type { Services } from '../services.js';
-import { closeWork, history, isActiveUser, isoDate, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from './common.js';
+import { actorOf, decideEvent, openEventRecord, returnEventRecord } from '../controlled/events.js';
+import { closeWork, controlledRecordOf, history, isActiveUser, isoDate, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from './common.js';
 import { buildScarReport } from './reports.js';
 
 const CHANNELS = ['EMAIL', 'PORTAL', 'MEETING', 'CALL', 'MAIL', 'OTHER'] as const;
@@ -75,6 +76,11 @@ export async function linkNcrToScar(
       ]);
       await closeWork(tx, ['SCAR_VERIFICATION'], 'SCAR', scarId, actorId, 'Reopened by recurrence');
       await openWork(tx, { kind: 'SCAR_RESPONSE', title: `${scar.number} reopened by ${ncr.number}: revised supplier response`, subjectType: 'SCAR', subjectId: scarId, assigneeId: scar.owner_id, dueAt: responseDue });
+      // A new cycle needs a new decision: a submitted form goes back to draft; a closed SCAR's completed
+      // form stays as approved and the new cycle opens its own record.
+      const actor = await actorOf(tx, actorId);
+      for (const code of ['OPS-07', 'OPS-08']) await returnEventRecord(tx, code, 'SCAR', scarId, actor, `Reopened by recurrence ${ncr.number}: ${reason}`, req.id);
+      if (scar.status === 'CLOSED') await openEventRecord(tx, 'OPS-07', scarId, actor, req.id);
       reopened = true;
     }
   }
@@ -139,7 +145,9 @@ export function registerScarRoutes(app: FastifyInstance, svc: Services) {
       await audit(tx, { actorId: auth.userId, action: 'scar.issue', entityType: 'scar', entityId: s!.id, summary: `${number} issued to ${body.sentTo} via ${body.sentVia.toLowerCase()}; response due ${body.responseDue}`, requestId: req.id });
       for (const ncrId of body.ncrIds) await linkNcrToScar(tx, req, auth.userId, s!.id, ncrId, 'ORIGIN', 'Issued from the nonconformance', null);
       await openWork(tx, { kind: 'SCAR_RESPONSE', title: `${number}: supplier response due — ${body.title}`, subjectType: 'SCAR', subjectId: s!.id, assigneeId: body.ownerId, dueAt: body.responseDue });
-      return { id: s!.id, number };
+      // The SCAR's controlled request (OPS-07) opens with it; closing the SCAR is its approval.
+      const controlled = await openEventRecord(tx, 'OPS-07', s!.id, { userId: auth.userId, displayName: auth.displayName }, req.id);
+      return { id: s!.id, number, controlled };
     });
     return reply.code(201).send(created);
   });
@@ -229,6 +237,7 @@ export function registerScarRoutes(app: FastifyInstance, svc: Services) {
       files: await linkedFiles(db, 'SCAR', id),
       history: await history(db, 'scar', [id]),
       renditions: await renditions(db, 'SCAR', id),
+      controlled: await controlledRecordOf(db, 'SCAR', id),
       permissions: {
         manage: has(auth, 'scar.manage') && s.status !== 'CLOSED',
         verify: has(auth, 'scar.verify'),
@@ -417,6 +426,19 @@ export function registerScarRoutes(app: FastifyInstance, svc: Services) {
         throw unprocessable(`${s.number} cannot close: ${SCAR_STATUS_TEXT[s.status]?.toLowerCase()}`);
       }
       if (!(await recheckCapability(tx, auth.userId, 'scar.close'))) throw forbidden();
+      // One approval: closing the SCAR signs the Supplier Quality approver block of its OPS-07 (and of an 8D started from it).
+      for (const code of ['OPS-07', 'OPS-08']) {
+        await decideEvent(tx, {
+          code,
+          entityType: 'SCAR',
+          entityId: id,
+          actor: { userId: auth.userId, displayName: auth.displayName },
+          grants: ['scar.close'],
+          decision: 'Close',
+          statement: `Closed after verified effectiveness (cycle ${s.cycle}). ${body.note}`,
+          requestId: req.id,
+        });
+      }
       await tx.query(`UPDATE scar SET status = 'CLOSED', closed_by = $2, closed_at = now(), closure_note = $3, version = version + 1 WHERE id = $1`, [id, auth.userId, body.note]);
       await closeWork(tx, ['SCAR_VERIFICATION', 'SCAR_RESPONSE'], 'SCAR', id, auth.userId, 'SCAR closed');
       await audit(tx, { actorId: auth.userId, action: 'scar.close', entityType: 'scar', entityId: id, summary: `${s.number} closed after verified effectiveness (cycle ${s.cycle})`, reason: body.note, requestId: req.id });

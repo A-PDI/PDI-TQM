@@ -12,6 +12,8 @@ import { enqueueJob } from '../jobs.js';
 import { qualityContext } from '../quality/context.js';
 import { nextRecordNumber } from '../numbering.js';
 import type { Services } from '../services.js';
+import { decideEvent, openEventRecord } from '../controlled/events.js';
+import { SUMMARY_NOTICE } from '../quality/common.js';
 import { buildApprovalReportSnapshot } from './approval-report.js';
 import { evaluateGates } from './gates.js';
 import { effectiveSourceStatuses } from './status.js';
@@ -288,7 +290,9 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
         [number, id, seq!.n, body.sampleType, s.baseline_revision_id, previousFaiId, body.correctiveRationale ?? null, body.lotNumber ?? null, body.serialNumbers ?? null, body.receivedDate, body.description ?? null, auth.userId],
       );
       await audit(tx, { actorId: auth.userId, action: 'fai.register', entityType: 'source', entityId: id, summary: `${number} (${body.sampleType.replaceAll('_', ' ').toLowerCase()}) registered`, requestId: req.id });
-      return { id: f!.id, number };
+      // The sample's controlled First Article Inspection Report (VAL-02) opens with it; deciding the sample is its approval.
+      const controlled = await openEventRecord(tx, 'VAL-02', f!.id, { userId: auth.userId, displayName: auth.displayName }, req.id);
+      return { id: f!.id, number, controlled };
     });
     return reply.code(201).send(created);
   });
@@ -401,6 +405,17 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
       if (body.decision === 'ACCEPTED' && nonconforming.length) {
         throw unprocessable(`${nonconforming.length} result(s) do not conform; the sample cannot be accepted without conditions`);
       }
+      // One approval: the first-article decision signs the VAL-02 Supplier Quality approver block.
+      await decideEvent(tx, {
+        code: 'VAL-02',
+        entityType: 'FAI',
+        entityId: id,
+        actor: { userId: auth.userId, displayName: auth.displayName },
+        grants: ['validation.decide'],
+        decision: body.decision === 'ACCEPTED' ? 'Approve' : body.decision === 'CONDITIONAL' ? 'Conditional' : 'Reject',
+        statement: [body.rationale, body.conditions ? `Conditions: ${body.conditions}` : '', body.defects ? `Defects: ${body.defects}` : ''].filter(Boolean).join(' '),
+        requestId: req.id,
+      });
       await tx.query(
         `UPDATE fai_sample SET status = 'DECIDED', decision = $2, conditions = $3, defects = $4, rationale = $5, decided_by = $6, decided_at = now(),
             grants_used = ARRAY['validation.decide'], version = version + 1 WHERE id = $1`,
@@ -442,7 +457,9 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
         [`Approve source for ${s.part_number}`, id],
       );
       await audit(tx, { actorId: auth.userId, action: 'source.request_approval', entityType: 'source', entityId: id, summary: 'Approval requested', requestId: req.id });
-      return { status: 'IN_REVIEW' };
+      // The request opens the source's controlled Product & Supplier Approval Record (VAL-11); the source decision is its approval.
+      const controlled = await openEventRecord(tx, 'VAL-11', id, { userId: auth.userId, displayName: auth.displayName }, req.id);
+      return { status: 'IN_REVIEW', controlled };
     });
   });
 
@@ -530,6 +547,18 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
         `UPDATE work_item SET status = 'DONE', closed_at = now(), closed_by = $2, closed_reason = $3 WHERE subject_type = 'SOURCE' AND subject_id = $1 AND kind = 'SOURCE_APPROVAL' AND status = 'OPEN'`,
         [id, auth.userId, body.decision],
       );
+      // One approval: the source decision signs the VAL-11 approval block; that controlled PDF replaces the summary record.
+      const controlled = await decideEvent(tx, {
+        code: 'VAL-11',
+        entityType: 'SOURCE',
+        entityId: id,
+        actor: { userId: auth.userId, displayName: auth.displayName },
+        grants: ['source.approve'],
+        decision: body.decision === 'APPROVED' ? 'Approve' : body.decision === 'APPROVED_CONDITIONAL' ? 'Conditional' : 'Reject',
+        statement: [`${number}: ${body.rationale}`, `Scope: ${body.scope}`, body.conditions ? `Conditions: ${body.conditions}` : ''].filter(Boolean).join(' '),
+        details: body.decision === 'REJECTED' ? {} : { ...(body.validUntil ? { approval_expiry: body.validUntil } : {}), effective_lot: body.scope.slice(0, 60) },
+        requestId: req.id,
+      });
       const approver = await one<{ display_name: string }>(tx, 'SELECT display_name FROM app_user WHERE id = $1', [auth.userId]);
       const snapshot = buildApprovalReportSnapshot({
         number,
@@ -545,12 +574,16 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
         manifestSha256: manifestSha,
         displayTimeZone: config.displayTimeZone,
       });
-      const snap = await one<{ id: string }>(
-        tx,
-        `INSERT INTO report_snapshot (subject_type, subject_id, edition, snapshot, sha256) VALUES ('SOURCE_APPROVAL', $1, 1, $2, $3) RETURNING id`,
-        [d!.id, JSON.stringify(snapshot), createHash('sha256').update(canonicalJson(snapshot)).digest('hex')],
-      );
-      await enqueueJob(tx, 'record_report', `record_report:${snap!.id}`, { snapshotId: snap!.id });
+      if (!controlled) {
+        // No controlled VAL-11 for this request (none in force when approval was requested): a summary, marked as such.
+        const summary = { ...snapshot, notice: SUMMARY_NOTICE };
+        const snap = await one<{ id: string }>(
+          tx,
+          `INSERT INTO report_snapshot (subject_type, subject_id, edition, snapshot, sha256) VALUES ('SOURCE_APPROVAL', $1, 1, $2, $3) RETURNING id`,
+          [d!.id, JSON.stringify(summary), createHash('sha256').update(canonicalJson(summary)).digest('hex')],
+        );
+        await enqueueJob(tx, 'record_report', `record_report:${snap!.id}`, { snapshotId: snap!.id });
+      }
       await audit(tx, {
         actorId: auth.userId,
         action: 'source.decide',
@@ -558,10 +591,10 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
         entityId: id,
         summary: `${number}: ${body.decision.replaceAll('_', ' ').toLowerCase()} for ${ctx.source.part_number} at ${ctx.source.supplier_name} / ${ctx.source.site_name}`,
         reason: body.rationale,
-        after: { manifestSha256: manifestSha, decisionId: d!.id },
+        after: { manifestSha256: manifestSha, decisionId: d!.id, controlledRecord: controlled?.number ?? null },
         requestId: req.id,
       });
-      return { id: d!.id, number, decision: body.decision, manifestSha256: manifestSha };
+      return { id: d!.id, number, decision: body.decision, manifestSha256: manifestSha, controlled };
     });
     return reply.code(201).send(result);
   });

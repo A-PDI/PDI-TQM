@@ -4,6 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const STUB_PORT = Number(process.env.CARBONZAPP_STUB_PORT ?? 3199);
 const VISUAL = /visual\.spec\.ts$/;
+// Released controlled forms bind module events (one approval path per event). These specs release them,
+// so they run after the module walkthroughs, which exercise the modules with no controlled form in force.
+const CONTROLLED = /(controlled-forms|documents)\.spec\.ts$/;
 const VISUAL_FONTS = path.resolve(import.meta.dirname, 'tests/fixtures/fonts.conf');
 
 export default defineConfig({
@@ -11,20 +14,23 @@ export default defineConfig({
   timeout: 90_000,
   fullyParallel: false,
   workers: 1,
+  // A stray test.only would silently skip the rest of the suite on CI.
+  forbidOnly: !!process.env.CI,
   reporter: [['list']],
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'desktop', testIgnore: VISUAL, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'mobile', testIgnore: VISUAL, use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } } },
+    { name: 'desktop', testIgnore: [VISUAL, CONTROLLED], use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    { name: 'mobile', testIgnore: [VISUAL, CONTROLLED], use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 } } },
     // Visual-regression baselines render with a pinned font set so they do not depend on the machine's fonts.
     {
       name: 'visual',
       testMatch: VISUAL,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, launchOptions: { env: { ...process.env, FONTCONFIG_FILE: VISUAL_FONTS } } },
     },
+    { name: 'controlled', testMatch: CONTROLLED, dependencies: ['desktop', 'mobile', 'visual'], use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
   ],
   webServer: [
     {

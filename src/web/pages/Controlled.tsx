@@ -1,7 +1,9 @@
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
+  ENTITY_ROUTES,
   EVIDENCE_SCHEDULE,
+  type EventBinding,
   ROW_LABEL,
   type RecordData,
   type TemplateColumn,
@@ -37,6 +39,7 @@ interface Signature {
   statement: string | null;
   reference: string | null;
   recorded_by: string;
+  module_action: string | null;
 }
 
 interface Step {
@@ -45,6 +48,8 @@ interface Step {
   mode: 'INTERNAL' | 'EXTERNAL';
   decides: boolean;
   optional: boolean;
+  /** Signed by the module decision (event records); never signed on the record. */
+  module: EventBinding['decision'];
   signature: Signature | null;
 }
 
@@ -86,6 +91,13 @@ interface RecordView {
   entity: { type: string; id: string | null; label: string; route: string | null };
   module: { name: string; route: string };
   rationale: string;
+  eventBound: boolean;
+  binding: EventBinding | null;
+  superseded: string | null;
+  readiness: { ready: boolean; reason: string | null } | null;
+  /** Module facts shown on the form that are entered in the module, not here. */
+  locked: string[];
+  ownedSchedules: string[];
   recordRevision: number;
   cycle: number;
   version: number;
@@ -212,10 +224,10 @@ export function ControlledRecord() {
                     throw err;
                   }
                   reload();
-                }, rec.category === 'FORM' ? 'Submitted for approval' : 'Submitted for signatures')
+                }, rec.eventBound ? 'Submitted for decision' : rec.category === 'FORM' ? 'Submitted for approval' : 'Submitted for signatures')
               }
             >
-              {rec.category === 'FORM' ? 'Submit for approval' : 'Submit for signatures'}
+              {rec.eventBound ? 'Submit for decision' : rec.category === 'FORM' ? 'Submit for approval' : 'Submit for signatures'}
             </button>
           )}
           {rec.can.return && (
@@ -232,6 +244,8 @@ export function ControlledRecord() {
       </div>
       {banner}
       {rec.status === 'VOID' && <div className="notice notice-warn">Void: {rec.voidReason}</div>}
+      {rec.superseded && <div className="notice notice-warn" role="status">{rec.superseded}</div>}
+      {rec.eventBound && rec.binding && <EventNotice rec={rec} binding={rec.binding} />}
 
       <div className="two-col">
         <section className="card" aria-labelledby="bound-revisions">
@@ -330,10 +344,21 @@ function ApprovalsCard({ rec, onSign, onAttest }: { rec: RecordView; onSign: (s:
                     {s.signature.signer_title ? `, ${s.signature.signer_title}` : ''} · {fmtDate(s.signature.signed_on)}
                     {s.signature.decision && <> · decision <strong>{s.signature.decision}</strong></>}
                     {s.signature.mode === 'EXTERNAL' && <> · recorded by {s.signature.recorded_by}</>}
+                    {s.signature.module_action && <> · through the {s.module?.module ?? 'module'} decision</>}
                   </>
                 )}
                 {s.signature.statement && s.signature.mode !== 'NOT_REQUIRED' && <div className="muted">{s.signature.statement}</div>}
                 {s.signature.reference && <div className="muted">Ref: {s.signature.reference}</div>}
+              </div>
+            ) : s.module ? (
+              <div className="small muted">
+                Signed when you {s.module.label.toLowerCase()} on the {s.module.module}
+                {rec.entity.route && (
+                  <>
+                    {' — '}
+                    <Link to={rec.entity.route}>open the {s.module.module}</Link>
+                  </>
+                )}
               </div>
             ) : (
               <div className="small muted">
@@ -355,6 +380,29 @@ function ApprovalsCard({ rec, onSign, onAttest }: { rec: RecordView; onSign: (s:
       </ul>
       {rec.status === 'DRAFT' && <p className="small muted" style={{ marginBottom: 0 }}>Signatures are collected after submission. The preparer and submitter cannot approve (POL-01).</p>}
     </section>
+  );
+}
+
+/** How this event record is approved: by the module's own decision, never a second time here. */
+function EventNotice({ rec, binding }: { rec: RecordView; binding: EventBinding }) {
+  const where = binding.decision?.module ?? ENTITY_ROUTES[binding.entity].label.toLowerCase();
+  const link = rec.entity.route ? <Link to={rec.entity.route}>{rec.entity.label}</Link> : rec.entity.label;
+  return (
+    <div className="notice" role="note" aria-label="Approval path">
+      <strong>One approval path.</strong> Opened when {binding.opensWhen} ({link}).{' '}
+      {binding.decision ? (
+        <>
+          The PDI decision is signed when you {binding.decision.label.toLowerCase()} on the {where}; it is not signed separately here.
+        </>
+      ) : (
+        <>The PDI decision below is the decision for the {where} and is carried out there when the record completes.</>
+      )}{' '}
+      Facts the {where} holds are shown locked — change them in the {where}.
+      {rec.status === 'DRAFT' && binding.submitAction && <div className="small">This form is submitted when you {binding.submitAction.label.toLowerCase()}.</div>}
+      {rec.status === 'SUBMITTED' && rec.readiness && (
+        <div className="small">{rec.readiness.ready ? `Ready: ${binding.decision?.label ?? 'decision'} on the ${where}.` : `Next: ${rec.readiness.reason}`}</div>
+      )}
+    </div>
   );
 }
 
@@ -388,6 +436,8 @@ function FormBody({
 }) {
   const sections = useMemo(() => sectionsOf(rec.schema), [rec.schema]);
   const problemPaths = new Set(problems.map((p) => p.path));
+  const locked = new Set(rec.locked);
+  const from = rec.binding?.decision?.module ?? rec.entity.label;
   return (
     <>
       {sections.map((sec, i) => {
@@ -397,12 +447,12 @@ function FormBody({
             {sec.fields.length > 0 && (
               <div className="cf-grid">
                 {sec.fields.map((f) => (
-                  <FieldInput key={f.key} field={f} value={draft.fields[f.key] ?? ''} editable={editable} narrative={rec.narrative} invalid={problemPaths.has(`fields.${f.key}`)} onChange={(v) => update((d) => { d.fields[f.key] = v; })} />
+                  <FieldInput key={f.key} field={f} value={draft.fields[f.key] ?? ''} editable={editable && !locked.has(`fields.${f.key}`)} lockedFrom={editable && locked.has(`fields.${f.key}`) ? from : null} narrative={rec.narrative} invalid={problemPaths.has(`fields.${f.key}`)} onChange={(v) => update((d) => { d.fields[f.key] = v; })} />
                 ))}
               </div>
             )}
             {sec.schedules.map((s) => (
-              <ScheduleTable key={s.key} sched={s} rows={draft.schedules[s.key] ?? []} cont={rec.continuations[s.key]} editable={editable} problems={problemPaths} update={update} />
+              <ScheduleTable key={s.key} sched={s} rows={draft.schedules[s.key] ?? []} cont={rec.continuations[s.key]} editable={editable} problems={problemPaths} update={update} owned={rec.ownedSchedules.includes(s.key) ? from : null} locked={locked} />
             ))}
           </FormSection>
         );
@@ -431,8 +481,23 @@ function FormSection({ title, initiallyOpen, missing, children }: { title: strin
   );
 }
 
-function FieldInput({ field, value, editable, narrative, invalid, onChange }: { field: TemplateField; value: string; editable: boolean; narrative: boolean; invalid: boolean; onChange: (v: string) => void }) {
+function FieldInput({ field, value, editable, lockedFrom = null, narrative, invalid, onChange }: { field: TemplateField; value: string; editable: boolean; lockedFrom?: string | null; narrative: boolean; invalid: boolean; onChange: (v: string) => void }) {
   const id = `cf-${field.key}`;
+  if (lockedFrom) {
+    // Entered in the module: shown on the form as it will print, never retyped here.
+    return (
+      <div className={`field${field.input === 'multiline' || (field.maxLength ?? 0) > 80 ? ' cf-wide' : ''}`}>
+        <label htmlFor={id}>
+          {field.label}
+          <span className="muted">{REQ_MARK[field.requirement]}</span>
+        </label>
+        <input id={id} type="text" value={value} readOnly className="cf-locked" aria-describedby={`${id}-from`} />
+        <div id={`${id}-from`} className="field-hint">
+          From the {lockedFrom}
+        </div>
+      </div>
+    );
+  }
   const over = field.maxLength && value.length > field.maxLength;
   const wide = field.input === 'multiline' || (field.maxLength ?? 0) > 80;
   return (
@@ -469,7 +534,8 @@ function FieldInput({ field, value, editable, narrative, invalid, onChange }: { 
   );
 }
 
-function CellInput({ col, value, label, onChange, invalid }: { col: TemplateColumn; value: string; label: string; onChange: (v: string) => void; invalid: boolean }) {
+function CellInput({ col, value, label, onChange, invalid, lockedFrom = null }: { col: TemplateColumn; value: string; label: string; onChange: (v: string) => void; invalid: boolean; lockedFrom?: string | null }) {
+  if (lockedFrom) return <input aria-label={label} type="text" value={value} readOnly className="cf-locked" title={`From the ${lockedFrom}`} />;
   if (col.input === 'choice') {
     return (
       <select aria-label={label} value={value} aria-invalid={invalid || undefined} onChange={(e) => onChange(e.target.value)}>
@@ -501,6 +567,8 @@ function ScheduleTable({
   editable,
   problems,
   update,
+  owned = null,
+  locked = new Set<string>(),
 }: {
   sched: TemplateSchedule;
   rows: Array<Record<string, string>>;
@@ -508,6 +576,9 @@ function ScheduleTable({
   editable: boolean;
   problems: Set<string>;
   update: (fn: (d: RecordData) => void) => void;
+  /** The module whose records are this schedule's rows (rows are not added or removed here). */
+  owned?: string | null;
+  locked?: Set<string>;
 }) {
   const printed = sched.rowLabels?.length ?? 0;
   const shown = Math.max(rows.length, printed);
@@ -527,6 +598,7 @@ function ScheduleTable({
         The form holds {sched.capacity} row{sched.capacity === 1 ? '' : 's'}
         {printed ? ` (${printed} printed checklist items)` : ''}.{' '}
         {cont ? `More rows continue on ${cont.documentNumber} Rev ${cont.revisionLabel}, ${cont.capacity} per sheet.` : 'No continuation sheet is released for more rows.'}
+        {owned && ` Rows come from the ${owned}; add what the ${owned} does not record.`}
       </div>
       <div className="table-wrap">
         <table className="data cf-table">
@@ -568,7 +640,7 @@ function ScheduleTable({
                   {sched.columns.map((c) => (
                     <td key={c.key} data-label={c.label}>
                       {editable ? (
-                        <CellInput col={c} value={row[c.key] ?? ''} label={`${title} row ${i + 1} ${c.label}`} invalid={problems.has(`schedules.${sched.key}.${i}.${c.key}`)} onChange={(v) => setCell(i, c.key, v)} />
+                        <CellInput col={c} value={row[c.key] ?? ''} label={`${title} row ${i + 1} ${c.label}`} invalid={problems.has(`schedules.${sched.key}.${i}.${c.key}`)} onChange={(v) => setCell(i, c.key, v)} lockedFrom={locked.has(`schedules.${sched.key}.${i}.${c.key}`) ? (owned ?? 'module') : null} />
                       ) : (
                         <span className="small">{row[c.key] ?? ''}</span>
                       )}
@@ -576,7 +648,7 @@ function ScheduleTable({
                   ))}
                   {editable && (
                     <td>
-                      {i >= printed && (
+                      {i >= printed && !owned && (
                         <button
                           type="button"
                           className="btn btn-small"
@@ -607,7 +679,7 @@ function ScheduleTable({
           </tbody>
         </table>
       </div>
-      {editable && (
+      {editable && !owned && (
         <button
           type="button"
           className="btn btn-small"

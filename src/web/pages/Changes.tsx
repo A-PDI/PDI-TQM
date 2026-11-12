@@ -275,6 +275,8 @@ function NewChangeDialog({ onClose }: { onClose: () => void }) {
 }
 
 interface ChangeData {
+  /** The record's controlled form (event record), when it has one: its PDF is the controlled output. */
+  controlled?: { number: string; status: string; type_code: string } | null;
   change: Record<string, string | number | boolean | string[] | null> & {
     id: string;
     number: string;
@@ -598,7 +600,7 @@ export function ChangeDetail() {
 
       <section className="card">
         <h2>Controlled record</h2>
-        <RecordPdfs renditions={data.renditions} issueUrl={`/api/changes/${id}/report`} docCode="OPS-04" canIssue={p.manage} onIssued={reload} />
+        <RecordPdfs renditions={data.renditions} issueUrl={`/api/changes/${id}/report`} docCode="OPS-04" canIssue={p.manage} onIssued={reload} controlled={data.controlled ?? null} />
       </section>
       <ControlledFormsPanel entity="CHANGE" entityId={id} />
       <HistoryCard history={data.history} />

@@ -86,6 +86,8 @@ export function ScarList() {
 }
 
 interface ScarData {
+  /** The record's controlled form (event record), when it has one: its PDF is the controlled output. */
+  controlled?: { number: string; status: string; type_code: string } | null;
   scar: Record<string, string | number | null> & { id: string; number: string; status: string; cycle: number; statusText: string; effectiveness_plan: string | null };
   responses: Array<Record<string, string | number | boolean | null>>;
   verifications: Array<Record<string, string | number | null> & { inspections: Array<{ id: string; number: string; outcome: string }> }>;
@@ -307,7 +309,7 @@ export function ScarDetail() {
 
       <section className="card">
         <h2>Controlled record</h2>
-        <RecordPdfs renditions={data.renditions} issueUrl={`/api/scars/${id}/report`} docCode="OPS-07" canIssue={data.permissions.manage || data.scar.status === 'CLOSED'} onIssued={reload} />
+        <RecordPdfs renditions={data.renditions} issueUrl={`/api/scars/${id}/report`} docCode="OPS-07" canIssue={data.permissions.manage || data.scar.status === 'CLOSED'} onIssued={reload} controlled={data.controlled ?? null} />
       </section>
       <ControlledFormsPanel entity="SCAR" entityId={id} />
       <HistoryCard history={data.history} />

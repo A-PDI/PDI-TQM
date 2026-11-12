@@ -14,7 +14,8 @@ import { auditedDenial, has, recheckCapability, requireCapability } from '../aut
 import { type Queryable, many, one, withTransaction } from '../db.js';
 import { conflict, forbidden, notFound, unprocessable } from '../errors.js';
 import { nextRecordNumber } from '../numbering.js';
-import { closeWork, history, isActiveUser, isoDate, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from '../quality/common.js';
+import { decideEvent, openEventRecord, voidEventRecords } from '../controlled/events.js';
+import { closeWork, controlledRecordOf, history, isActiveUser, isoDate, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from '../quality/common.js';
 import { buildChangeReport } from '../quality/reports.js';
 import type { Services } from '../services.js';
 import { effectiveSourceStatuses } from '../sourcing/status.js';
@@ -198,6 +199,7 @@ export function registerChangeRoutes(app: FastifyInstance, svc: Services) {
       files: await linkedFiles(db, 'CHANGE', id),
       history: await history(db, 'change_request', [id]),
       renditions: await renditions(db, 'CHANGE', id),
+      controlled: await controlledRecordOf(db, 'CHANGE', id),
       permissions: {
         manage: has(auth, 'change.manage') && OPEN_STATES.includes(c.status),
         decide: has(auth, 'change.approve') && c.requested_by !== auth.userId,
@@ -276,7 +278,9 @@ export function registerChangeRoutes(app: FastifyInstance, svc: Services) {
         reason: body.justification,
         requestId: req.id,
       });
-      return { id: c!.id, number };
+      // The change's controlled impact and requalification decision (OPS-04) opens with it; deciding the change is its approval.
+      const controlled = await openEventRecord(tx, 'OPS-04', c!.id, { userId: auth.userId, displayName: auth.displayName }, req.id);
+      return { id: c!.id, number, controlled };
     });
     return reply.code(201).send(created);
   });
@@ -457,6 +461,17 @@ export function registerChangeRoutes(app: FastifyInstance, svc: Services) {
         const requal = await one(tx, `SELECT 1 FROM change_action WHERE change_id = $1 AND kind IN ('REQUALIFY_FAI', 'SOURCE_REAPPROVAL')`, [id]);
         if (!requal) throw unprocessable('Requalification is required: add the first-article or source re-approval action(s) before approving');
       }
+      // One approval: deciding the change signs the OPS-04 approval block and generates the controlled PDF.
+      await decideEvent(tx, {
+        code: 'OPS-04',
+        entityType: 'CHANGE',
+        entityId: id,
+        actor: { userId: auth.userId, displayName: auth.displayName },
+        grants: ['change.approve'],
+        decision: body.decision === 'REJECTED' ? 'Reject' : body.conditions ? 'Conditional' : 'Approve',
+        statement: [body.rationale, body.conditions ? `Conditions: ${body.conditions}` : ''].filter(Boolean).join(' '),
+        requestId: req.id,
+      });
       await tx.query(
         `UPDATE change_request SET status = $2, decided_by = $3, decided_at = now(), decision_rationale = $4, conditions = $5, grants_used = $6, version = version + 1 WHERE id = $1`,
         [id, body.decision, auth.userId, body.rationale, body.conditions ?? null, ['change.approve']],
@@ -544,6 +559,7 @@ export function registerChangeRoutes(app: FastifyInstance, svc: Services) {
       const c = await loadChange(tx, id, true);
       if (!['PROPOSED', 'IMPACT_ASSESSED', 'APPROVED'].includes(c.status)) throw conflict(`${c.number} is ${c.status.toLowerCase().replaceAll('_', ' ')}`);
       await tx.query(`UPDATE change_request SET status = 'CANCELLED', cancel_reason = $2, version = version + 1 WHERE id = $1`, [id, body.reason]);
+      await voidEventRecords(tx, 'CHANGE', id, { userId: auth.userId, displayName: auth.displayName }, `Change cancelled: ${body.reason}`, req.id);
       await closeWork(tx, ['CHANGE_IMPACT', 'CHANGE_DECISION'], 'CHANGE', id, auth.userId, 'Cancelled');
       const actions = await many<{ id: string }>(tx, `SELECT id FROM change_action WHERE change_id = $1 AND status = 'OPEN'`, [id]);
       for (const a of actions) await closeWork(tx, ['CHANGE_ACTION'], 'CHANGE_ACTION', a.id, auth.userId, 'Change cancelled');
