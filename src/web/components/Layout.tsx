@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { QuickCapture } from './QuickCapture';
+import { useKeyboardScrollRegions } from './ui';
 import logoUrl from '../assets/pdi-logo.png';
 
 const NAV: Array<{ to: string; label: string; built: boolean; stage?: string; also?: string[] }> = [
@@ -18,6 +19,7 @@ const NAV: Array<{ to: string; label: string; built: boolean; stage?: string; al
 
 export function Layout() {
   const { me, signOut, can } = useAuth();
+  useKeyboardScrollRegions();
   const [menuOpen, setMenuOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [q, setQ] = useState('');
