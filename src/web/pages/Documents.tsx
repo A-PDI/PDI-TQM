@@ -5,6 +5,7 @@ import { api, fmtDate, fmtDateTime } from '../api';
 import { useAuth } from '../auth';
 import { useBusy } from '../components/sourcing';
 import { Dialog, LoadState, StatusBadge, useLoad } from '../components/ui';
+import { DocumentAgreementsPanel } from '../components/agreements';
 
 type Usage = { how: 'GENERATED' | 'RECORDED'; route: string; screen: string } | null;
 type Controlled = { category: 'FORM' | 'ATTACHMENT'; family: string; module: string; moduleRoute: string; entity: string; rationale: string } | null;
@@ -69,9 +70,10 @@ interface DocumentDetail {
   evidenceType: string | null;
   controlled: Controlled;
   template: TemplateSummary | null;
+  agreements?: Parameters<typeof DocumentAgreementsPanel>[0]['info'];
 }
 
-const KIND_TEXT: Record<string, string> = { FORM: 'Form', CONTINUATION: 'Continuation sheet', LIBRARY: 'Library document' };
+const KIND_TEXT: Record<string, string> = { FORM: 'Form', CONTINUATION: 'Continuation sheet', LIBRARY: 'Library document', SPECIFICATION: 'Specification / agreement document' };
 const todayIso = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -397,6 +399,7 @@ export function DocumentDetail() {
             ))}
         </section>
       )}
+      <DocumentAgreementsPanel documentId={data.id} info={data.agreements} revisions={data.revisions} canControl={can('documents.control')} onChanged={reload} />
       <h2>Revision history</h2>
       <div className="table-wrap">
         <table className="data stack">

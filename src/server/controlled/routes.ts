@@ -48,6 +48,7 @@ import {
   stepsFor,
   submitEventRecord,
 } from './events.js';
+import { agreementCarryingSqa } from '../agreements/agreements.js';
 import { sha256 } from './pdf-text.js';
 import { entityContext, fitToTemplate } from './prefill.js';
 import {
@@ -243,6 +244,14 @@ export function registerControlledRoutes(app: FastifyInstance, svc: Services) {
     if (def.entity !== 'SYSTEM' && !entityId) throw badRequest(`${def.code} is opened from a ${ENTITY_ROUTES[def.entity].label.toLowerCase()}`);
     const ctx = await entityContext(db, def.entity, entityId, def.code, tz);
     if (!ctx) throw notFound(ENTITY_ROUTES[def.entity].label);
+    // One path for the Supplier Quality Agreement: a package incorporating SUP-03 is its approval and execution.
+    if (def.code === 'SUP-03' && entityId) {
+      const pkg = await agreementCarryingSqa(db, entityId);
+      if (pkg) {
+        await audit(db, { actorId: auth.userId, action: 'controlled.create', outcome: 'DENIED', entityType: 'controlled_record', summary: `Denied: SUP-03 is approved and executed through agreement ${pkg.number}`, requestId: req.id });
+        throw conflict(`SUP-03 for this supplier is approved and executed through agreement ${pkg.number} (${pkg.status.toLowerCase().replaceAll('_', ' ')}); a separate SUP-03 record would duplicate it`);
+      }
+    }
     const asOf = await todayIn(db, tz);
     const base = await revisionInForce(db, def.code, asOf);
     if (!base) throw conflict(`No released revision of ${def.code} is in effect. An administrator imports it in the Document Library first.`);

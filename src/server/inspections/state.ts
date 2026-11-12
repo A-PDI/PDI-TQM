@@ -42,6 +42,8 @@ export interface InspectionRow {
   form_revision_sequence: number;
   baseline_revision_id: string | null;
   baseline_snapshot: BaselineSnapshot | null;
+  /** Contractual documents governing the part from the site on receipt (migration 0014); informational. */
+  specification_snapshot: unknown;
   part_id: string | null;
   part_number: string;
   part_description: string;

@@ -63,6 +63,18 @@ The seed creates, through the application's own API, as the persona who would do
 | First articles | FA-PILOT-01 on the Northwind P1 source | Measured; VAL-02 open |
 | Changes | Tighten radial wall tolerance | Impact assessed; OPS-04 open |
 
+**Supplier agreements (pilot).** A separate stage loads them at the same start, once (`system_setting.pilot_agreements`). It does not wait for the controlled templates. It creates, through the API as the personas:
+
+- **Document Library:** synthetic `MSA-001` Rev S01 and `SCS-001` Rev S1.0, classified (master agreement; casting specification), with the SCS-001 clauses. Both are marked *SYNTHETIC TEST DOCUMENT* on every page; the `S` labels let the approved files import later as ordinary revisions.
+- **Bluestone Castings (FA):**
+  - an agreement executed from a fictional signed copy;
+  - its renewal, executed, which supersedes it;
+  - SCS-001 Rev S1.1 released, with its revision review;
+  - an executed amendment incorporating S1.1.
+- **Northwind (P1):** a draft agreement.
+
+The legal review and signatures are fictional and have no legal effect.
+
 To start again: delete and recreate the test database and disk (or create a new Blueprint instance), then repeat steps 1–3.
 
 ## Personas
@@ -95,5 +107,7 @@ Tick each line; each "→" is the persona to sign in as.
 10. [ ] → Morgan: complete INT-01 and submit. → Taylor: sign the PDI decision (*Investigate*). → Casey: sign; INT-01 completes.
 11. [ ] One path only: on any submitted event record, the module's approval block shows *Signed when you … on the …* with no **Sign…** button; deciding in the module before the form is submitted is refused with the reason.
 12. [ ] → Morgan: **Suppliers → Northwind → Controlled forms → SUP-01** starts, completes and is approved by Casey (a form that is not tied to a module event).
+
+13. [ ] → Casey: **Suppliers → Bluestone Castings → Agreements & Specifications** shows the renewal as the current agreement, SCS-001 Rev S1.1 and the TQ-CYH-4004 schedule, the executed amendment, and the superseded original with its signed copy and package PDFs. The full owner walkthrough is in [release-notes/2026-11-supplier-agreements.md](../release-notes/2026-11-supplier-agreements.md#manual-acceptance-pdi-owner).
 
 If a step fails, note the persona, the page and the message shown.

@@ -1,7 +1,7 @@
 import { buildApp, checkReadiness, initFreshEvidenceVolume, pairEvidenceVolume } from './app.js';
 import { loadConfig } from './config.js';
 import { createPool } from './db.js';
-import { seedPilot } from './pilot-seed.js';
+import { pilotSessions, seedPilot, seedPilotAgreements } from './pilot-seed.js';
 import { startReminderSchedule } from './quality/commitments.js';
 
 async function main() {
@@ -29,9 +29,23 @@ async function main() {
 
   // TEST environments only: fictional pilot records, created once through the API (never in production).
   if (process.env.PILOT_SEED === 'true' && config.appEnv !== 'production' && readiness.ready) {
-    seedPilot(app, svc, { password: process.env.TQMS_DEMO_PASSWORD ?? '', templatesDir: process.env.PILOT_TEMPLATES_DIR ?? null, log: app.log })
-      .then((r) => app.log.info({ pilotSeed: r }, `pilot seed ${r.status.toLowerCase()}${r.reason ? `: ${r.reason}` : ''}`))
-      .catch((err) => app.log.error({ err }, 'pilot seed failed'));
+    const password = process.env.TQMS_DEMO_PASSWORD ?? '';
+    const sessions = pilotSessions(app, password);
+    // Agreements need no controlled templates; the module records wait until the templates are in force.
+    void (async () => {
+      try {
+        const a = await seedPilotAgreements(app, svc, { password, log: app.log, sessions });
+        app.log.info({ pilotAgreements: a }, `pilot agreements ${a.status.toLowerCase()}${a.reason ? `: ${a.reason}` : ''}`);
+      } catch (err) {
+        app.log.error({ err }, 'pilot agreements failed');
+      }
+      try {
+        const r = await seedPilot(app, svc, { password, templatesDir: process.env.PILOT_TEMPLATES_DIR ?? null, log: app.log, sessions });
+        app.log.info({ pilotSeed: r }, `pilot seed ${r.status.toLowerCase()}${r.reason ? `: ${r.reason}` : ''}`);
+      } catch (err) {
+        app.log.error({ err }, 'pilot seed failed');
+      }
+    })();
   }
 
   const shutdown = async (signal: string) => {

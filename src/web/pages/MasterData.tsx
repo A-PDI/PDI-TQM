@@ -6,6 +6,7 @@ import { useAuth } from '../auth';
 import { type QualityContext, QualityContextCard } from '../components/quality';
 import { SourceStatusBadge, useBusy } from '../components/sourcing';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
+import { PartSpecificationsPanel } from '../components/agreements';
 
 const Synthetic = ({ on }: { on: boolean }) => (on ? <span className="badge badge-synthetic">fictional</span> : null);
 
@@ -246,6 +247,8 @@ export function PartDetail() {
           <dd>{p.defaultFormNumber ?? '—'}</dd>
         </dl>
       </div>
+
+      <PartSpecificationsPanel partId={p.id} canEdit={can('masterdata.edit')} />
 
       <section className="card">
         <h2>Exact sources</h2>

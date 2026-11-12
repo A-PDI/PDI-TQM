@@ -8,6 +8,7 @@ import { type QualityContext, QualityContextCard } from '../components/quality';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
 import { NewCommitmentDialog } from './Commitments';
 import { ControlledFormsPanel } from '../components/controlled';
+import { AgreementsSection } from '../components/agreements';
 
 const Synthetic = ({ on }: { on: boolean }) => (on ? <span className="badge badge-synthetic">fictional</span> : null);
 
@@ -162,10 +163,10 @@ interface SupplierData {
   quality: QualityContext;
   certificates: Array<{ id: string; siteName: string | null; certType: string; certNumber: string | null; issuer: string | null; validUntil: string | null; expired: boolean; files: Array<{ linkId: string; fileId: string; name: string }> }>;
   supplierParts: Array<{ id: string; supplierPartNumber: string; description: string | null }>;
-  permissions: { canManage: boolean; canQualify: boolean; canRestrict: boolean };
+  permissions: { canManage: boolean; canQualify: boolean; canRestrict: boolean; canChangeStatus?: boolean };
 }
 
-type DialogKind = null | 'site' | 'assess' | 'part' | 'cert' | { decide: Qualification } | { suspend: string | null } | { lift: string };
+type DialogKind = null | 'site' | 'assess' | 'part' | 'cert' | 'status' | { decide: Qualification } | { suspend: string | null } | { lift: string };
 
 export function SupplierDetail() {
   const { id = '' } = useParams();
@@ -204,6 +205,11 @@ export function SupplierDetail() {
           </div>
         </div>
         <div className="row-actions">
+          {p.canChangeStatus && s.status !== 'PROSPECTIVE' && (
+            <button type="button" className="btn" onClick={() => setDialog('status')}>
+              {s.status === 'INACTIVE' ? 'Reactivate supplier' : 'Mark inactive'}
+            </button>
+          )}
           {p.canRestrict && !activeRestrictions.some((r) => !r.siteId) && (
             <button type="button" className="btn btn-danger" onClick={() => setDialog({ suspend: null })}>
               Suspend supplier
@@ -231,6 +237,8 @@ export function SupplierDetail() {
           )}
         </div>
       ))}
+
+      <AgreementsSection supplierId={id} sites={data.sites} />
 
       <section className="card">
         <div className="page-head" style={{ marginBottom: 6 }}>
@@ -467,6 +475,29 @@ export function SupplierDetail() {
           </ul>
         </section>
       )}
+
+      <Dialog
+        open={dialog === 'status'}
+        title={s.status === 'INACTIVE' ? 'Reactivate supplier' : 'Mark supplier inactive'}
+        onClose={close}
+        footer={
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy || (f.reason ?? '').trim().length < 5}
+            onClick={() => void submit(() => api(`/api/suppliers/${id}/status`, { body: { status: s.status === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE', reason: f.reason } }), 'Supplier status updated')}
+          >
+            {s.status === 'INACTIVE' ? 'Reactivate' : 'Mark inactive'}
+          </button>
+        }
+      >
+        <p className="small muted">Status is master data. Agreements, sources, records and their history are kept unchanged. Use Suspend supplier to block activity.</p>
+        <div className="field">
+          <label htmlFor="sup-status-reason">Reason</label>
+          <textarea id="sup-status-reason" rows={2} {...field('reason')} />
+        </div>
+        {banner}
+      </Dialog>
 
       <Dialog
         open={dialog === 'site'}

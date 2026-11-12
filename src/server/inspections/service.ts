@@ -12,6 +12,7 @@ import {
 } from '../../shared/forms.js';
 import { evaluateInspection, passAllTargets, readingId, rowId, summarizeReviewReasons } from '../../shared/inspection.js';
 import { parseReading } from '../../shared/measurement.js';
+import { governingRequirements, snapshotJson } from '../agreements/specifications.js';
 import { audit } from '../audit.js';
 import { type AuthContext, recheckCapability, requireCapability } from '../auth.js';
 import type { Config } from '../config.js';
@@ -137,8 +138,8 @@ export async function createInspection(
       tx,
       `INSERT INTO inspection (number, form_revision_id, form_snapshot, form_snapshot_sha256, baseline_revision_id, baseline_snapshot,
           part_id, part_number, part_description, source_id, supplier_id, site_id, source_state_at_start, po_number, date_received,
-          lot_number, lot_size, sampling_note, unit_count, inspector_id, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING id`,
+          lot_number, lot_size, sampling_note, unit_count, inspector_id, created_by, specification_snapshot)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING id`,
       [
         number,
         form.id,
@@ -161,6 +162,8 @@ export async function createInspection(
         input.unitCount,
         inspectorId,
         auth.userId,
+        // Contractual documents governing the part from this site on receipt (informational; criteria come from the baseline).
+        source ? snapshotJson(await governingRequirements(tx, { supplierId: source.supplier_id, siteId: source.site_id, partId: part.id, asOf: input.dateReceived })) : null,
       ],
     );
     const id = created!.id;

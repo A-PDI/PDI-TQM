@@ -5,6 +5,7 @@ import { IMPACT_AREAS } from '../shared/quality.js';
 import { many, one } from './db.js';
 import { DEMO_USERS, type DemoKey, seedDemo } from './demo-seed.js';
 import { makePng } from './fictional-image.js';
+import { SCS001_CLAUSES, syntheticMsa001, syntheticScs001, syntheticSignedCopy } from './agreements/synthetic-documents.js';
 import type { Services } from './services.js';
 
 /**
@@ -26,6 +27,15 @@ export interface PilotSeedOptions {
   log: { info: (obj: object, msg?: string) => void; warn: (obj: object, msg?: string) => void };
   /** Render queued controlled PDFs before returning (CLI). On boot the running job worker renders them. */
   drain?: boolean;
+  /** Persona sessions shared between pilot stages, so sign-ins stay under the login rate limit. */
+  sessions?: PilotSessions;
+}
+
+export type PilotSessions = Record<DemoKey, Session>;
+
+/** One lazily signed-in session per demo persona. */
+export function pilotSessions(app: FastifyInstance, password: string): PilotSessions {
+  return Object.fromEntries(DEMO_USERS.map((u) => [u.key, lazySession(app, u.key, password)] as const)) as PilotSessions;
 }
 
 export interface PilotSeedResult {
@@ -162,7 +172,7 @@ export async function seedPilot(app: FastifyInstance, svc: Services, opts: Pilot
   if (!storage.ok) throw new Error(`Evidence storage is not ready (${storage.reason}); the pilot seed stores documents and PDFs there`);
   await seedDemo(db, opts.password);
   const today = (await one<{ d: string }>(db, `SELECT (now() AT TIME ZONE $1)::date::text AS d`, [config.displayTimeZone]))!.d;
-  const s = Object.fromEntries(DEMO_USERS.map((u) => [u.key, lazySession(app, u.key, opts.password)] as const)) as Record<DemoKey, Session>;
+  const s = opts.sessions ?? pilotSessions(app, opts.password);
   const templates = opts.templatesDir ? await importTemplates(s.admin, opts.templatesDir, today, opts.log) : { imported: 0, failed: [] };
 
   // Sample events need their controlled forms in force; otherwise they would be recorded without them.
@@ -310,4 +320,121 @@ async function inspect(s: Session, ids: Ids, lot: string, po: string, today: str
     await s.upload(`/api/inspections/${insp.id}/photos?unitIndex=2&sectionKey=B&rowKey=running_face_coating`, makePng(120, 80, [150, 40, 40]), 'coating.png', 'image/png');
   }
   return insp;
+}
+
+// ---------------------------------------------------------------- supplier agreements (own marker)
+export const PILOT_AGREEMENTS_MARKER = 'pilot_agreements';
+
+/**
+ * Fictional supplier-agreement history for the TEST environment, created through the API as the
+ * personas would: synthetic MSA-001 and SCS-001 (revision labels prefixed S, so PDI's approved
+ * files import later as ordinary revisions), an executed agreement for Bluestone Castings that a
+ * renewal supersedes, a newer SCS-001 revision with its impact review, an executed amendment
+ * incorporating it, and a draft for Northwind. It needs no controlled templates. Runs once.
+ */
+export async function seedPilotAgreements(app: FastifyInstance, svc: Services, opts: PilotSeedOptions): Promise<PilotSeedResult> {
+  const { db, config } = svc;
+  if (config.appEnv === 'production') throw new Error('Pilot sample data may not be seeded into production');
+  if (opts.password.length < 12) throw new Error('TQMS_DEMO_PASSWORD (12+ characters) is required for the pilot seed');
+  const none = { imported: 0, failed: [] as string[] };
+  const prior = await one<{ value: Json }>(db, 'SELECT value FROM system_setting WHERE key = $1', [PILOT_AGREEMENTS_MARKER]);
+  if (prior) return { status: 'SKIPPED', reason: `agreements already ${String(prior.value.status ?? 'seeded').toLowerCase()} (${String(prior.value.at ?? '')})`, templates: none, records: [] };
+  const storage = await svc.storage.check();
+  if (!storage.ok) throw new Error(`Evidence storage is not ready (${storage.reason})`);
+  await seedDemo(db, opts.password);
+  const s = opts.sessions ?? pilotSessions(app, opts.password);
+  const today = (await one<{ d: string }>(db, `SELECT (now() AT TIME ZONE $1)::date::text AS d`, [config.displayTimeZone]))!.d;
+  const earlier = addDays(today, -30);
+  await db.query(`INSERT INTO system_setting (key, value) VALUES ($1, $2)`, [PILOT_AGREEMENTS_MARKER, JSON.stringify({ status: 'IN_PROGRESS', at: new Date().toISOString(), fictional: true })]);
+  const records: string[] = [];
+  try {
+    // Document Control: synthetic documents, their classification and SCS-001 clauses.
+    const msa = await s.admin.upload(`/api/documents/import?effectiveFrom=${earlier}`, await syntheticMsa001('S01'), 'MSA-001_Master_Supplier_Agreement_RevS01.pdf', 'application/pdf');
+    const scs = await s.admin.upload(`/api/documents/import?effectiveFrom=${earlier}`, await syntheticScs001('S1.0'), 'SCS-001_Cast_Component_Quality_Identification_Standard_RevS1.0.pdf', 'application/pdf');
+    await s.admin.call('PUT', `/api/documents/${msa.documentId}/classification`, { classification: 'MASTER_AGREEMENT', scopeNote: 'Synthetic proposed structure; legal text to be supplied by PDI counsel' });
+    await s.admin.call('PUT', `/api/documents/${scs.documentId}/classification`, { classification: 'TECHNICAL_SPECIFICATION', categoryCode: 'CASTING', processes: ['Casting'], productFamilies: ['Cylinder heads'], scopeNote: 'Synthetic stand-in for SCS-001' });
+    const clauses = SCS001_CLAUSES.map((c) => ({ clauseRef: c.ref, title: c.title }));
+    if (scs.revisionId) await s.admin.call('POST', `/api/document-revisions/${scs.revisionId}/clauses`, { clauses });
+    records.push('MSA-001 Rev S01 and SCS-001 Rev S1.0 (synthetic) imported and classified');
+
+    // Master data: the cylinder head is a casting.
+    const head = ((await s.purchasing.call('GET', '/api/parts?q=TQ-CYH-4004')) as unknown as Json[]).find((p) => p.partNumber === 'TQ-CYH-4004');
+    if (!head) throw new SeedError('Demo part TQ-CYH-4004 not found');
+    await s.purchasing.call('PUT', `/api/parts/${head.id}/classification`, { material: 'Gray iron (fictional)', manufacturingProcess: 'Casting' });
+    const suppliers = (await s.purchasing.call('GET', '/api/suppliers')) as unknown as Json[];
+    const bsc = suppliers.find((x) => x.code === 'BSC')?.id as string | undefined;
+    const nwr = suppliers.find((x) => x.code === 'NWR')?.id as string | undefined;
+    if (!bsc || !nwr) throw new SeedError('Demo suppliers BSC and NWR not found');
+    const bscFa = ((await s.purchasing.call('GET', `/api/suppliers/${bsc}`)).sites as Json[]).find((x) => x.code === 'FA')?.id as string;
+    const nwrP1 = ((await s.purchasing.call('GET', `/api/suppliers/${nwr}`)).sites as Json[]).find((x) => x.code === 'P1')?.id as string;
+
+    const version = async (id: string) => (await s.purchasing.call('GET', `/api/agreements/${id}`)).agreement.version as number;
+    const approveAndExecute = async (id: string, number: string, effectiveFrom: string) => {
+      await s.purchasing.call('POST', `/api/agreements/${id}/submit`, { version: await version(id) });
+      await s.quality.call('POST', `/api/agreements/${id}/approve`, {
+        version: await version(id),
+        legalReviewer: 'Fictional counsel (test environment)',
+        legalReference: 'PILOT-LR — fictional legal review, no legal effect',
+        legalReviewedOn: today,
+      });
+      const signed = await s.purchasing.upload(`/api/evidence/SUPPLIER_AGREEMENT/${id}?caption=${encodeURIComponent('Signed agreement (fictional)')}`, await syntheticSignedCopy(number, today), `${number}-signed-fictional.pdf`, 'application/pdf');
+      await s.purchasing.call('POST', `/api/agreements/${id}/execution`, {
+        version: await version(id),
+        signedFileId: signed.fileId,
+        effectiveFrom,
+        pdiSignatory: { name: 'Jamie Example (fictional)', title: 'Director of Supply Chain (fictional)', signedOn: today },
+        supplierSignatory: { name: 'Robin Sample (fictional)', title: 'President, Bluestone Castings (fictional)', signedOn: today },
+      });
+    };
+    const fromRecommendations = async (id: string) => {
+      const recs = (await s.purchasing.call('GET', `/api/agreements/${id}/recommendations`)) as unknown as Json[];
+      await s.purchasing.call('PUT', `/api/agreements/${id}/documents`, {
+        version: await version(id),
+        lines: recs.map((r) => ({ role: r.role, documentRevisionId: r.documentRevisionId ?? null, baselineRevisionId: r.baselineRevisionId ?? null, contractualRef: r.contractualRef, partIds: r.partIds, precedence: r.precedence })),
+      });
+      return recs.map((r) => `${r.documentNumber} Rev ${r.revisionLabel}`);
+    };
+
+    // 1. Original agreement for Bluestone Castings, executed (later superseded by its renewal).
+    const first = await s.purchasing.call('POST', `/api/suppliers/${bsc}/agreements`, { title: 'Supply agreement — cylinder head castings (pilot)', siteIds: [bscFa], productFamilies: ['Cylinder heads'], expiresOn: addDays(today, 365) });
+    const docs1 = await fromRecommendations(first.id);
+    await approveAndExecute(first.id, first.number, earlier);
+    records.push(`${first.number} executed (${docs1.join(', ')})`);
+
+    // 2. Renewal, executed: supersedes the original, which stays on record.
+    const renewal = await s.purchasing.call('POST', `/api/agreements/${first.id}/renewal`, { expiresOn: addDays(today, 3 * 365) });
+    await approveAndExecute(renewal.id, renewal.number, today);
+    records.push(`${renewal.number} renewal executed; ${first.number} superseded`);
+
+    // 3. SCS-001 Rev S1.1 released: the executed renewal is unchanged and gets a revision review.
+    const rev = await s.admin.upload(
+      `/api/documents/${scs.documentId}/revisions?revisionLabel=S1.1&effectiveFrom=${today}&changeSummary=${encodeURIComponent('Synthetic clarification for the pilot')}`,
+      await syntheticScs001('S1.1'),
+      'SCS-001_Cast_Component_Quality_Identification_Standard_RevS1.1.pdf',
+      'application/pdf',
+    );
+    await s.admin.call('POST', `/api/document-revisions/${rev.revisionId}/clauses`, { clauses });
+    records.push(`SCS-001 Rev S1.1 released; ${rev.impactedAgreements} agreement(s) flagged for revision review`);
+
+    // 4. Amendment incorporating the new revision, executed.
+    const amendment = await s.purchasing.call('POST', `/api/agreements/${renewal.id}/amendments`, { changeSummary: 'Incorporate SCS-001 Rev S1.1 for cylinder head castings (pilot)' });
+    await s.purchasing.call('PUT', `/api/agreements/${amendment.id}/documents`, {
+      version: await version(amendment.id),
+      lines: [{ role: 'SPECIFICATION', action: 'REPLACE', documentRevisionId: rev.revisionId, contractualRef: 'Schedule B1', partIds: [head.id] }],
+    });
+    await approveAndExecute(amendment.id, amendment.number, today);
+    records.push(`${amendment.number} amendment executed (SCS-001 Rev S1.1)`);
+
+    // 5. A draft for Northwind, waiting for its documents.
+    const draft = await s.purchasing.call('POST', `/api/suppliers/${nwr}/agreements`, { title: 'Supply agreement — piston ring kits (pilot draft)', siteIds: [nwrP1], productFamilies: ['Rings'] });
+    await s.purchasing.call('PUT', `/api/agreements/${draft.id}/documents`, { version: await version(draft.id), lines: [{ role: 'MASTER_AGREEMENT', documentRevisionId: msa.revisionId, contractualRef: 'Agreement' }] });
+    records.push(`${draft.number} draft for Northwind`);
+
+    if (opts.drain) await svc.worker?.drain();
+    await db.query(`UPDATE system_setting SET value = $2, updated_at = now() WHERE key = $1`, [PILOT_AGREEMENTS_MARKER, JSON.stringify({ status: 'SEEDED', at: new Date().toISOString(), fictional: true, records })]);
+    return { status: 'SEEDED', templates: none, records };
+  } catch (err) {
+    await db.query(`UPDATE system_setting SET value = $2, updated_at = now() WHERE key = $1`, [PILOT_AGREEMENTS_MARKER, JSON.stringify({ status: 'FAILED', at: new Date().toISOString(), error: (err as Error).message.slice(0, 1000), records })]);
+    throw err;
+  }
 }

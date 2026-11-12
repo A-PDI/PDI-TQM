@@ -210,6 +210,7 @@ export function registerInspectionRoutes(app: FastifyInstance, svc: Services) {
       amendmentCount: r.amendment_count,
       form: { revisionId: r.form_revision_id, definition: r.form_snapshot, sha256: r.form_snapshot_sha256 },
       baseline: r.baseline_snapshot,
+      specifications: r.specification_snapshot ?? null,
       limits: state.limits,
       units: state.units.map((u) => ({ unitIndex: u.unit_index, serialNumber: u.serial_number, dispositionNote: u.disposition_note })),
       activated: state.activated,

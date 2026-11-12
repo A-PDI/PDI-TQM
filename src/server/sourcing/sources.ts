@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { governingRequirements, snapshotJson, sourceCoverage } from '../agreements/specifications.js';
+import { todayIn } from '../controlled/service.js';
 import { canonicalJson } from '../../shared/forms.js';
 import { evaluateReading, parseReading } from '../../shared/measurement.js';
 import { CHECKLIST_RULE_VERSION, RISK_RULE_VERSION } from '../../shared/sourcing.js';
@@ -66,6 +68,7 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
         db,
         `SELECT f.id, f.number, f.sequence, f.sample_type AS "sampleType", f.status, f.decision, f.conditions, f.defects, f.rationale, f.corrective_rationale AS "correctiveRationale",
                 f.lot_number AS "lotNumber", f.serial_numbers AS "serialNumbers", f.received_date AS "receivedDate", f.description, f.version,
+                f.specification_snapshot AS "specificationSnapshot",
                 r.revision_label AS "revisionLabel", f.baseline_revision_id AS "baselineRevisionId", f.previous_fai_id AS "previousFaiId",
                 rb.id AS "recordedById", rb.display_name AS "recordedBy", db.display_name AS "decidedBy", f.decided_at AS "decidedAt",
                 coalesce((SELECT json_agg(json_build_object('linkId', l.id, 'fileId', fo.id, 'name', fo.original_name)) FROM evidence_link l JOIN file_object fo ON fo.id = l.file_id
@@ -132,6 +135,7 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
       fais: (fais as Array<{ id: string }>).map((f) => ({ ...f, results: results.filter((r) => (r as { faiId: string }).faiId === f.id) })),
       decisions,
       inspections,
+      contractualCoverage: await sourceCoverage(db, id, await todayIn(db, config.displayTimeZone)),
       repointCandidates: everApproved ? [] : candidates,
       permissions: {
         canManage: has(auth, 'sourcing.manage'),
@@ -200,40 +204,58 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
 
   app.post('/api/acknowledgments/:id/response', async (req) => {
     const { id } = req.params as { id: string };
-    const auth = await requireCapability(db, req, 'sourcing.manage', { action: 'acknowledgment.response', entityType: 'supplier_acknowledgment', entityId: id });
+    if (!uuid.safeParse(id).success) throw notFound('Acknowledgment');
+    // A specification acknowledgment is a supplier record (supplier.manage); a baseline one belongs to its source (sourcing.manage).
+    const kind = await one<{ source_id: string | null }>(db, 'SELECT source_id FROM supplier_acknowledgment WHERE id = $1', [id]);
+    const auth = await requireCapability(db, req, kind && !kind.source_id ? 'supplier.manage' : 'sourcing.manage', { action: 'acknowledgment.response', entityType: 'supplier_acknowledgment', entityId: id });
     const body = z
       .object({
         response: z.enum(['ACKNOWLEDGED', 'OBJECTED']),
         representative: z.string().trim().min(2).max(200),
         respondedAt: z.string().datetime({ offset: true }).or(date),
         note: z.string().trim().max(4000).nullable().optional(),
+        exceptions: z.string().trim().max(4000).nullable().optional(),
       })
       .parse(req.body);
     if (body.response === 'OBJECTED' && !body.note) throw unprocessable('Record what the supplier objected to');
-    if (!uuid.safeParse(id).success) throw notFound('Acknowledgment');
     return withTransaction(db, async (tx) => {
-      const a = await one<{ source_id: string; response: string; label: string }>(
+      const a = await one<{ source_id: string | null; supplier_id: string | null; response: string; label: string }>(
         tx,
-        `SELECT a.source_id, a.response, r.revision_label AS label FROM supplier_acknowledgment a JOIN baseline_revision r ON r.id = a.baseline_revision_id WHERE a.id = $1 FOR UPDATE OF a`,
+        `SELECT a.source_id, a.supplier_id, a.response, coalesce(r.revision_label, d.number || ' Rev ' || cr.revision_label) AS label
+           FROM supplier_acknowledgment a
+           LEFT JOIN baseline_revision r ON r.id = a.baseline_revision_id
+           LEFT JOIN controlled_document_revision cr ON cr.id = a.document_revision_id
+           LEFT JOIN controlled_document d ON d.id = cr.document_id
+          WHERE a.id = $1 FOR UPDATE OF a`,
         [id],
       );
       if (!a) throw notFound('Acknowledgment');
       if (a.response !== 'PENDING') throw conflict('The supplier response was already recorded');
+      if (a.source_id && body.exceptions) throw unprocessable('Record exceptions to a baseline revision in the response note');
       await tx.query(
-        `UPDATE supplier_acknowledgment SET response = $2, representative = $3, responded_at = $4, response_note = $5, recorded_by = $6, recorded_at = now() WHERE id = $1`,
-        [id, body.response, body.representative, atMidday(body.respondedAt), body.note ?? null, auth.userId],
+        `UPDATE supplier_acknowledgment SET response = $2, representative = $3, responded_at = $4, response_note = $5, recorded_by = $6, recorded_at = now(), exceptions = $7 WHERE id = $1`,
+        [id, body.response, body.representative, atMidday(body.respondedAt), body.note ?? null, auth.userId, body.exceptions ?? null],
       );
-      await tx.query(
-        `UPDATE work_item SET status = 'DONE', closed_at = now(), closed_by = $2, closed_reason = 'Response recorded' WHERE subject_type = 'SOURCE' AND subject_id = $1 AND kind = 'SUPPLIER_RESPONSE' AND status = 'OPEN'`,
-        [a.source_id, auth.userId],
-      );
+      if (a.source_id) {
+        await tx.query(
+          `UPDATE work_item SET status = 'DONE', closed_at = now(), closed_by = $2, closed_reason = 'Response recorded' WHERE subject_type = 'SOURCE' AND subject_id = $1 AND kind = 'SUPPLIER_RESPONSE' AND status = 'OPEN'`,
+          [a.source_id, auth.userId],
+        );
+      } else {
+        await tx.query(
+          `UPDATE work_item SET status = 'DONE', closed_at = now(), closed_by = $2, closed_reason = 'Response recorded' WHERE subject_type = 'SUPPLIER_ACKNOWLEDGMENT' AND subject_id = $1 AND kind = 'SUPPLIER_RESPONSE' AND status = 'OPEN'`,
+          [id, auth.userId],
+        );
+      }
       await audit(tx, {
         actorId: auth.userId,
         action: 'acknowledgment.response',
-        entityType: 'source',
-        entityId: a.source_id,
-        summary: `Supplier ${body.response === 'ACKNOWLEDGED' ? 'acknowledged' : 'objected to'} Rev ${a.label} (${body.representative}). An acknowledgment does not verify execution.`,
-        reason: body.note ?? null,
+        entityType: a.source_id ? 'source' : 'supplier',
+        entityId: (a.source_id ?? a.supplier_id)!,
+        summary: a.source_id
+          ? `Supplier ${body.response === 'ACKNOWLEDGED' ? 'acknowledged' : 'objected to'} Rev ${a.label} (${body.representative}). An acknowledgment does not verify execution.`
+          : `Supplier ${body.response === 'ACKNOWLEDGED' ? 'acknowledged' : 'objected to'} ${a.label} (${body.representative})${body.exceptions ? ' with exceptions' : ''}. An acknowledgment is not proof of compliance.`,
+        reason: body.note ?? body.exceptions ?? null,
         requestId: req.id,
       });
       return { response: body.response };
@@ -256,9 +278,9 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
       .parse(req.body);
     if (!uuid.safeParse(id).success) throw notFound('Source');
     const created = await withTransaction(db, async (tx) => {
-      const s = await one<{ baseline_revision_id: string | null; status: string | null }>(
+      const s = await one<{ baseline_revision_id: string | null; status: string | null; supplier_id: string; site_id: string; part_id: string }>(
         tx,
-        `SELECT s.baseline_revision_id, r.status FROM source s LEFT JOIN baseline_revision r ON r.id = s.baseline_revision_id WHERE s.id = $1 FOR UPDATE OF s`,
+        `SELECT s.baseline_revision_id, r.status, s.supplier_id, s.site_id, s.part_id FROM source s LEFT JOIN baseline_revision r ON r.id = s.baseline_revision_id WHERE s.id = $1 FOR UPDATE OF s`,
         [id],
       );
       if (!s) throw notFound('Source');
@@ -285,9 +307,13 @@ export function registerSourceRoutes(app: FastifyInstance, svc: Services) {
       const number = await nextRecordNumber(tx, 'FAI');
       const f = await one<{ id: string }>(
         tx,
-        `INSERT INTO fai_sample (number, source_id, sequence, sample_type, baseline_revision_id, previous_fai_id, corrective_rationale, lot_number, serial_numbers, received_date, description, recorded_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
-        [number, id, seq!.n, body.sampleType, s.baseline_revision_id, previousFaiId, body.correctiveRationale ?? null, body.lotNumber ?? null, body.serialNumbers ?? null, body.receivedDate, body.description ?? null, auth.userId],
+        `INSERT INTO fai_sample (number, source_id, sequence, sample_type, baseline_revision_id, previous_fai_id, corrective_rationale, lot_number, serial_numbers, received_date, description, recorded_by, specification_snapshot)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+        [
+          number, id, seq!.n, body.sampleType, s.baseline_revision_id, previousFaiId, body.correctiveRationale ?? null, body.lotNumber ?? null, body.serialNumbers ?? null, body.receivedDate, body.description ?? null, auth.userId,
+          // Contractual documents governing the part from this site when the sample arrived (informational; VAL-02 criteria come from the baseline).
+          snapshotJson(await governingRequirements(tx, { supplierId: s.supplier_id, siteId: s.site_id, partId: s.part_id, asOf: body.receivedDate })),
+        ],
       );
       await audit(tx, { actorId: auth.userId, action: 'fai.register', entityType: 'source', entityId: id, summary: `${number} (${body.sampleType.replaceAll('_', ' ').toLowerCase()}) registered`, requestId: req.id });
       // The sample's controlled First Article Inspection Report (VAL-02) opens with it; deciding the sample is its approval.

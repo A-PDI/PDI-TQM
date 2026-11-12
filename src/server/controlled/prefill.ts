@@ -328,10 +328,13 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
     }
     case 'NCR': {
       if (!id) return null;
-      const r = await one<{ number: string; title: string; defect_description: string; characteristic: string | null; expected: string | null; actual: string | null; part_id: string | null; supplier_id: string | null; site_id: string | null; source_id: string | null; inspection_id: string | null; lot_number: string | null; severity: string; confirmed_at: string; reporter: string }>(
+      const r = await one<{ number: string; title: string; defect_description: string; characteristic: string | null; expected: string | null; actual: string | null; part_id: string | null; supplier_id: string | null; site_id: string | null; source_id: string | null; inspection_id: string | null; lot_number: string | null; severity: string; confirmed_at: string; reporter: string; governing: string | null }>(
         db,
         `SELECT n.number, n.title, n.defect_description, n.characteristic, n.expected, n.actual, n.part_id, n.supplier_id, n.site_id, n.source_id, n.inspection_id,
-                n.lot_number, n.severity, n.confirmed_at, ru.display_name AS reporter
+                n.lot_number, n.severity, n.confirmed_at, ru.display_name AS reporter,
+                nullif(concat_ws(' ', (SELECT d.number || ' Rev ' || cr.revision_label FROM controlled_document_revision cr JOIN controlled_document d ON d.id = cr.document_id WHERE cr.id = n.governing_revision_id),
+                                 n.governing_clause,
+                                 (SELECT 'part schedule ' || p.part_number || ' Rev ' || br.revision_label FROM baseline_revision br JOIN technical_baseline tb ON tb.id = br.baseline_id JOIN company_part p ON p.id = tb.part_id WHERE br.id = n.governing_baseline_revision_id)), '') AS governing
            FROM ncr n JOIN quality_event q ON q.id = n.quality_event_id JOIN app_user ru ON ru.id = q.reported_by WHERE n.id = $1`,
         [id],
       );
@@ -349,7 +352,7 @@ export async function entityContext(db: Queryable, entity: ControlledEntity, id:
       );
       const src = r.source_id ? await sourceRow(db, r.source_id) : null;
       const population = scopes.reduce((n, x) => n + x.quantity, 0);
-      const problem = [r.characteristic && `${r.characteristic}:`, r.expected && `required ${r.expected}`, r.actual && `actual ${r.actual}.`, r.defect_description].filter(Boolean).join(' ');
+      const problem = [r.characteristic && `${r.characteristic}:`, r.expected && `required ${r.expected}`, r.actual && `actual ${r.actual}.`, r.defect_description, r.governing && `Governing requirement: ${r.governing}.`].filter(Boolean).join(' ');
       const fields: Record<string, string> = {
         ...(src ? sourceHeader(src) : await partySite(db, r.supplier_id, r.site_id, r.part_id)),
         project_ref: r.number,

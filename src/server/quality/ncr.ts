@@ -22,6 +22,7 @@ import { effectiveSourceStatuses } from '../sourcing/status.js';
 import { decideEvent, openEventRecord } from '../controlled/events.js';
 import { closeWork, controlledRecordOf, history, isActiveUser, issueRecordEdition, linkedFiles, openWork, renditions, uuid } from './common.js';
 import { buildNcrReport } from './reports.js';
+import { governingRequirements } from '../agreements/specifications.js';
 import { linkNcrToScar } from './scars.js';
 
 export interface NcrRow {
@@ -73,6 +74,26 @@ async function loadNcr(db: Queryable, id: string, lock = false): Promise<NcrRow>
   const row = await one<NcrRow>(db, `SELECT * FROM ncr WHERE id = $1${lock ? ' FOR UPDATE' : ''}`, [id]);
   if (!row) throw notFound('NCR');
   return row;
+}
+
+/** The requirement cited on the NCR and what the executed agreements made governing for its part and site. */
+async function ncrRequirement(db: Queryable, n: NcrRow, tz: string) {
+  const r = n as unknown as { governing_revision_id: string | null; governing_clause: string | null; governing_baseline_revision_id: string | null; supplier_id: string | null; site_id: string | null; part_id: string | null; confirmed_at: Date | string };
+  const cited = r.governing_revision_id
+    ? await one<{ documentNumber: string; revisionLabel: string; title: string }>(db, `SELECT d.number AS "documentNumber", cr.revision_label AS "revisionLabel", d.title FROM controlled_document_revision cr JOIN controlled_document d ON d.id = cr.document_id WHERE cr.id = $1`, [r.governing_revision_id])
+    : null;
+  const schedule = r.governing_baseline_revision_id
+    ? await one<{ partNumber: string; revisionLabel: string }>(db, `SELECT p.part_number AS "partNumber", br.revision_label AS "revisionLabel" FROM baseline_revision br JOIN technical_baseline tb ON tb.id = br.baseline_id JOIN company_part p ON p.id = tb.part_id WHERE br.id = $1`, [r.governing_baseline_revision_id])
+    : null;
+  const asOf = (await one<{ d: string }>(db, `SELECT ($1::timestamptz AT TIME ZONE $2)::date::text AS d`, [r.confirmed_at, tz]))!.d;
+  return {
+    revisionId: r.governing_revision_id,
+    clause: r.governing_clause,
+    baselineRevisionId: r.governing_baseline_revision_id,
+    cited,
+    schedule,
+    governing: await governingRequirements(db, { supplierId: r.supplier_id, siteId: r.site_id, partId: r.part_id, asOf }),
+  };
 }
 
 async function decisionsFor(db: Queryable, scopeIds: string[]): Promise<DecisionRow[]> {
@@ -417,6 +438,7 @@ export function registerNcrRoutes(app: FastifyInstance, svc: Services) {
       renditions: await renditions(db, 'NCR', id),
       controlled: await controlledRecordOf(db, 'NCR', id),
       rule: DISPOSITION_RULE,
+      requirement: await ncrRequirement(db, base, config.displayTimeZone),
       permissions: {
         manage: has(auth, 'ncr.manage') && base.status !== 'CLOSED',
         authorizeContainment: has(auth, 'containment.authorize'),
@@ -430,6 +452,48 @@ export function registerNcrRoutes(app: FastifyInstance, svc: Services) {
         isReporter: reporterId === auth.userId,
       },
     };
+  });
+
+  /** The governing requirement violated: an exact specification revision and clause, and/or the part schedule. */
+  app.put('/api/ncrs/:id/requirement', async (req) => {
+    const { id } = req.params as { id: string };
+    const auth = await requireCapability(db, req, 'ncr.manage', { action: 'ncr.requirement', entityType: 'ncr', entityId: id });
+    const body = z
+      .object({ governingRevisionId: uuid.nullable(), governingClause: z.string().trim().min(1).max(40).nullable(), governingBaselineRevisionId: uuid.nullable() })
+      .parse(req.body);
+    if (body.governingClause && !body.governingRevisionId) throw unprocessable('A clause is cited within a specification revision');
+    return withTransaction(db, async (tx) => {
+      const n = await loadNcr(tx, id, true);
+      if (n.status === 'CLOSED') throw conflict('The NCR is closed');
+      let summary = 'Governing requirement cleared';
+      if (body.governingRevisionId) {
+        const rev = await one<{ number: string; revision_label: string }>(
+          tx,
+          `SELECT d.number, r.revision_label FROM controlled_document_revision r JOIN controlled_document d ON d.id = r.document_id
+            JOIN document_classification c ON c.document_id = d.id WHERE r.id = $1`,
+          [body.governingRevisionId],
+        );
+        if (!rev) throw unprocessable('Cite a revision of a classified specification or agreement document');
+        const clauses = await many<{ clause_ref: string }>(tx, 'SELECT clause_ref FROM document_clause WHERE revision_id = $1', [body.governingRevisionId]);
+        if (body.governingClause && clauses.length && !clauses.some((c) => c.clause_ref === body.governingClause)) {
+          throw unprocessable(`Clause ${body.governingClause} is not recorded for ${rev.number} Rev ${rev.revision_label}`);
+        }
+        summary = `Governing requirement: ${rev.number} Rev ${rev.revision_label}${body.governingClause ? ` ${body.governingClause}` : ''}`;
+      }
+      if (body.governingBaselineRevisionId) {
+        const b = await one<{ status: string; part_id: string }>(tx, 'SELECT br.status, tb.part_id FROM baseline_revision br JOIN technical_baseline tb ON tb.id = br.baseline_id WHERE br.id = $1', [body.governingBaselineRevisionId]);
+        if (!b || !['RELEASED', 'SUPERSEDED'].includes(b.status)) throw unprocessable('Cite a released part schedule (baseline revision)');
+        if (n.part_id && b.part_id !== n.part_id) throw unprocessable('The part schedule is for a different part');
+      }
+      await tx.query(`UPDATE ncr SET governing_revision_id = $2, governing_clause = $3, governing_baseline_revision_id = $4, version = version + 1 WHERE id = $1`, [
+        id,
+        body.governingRevisionId,
+        body.governingClause,
+        body.governingBaselineRevisionId,
+      ]);
+      await audit(tx, { actorId: auth.userId, action: 'ncr.requirement', entityType: 'ncr', entityId: id, summary, after: body, requestId: req.id });
+      return { ok: true };
+    });
   });
 
   app.post('/api/ncrs/:id/scopes', async (req, reply) => {

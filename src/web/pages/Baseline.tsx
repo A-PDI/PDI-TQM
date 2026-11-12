@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, fmtDateTime } from '../api';
 import { FileLinks, UploadEvidence, useBusy } from '../components/sourcing';
 import { Dialog, LoadState, StatusBadge, useLoad } from '../components/ui';
+import { SCHEDULE_FIELDS } from '../../shared/agreements';
 
 interface Char {
   charKey: string;
@@ -16,6 +17,7 @@ interface Char {
   method: string | null;
   special: boolean;
   isDelta: boolean;
+  specReference: string | null;
 }
 
 interface RevisionData {
@@ -42,6 +44,8 @@ export function Baseline() {
   const navigate = useNavigate();
   const { data, error, loading, reload } = useLoad<RevisionData>(`/api/baseline-revisions/${id}`);
   const [chars, setChars] = useState<Char[]>([]);
+  const [schedule, setSchedule] = useState<Record<string, string>>({});
+  const [specRev, setSpecRev] = useState<string>('');
   const [dirty, setDirty] = useState(false);
   const [dialog, setDialog] = useState<null | 'release' | 'return' | 'revise'>(null);
   const [text, setText] = useState('');
@@ -49,9 +53,12 @@ export function Baseline() {
   useEffect(() => {
     if (data) {
       setChars(data.characteristics);
+      setSchedule(((data.revision as unknown as { schedule: Record<string, string> | null }).schedule ?? {}) as Record<string, string>);
+      setSpecRev(data.revision.governing_spec_revision_id ?? '');
       setDirty(false);
     }
   }, [data]);
+  const specs = useLoad<Array<{ number: string; title: string; classification: string; current: { id: string; revisionLabel: string } | null }>>(data?.permissions.canEdit ? '/api/specifications' : null, [data?.permissions.canEdit]);
   if (!data) return <LoadState loading={loading} error={error} />;
   const r = data.revision;
   const p = data.permissions;
@@ -64,7 +71,11 @@ export function Baseline() {
     run(async () => {
       await api(`/api/baseline-revisions/${id}/characteristics`, {
         method: 'PUT',
-        body: { characteristics: chars.map((c) => ({ ...c, formRowRef: c.formRowRef || null, unit: c.unit || null, lower: c.lower || null, upper: c.upper || null })) },
+        body: {
+          characteristics: chars.map((c) => ({ ...c, formRowRef: c.formRowRef || null, unit: c.unit || null, lower: c.lower || null, upper: c.upper || null, specReference: c.specReference || null })),
+          governingSpecRevisionId: specRev || null,
+          schedule,
+        },
       });
       reload();
     }, 'Draft saved');
@@ -164,7 +175,7 @@ export function Baseline() {
               type="button"
               className="btn btn-small"
               onClick={() => {
-                setChars((cs) => [...cs, { charKey: `new_${cs.length + 1}`, name: '', charType: 'DIMENSIONAL', formRowRef: null, unit: '', lower: '', upper: '', limitText: '', method: '', special: false, isDelta: delta }]);
+                setChars((cs) => [...cs, { charKey: `new_${cs.length + 1}`, name: '', charType: 'DIMENSIONAL', formRowRef: null, unit: '', lower: '', upper: '', limitText: '', method: '', special: false, isDelta: delta, specReference: null }]);
                 setDirty(true);
               }}
             >
@@ -186,6 +197,7 @@ export function Baseline() {
                 <th>Upper</th>
                 <th>Unit</th>
                 <th>Criterion / method</th>
+                <th>Spec clause</th>
                 {delta && <th>PDI delta</th>}
                 {p.canEdit && <th />}
               </tr>
@@ -240,6 +252,9 @@ export function Baseline() {
                     <td>
                       <input type="text" aria-label="Criterion" value={c.limitText ?? ''} onChange={(e) => update(i, { limitText: e.target.value })} />
                     </td>
+                    <td style={{ width: 110 }}>
+                      <input type="text" aria-label="Specification clause" placeholder="e.g. SCS-001 §6.3" value={c.specReference ?? ''} onChange={(e) => update(i, { specReference: e.target.value })} />
+                    </td>
                     {delta && (
                       <td>
                         <input type="checkbox" aria-label="PDI delta" checked={c.isDelta} onChange={(e) => update(i, { isDelta: e.target.checked })} />
@@ -268,6 +283,7 @@ export function Baseline() {
                     <td>{c.upper ?? '—'}</td>
                     <td>{c.unit ?? ''}</td>
                     <td className="small">{c.limitText ?? '—'}</td>
+                    <td className="small">{c.specReference ?? '—'}</td>
                     {delta && <td>{c.isDelta ? <span className="badge badge-accepted">delta</span> : ''}</td>}
                   </tr>
                 ),
@@ -275,6 +291,63 @@ export function Baseline() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="card" aria-labelledby="schedule-title">
+        <h2 id="schedule-title">Part-specific schedule (Annex A)</h2>
+        <p className="small muted" style={{ marginTop: 0 }}>
+          Incorporated into supplier agreements as this part's schedule, frozen with the revision on release. Acceptance criteria stay in the characteristics above; nothing here adds pass/fail limits.
+        </p>
+        {p.canEdit ? (
+          <>
+            <div className="field">
+              <label htmlFor="sch-spec">Governing specification</label>
+              <select
+                id="sch-spec"
+                value={specRev}
+                onChange={(e) => {
+                  setSpecRev(e.target.value);
+                  setDirty(true);
+                }}
+              >
+                <option value="">None</option>
+                {specRev && !(specs.data ?? []).some((x) => x.current?.id === specRev) && <option value={specRev}>{r.governing_spec_label ?? 'Current selection'}</option>}
+                {(specs.data ?? [])
+                  .filter((x) => x.classification === 'TECHNICAL_SPECIFICATION' && x.current)
+                  .map((x) => (
+                    <option key={x.current!.id} value={x.current!.id}>
+                      {x.number} Rev {x.current!.revisionLabel} — {x.title}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            {SCHEDULE_FIELDS.map((fd) => (
+              <div className="field" key={fd.key}>
+                <label htmlFor={`sch-${fd.key}`}>{fd.label}</label>
+                <textarea
+                  id={`sch-${fd.key}`}
+                  rows={2}
+                  value={schedule[fd.key] ?? ''}
+                  onChange={(e) => {
+                    setSchedule((x) => ({ ...x, [fd.key]: e.target.value }));
+                    setDirty(true);
+                  }}
+                />
+              </div>
+            ))}
+          </>
+        ) : (
+          <dl className="kv">
+            <dt>Governing specification</dt>
+            <dd>{r.governing_spec_label ?? '—'}</dd>
+            {SCHEDULE_FIELDS.filter((fd) => schedule[fd.key]).map((fd) => (
+              <div key={fd.key} style={{ display: 'contents' }}>
+                <dt>{fd.label}</dt>
+                <dd>{schedule[fd.key]}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
       </section>
 
       {data.sources.length > 0 && (

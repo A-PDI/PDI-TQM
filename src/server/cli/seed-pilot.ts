@@ -1,7 +1,7 @@
 import { buildApp, initFreshEvidenceVolume, pairEvidenceVolume } from '../app.js';
 import { loadConfig } from '../config.js';
 import { createPool } from '../db.js';
-import { seedPilot } from '../pilot-seed.js';
+import { pilotSessions, seedPilot, seedPilotAgreements } from '../pilot-seed.js';
 
 /**
  * Pilot sample data for an isolated TEST environment (refuses production):
@@ -17,13 +17,12 @@ async function main() {
     await initFreshEvidenceVolume(db, svc.storage);
     await pairEvidenceVolume(db, svc.storage);
     await app.ready();
-    const result = await seedPilot(app, svc, {
-      password: process.env.TQMS_DEMO_PASSWORD ?? '',
-      templatesDir: process.argv[2] ?? process.env.PILOT_TEMPLATES_DIR ?? null,
-      log: { info: (o, m) => console.log(m ?? '', o), warn: (o, m) => console.warn(m ?? '', o) },
-      drain: true,
-    });
-    console.log(JSON.stringify(result, null, 2));
+    const password = process.env.TQMS_DEMO_PASSWORD ?? '';
+    const log = { info: (o: object, m?: string) => console.log(m ?? '', o), warn: (o: object, m?: string) => console.warn(m ?? '', o) };
+    const sessions = pilotSessions(app, password);
+    const agreements = await seedPilotAgreements(app, svc, { password, log, drain: true, sessions });
+    const result = await seedPilot(app, svc, { password, templatesDir: process.argv[2] ?? process.env.PILOT_TEMPLATES_DIR ?? null, log, drain: true, sessions });
+    console.log(JSON.stringify({ agreements, records: result }, null, 2));
   } finally {
     await app.close();
     await db.end();
