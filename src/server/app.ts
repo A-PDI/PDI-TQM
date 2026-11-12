@@ -37,6 +37,9 @@ import { registerDocumentRoutes } from './sourcing/documents.js';
 import { registerSourcingRoutes } from './sourcing/requests.js';
 import { registerSourceRoutes } from './sourcing/sources.js';
 import { registerSupplierRoutes } from './sourcing/suppliers.js';
+import { registerAgreementRoutes } from './agreements/agreements.js';
+import { agreementPackageHandler } from './agreements/package.js';
+import { registerSpecificationRoutes } from './agreements/specifications.js';
 import type { Services } from './services.js';
 import { EvidenceStorage } from './storage.js';
 
@@ -123,6 +126,7 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
       record_report: recordReportHandler(svc),
       reminder_sweep: reminderSweepHandler(svc),
       controlled_render: controlledRenderHandler(svc),
+      agreement_package: agreementPackageHandler(svc),
     },
     app.log,
   );
@@ -200,6 +204,8 @@ export async function buildApp(config: Config, db: Db, opts: { rootDir?: string 
   registerCommitmentRoutes(app, svc);
   registerChangeRoutes(app, svc);
   registerFormRoutes(app, svc);
+  registerSpecificationRoutes(app, svc);
+  registerAgreementRoutes(app, svc);
   registerInjectorRoutes(app, svc);
   registerBenchRoutes(app, svc);
   registerReportRoutes(app, svc);

@@ -91,7 +91,7 @@ interface ScarData {
   scar: Record<string, string | number | null> & { id: string; number: string; status: string; cycle: number; statusText: string; effectiveness_plan: string | null };
   responses: Array<Record<string, string | number | boolean | null>>;
   verifications: Array<Record<string, string | number | null> & { inspections: Array<{ id: string; number: string; outcome: string }> }>;
-  ncrs: Array<{ id: string; number: string; title: string; status: string; relation: string }>;
+  ncrs: Array<{ id: string; number: string; title: string; status: string; relation: string; governingRequirement: string | null }>;
   reopens: Array<{ id: string; ncr_number: string; from_status: string; to_cycle: number; reason: string; reopened_by_name: string; reopened_at: string }>;
   commitments: Array<{ id: string; number: string; promisedAction: string; status: string }>;
   inspections: Array<{ id: string; number: string; outcome: string; dateReceived: string; lotNumber: string | null; completedAt: string }>;
@@ -147,6 +147,7 @@ export function ScarDetail() {
               <span key={n.id}>
                 {i > 0 && ', '}
                 <Link to={`/quality/ncrs/${n.id}`}>{n.number}</Link> ({n.relation.toLowerCase()}, {n.status.replaceAll('_', ' ').toLowerCase()})
+                {n.governingRequirement && <span className="small"> — requirement: {n.governingRequirement}</span>}
               </span>
             ))}
             {!data.ncrs.length && '—'}

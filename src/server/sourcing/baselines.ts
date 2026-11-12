@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { type FormDefinition, sectionRows } from '../../shared/forms.js';
 import { parseReading } from '../../shared/measurement.js';
+import { SCHEDULE_FIELDS } from '../../shared/agreements.js';
 import { audit } from '../audit.js';
 import { auditedDenial, has, recheckCapability, requireCapability } from '../auth.js';
 import { type DbClient, many, one, withTransaction } from '../db.js';
@@ -22,6 +23,8 @@ const characteristic = z.object({
   method: z.string().trim().max(500).nullable().optional(),
   special: z.boolean().optional(),
   isDelta: z.boolean().optional(),
+  // Clause of the governing specification the characteristic implements, e.g. "SCS-001 §6.3".
+  specReference: z.string().trim().max(80).nullable().optional(),
 });
 type CharacteristicInput = z.infer<typeof characteristic>;
 
@@ -51,8 +54,8 @@ function validateCharacteristics(chars: CharacteristicInput[]) {
 
 async function copyCharacteristics(tx: DbClient, fromRevision: string, toRevision: string, asDelta: boolean | null) {
   await tx.query(
-    `INSERT INTO baseline_characteristic (revision_id, char_key, name, char_type, form_row_ref, unit, lower_limit, upper_limit, nominal, limit_text, method, location, special, is_delta)
-     SELECT $2, char_key, name, char_type, form_row_ref, unit, lower_limit, upper_limit, nominal, limit_text, method, location, special,
+    `INSERT INTO baseline_characteristic (revision_id, char_key, name, char_type, form_row_ref, unit, lower_limit, upper_limit, nominal, limit_text, method, location, special, spec_reference, is_delta)
+     SELECT $2, char_key, name, char_type, form_row_ref, unit, lower_limit, upper_limit, nominal, limit_text, method, location, special, spec_reference,
             CASE WHEN $3::boolean IS NULL THEN is_delta ELSE $3::boolean END
        FROM baseline_characteristic WHERE revision_id = $1`,
     [fromRevision, toRevision, asDelta],
@@ -151,7 +154,14 @@ export function registerBaselineRoutes(app: FastifyInstance, svc: Services) {
         `INSERT INTO baseline_revision (baseline_id, revision_label, base_revision_id, authored_by) VALUES ($1,$2,$3,$4) RETURNING id`,
         [id, body.revisionLabel.toUpperCase(), baseRevisionId, auth.userId],
       );
-      if (current) await copyCharacteristics(tx, current.id, r!.id, null);
+      if (current) {
+        await copyCharacteristics(tx, current.id, r!.id, null);
+        // The part-specific schedule content carries forward into the draft for review.
+        await tx.query(
+          `UPDATE baseline_revision n SET schedule = c.schedule, governing_spec_revision_id = c.governing_spec_revision_id FROM baseline_revision c WHERE n.id = $1 AND c.id = $2`,
+          [r!.id, current.id],
+        );
+      }
       await audit(tx, {
         actorId: auth.userId,
         action: 'baseline.revise',
@@ -172,7 +182,8 @@ export function registerBaselineRoutes(app: FastifyInstance, svc: Services) {
     const revision = await one<Record<string, unknown> & { baseline_id: string; part_id: string; base_revision_id: string | null; status: string; authored_by: string; submitted_by: string | null; default_form_number: string | null }>(
       db,
       `SELECT r.*, b.title, b.ownership, b.part_id, p.part_number, p.description AS part_description, p.default_form_number,
-              a.display_name AS authored_by_name, s.display_name AS submitted_by_name, rl.display_name AS released_by_name
+              a.display_name AS authored_by_name, s.display_name AS submitted_by_name, rl.display_name AS released_by_name,
+              (SELECT d.number || ' Rev ' || cr.revision_label FROM controlled_document_revision cr JOIN controlled_document d ON d.id = cr.document_id WHERE cr.id = r.governing_spec_revision_id) AS governing_spec_label
          FROM baseline_revision r JOIN technical_baseline b ON b.id = r.baseline_id JOIN company_part p ON p.id = b.part_id
          LEFT JOIN app_user a ON a.id = r.authored_by LEFT JOIN app_user s ON s.id = r.submitted_by LEFT JOIN app_user rl ON rl.id = r.released_by
         WHERE r.id = $1`,
@@ -183,7 +194,7 @@ export function registerBaselineRoutes(app: FastifyInstance, svc: Services) {
       many(
         db,
         `SELECT char_key AS "charKey", name, char_type AS "charType", form_row_ref AS "formRowRef", unit, lower_limit AS lower, upper_limit AS upper,
-                limit_text AS "limitText", method, special, is_delta AS "isDelta"
+                limit_text AS "limitText", method, special, is_delta AS "isDelta", spec_reference AS "specReference"
            FROM baseline_characteristic WHERE revision_id = $1 ORDER BY char_key`,
         [id],
       ),
@@ -270,6 +281,8 @@ export function registerBaselineRoutes(app: FastifyInstance, svc: Services) {
         characteristics: z.array(characteristic).max(300),
         documentRef: z.string().trim().max(300).nullable().optional(),
         notes: z.string().trim().max(2000).nullable().optional(),
+        governingSpecRevisionId: uuid.nullable().optional(),
+        schedule: z.object(Object.fromEntries(SCHEDULE_FIELDS.map((f) => [f.key, z.string().trim().max(2000).optional()]))).strict().optional(),
       })
       .parse(req.body);
     if (!uuid.safeParse(id).success) throw notFound('Baseline revision');
@@ -281,9 +294,24 @@ export function registerBaselineRoutes(app: FastifyInstance, svc: Services) {
       await tx.query('DELETE FROM baseline_characteristic WHERE revision_id = $1', [id]);
       for (const c of chars) {
         await tx.query(
-          `INSERT INTO baseline_characteristic (revision_id, char_key, name, char_type, form_row_ref, unit, lower_limit, upper_limit, limit_text, method, special, is_delta)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-          [id, c.charKey, c.name, c.charType, c.formRowRef ?? null, c.unit || null, c.lower, c.upper, c.limitText || null, c.method || null, c.special ?? false, r.base_revision_id ? (c.isDelta ?? false) : false],
+          `INSERT INTO baseline_characteristic (revision_id, char_key, name, char_type, form_row_ref, unit, lower_limit, upper_limit, limit_text, method, special, is_delta, spec_reference)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+          [id, c.charKey, c.name, c.charType, c.formRowRef ?? null, c.unit || null, c.lower, c.upper, c.limitText || null, c.method || null, c.special ?? false, r.base_revision_id ? (c.isDelta ?? false) : false, c.specReference || null],
+        );
+      }
+      if (body.governingSpecRevisionId) {
+        const spec = await one(
+          tx,
+          `SELECT 1 FROM controlled_document_revision r JOIN document_classification c ON c.document_id = r.document_id WHERE r.id = $1 AND c.classification = 'TECHNICAL_SPECIFICATION'`,
+          [body.governingSpecRevisionId],
+        );
+        if (!spec) throw unprocessable('The governing specification must be a revision of a classified technical specification');
+      }
+      if (body.governingSpecRevisionId !== undefined || body.schedule !== undefined) {
+        const schedule = body.schedule ? Object.fromEntries(Object.entries(body.schedule).filter(([, v]) => typeof v === 'string' && v.length > 0)) : undefined;
+        await tx.query(
+          `UPDATE baseline_revision SET governing_spec_revision_id = CASE WHEN $2 THEN $3::uuid ELSE governing_spec_revision_id END, schedule = coalesce($4::jsonb, schedule) WHERE id = $1`,
+          [id, body.governingSpecRevisionId !== undefined, body.governingSpecRevisionId ?? null, schedule ? JSON.stringify(schedule) : null],
         );
       }
       if (body.documentRef !== undefined || body.notes !== undefined) {

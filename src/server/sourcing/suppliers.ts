@@ -172,6 +172,7 @@ export function registerSupplierRoutes(app: FastifyInstance, svc: Services) {
         canManage: has(auth, 'supplier.manage'),
         canQualify: has(auth, 'supplier.qualify'),
         canRestrict: has(auth, 'supplier.restrict'),
+        canChangeStatus: has(auth, 'supplier.manage'),
       },
     };
   });
@@ -277,6 +278,23 @@ export function registerSupplierRoutes(app: FastifyInstance, svc: Services) {
         requestId: req.id,
       });
       return { status: 'DECIDED', decision: body.decision };
+    });
+  });
+
+  /** Active / inactive is master data: it gates nothing and never removes history (agreements, sources, records stay). */
+  app.post('/api/suppliers/:id/status', async (req) => {
+    const { id } = req.params as { id: string };
+    const auth = await requireCapability(db, req, 'supplier.manage', { action: 'supplier.status', entityType: 'supplier', entityId: id });
+    const body = z.object({ status: z.enum(['ACTIVE', 'INACTIVE']), reason: z.string().trim().min(5).max(2000) }).parse(req.body);
+    if (!uuid.safeParse(id).success) throw notFound('Supplier');
+    return withTransaction(db, async (tx) => {
+      const s = await one<{ status: string; legal_name: string }>(tx, 'SELECT status, legal_name FROM supplier WHERE id = $1 FOR UPDATE', [id]);
+      if (!s) throw notFound('Supplier');
+      if (s.status === body.status) throw conflict(`${s.legal_name} is already ${body.status.toLowerCase()}`);
+      if (body.status === 'ACTIVE' && s.status === 'PROSPECTIVE') throw conflict('A prospective supplier becomes active through an approved qualification');
+      await tx.query('UPDATE supplier SET status = $2 WHERE id = $1', [id, body.status]);
+      await audit(tx, { actorId: auth.userId, action: 'supplier.status', entityType: 'supplier', entityId: id, summary: `${s.legal_name} marked ${body.status.toLowerCase()}; records and agreements are retained`, reason: body.reason, before: { status: s.status }, after: { status: body.status }, requestId: req.id });
+      return { status: body.status };
     });
   });
 

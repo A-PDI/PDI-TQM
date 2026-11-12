@@ -6,6 +6,7 @@ import { FileLinks, GateList, QualificationBadge, SourceStatusBadge, UploadEvide
 import { type QualityContext, QualityContextCard } from '../components/quality';
 import { Dialog, LoadState, OutcomeBadge, StatusBadge, useLoad } from '../components/ui';
 import { ControlledFormsPanel, EventRecordStatus } from '../components/controlled';
+import { type GoverningSnapshot, GoverningRequirements } from '../components/agreements';
 
 interface Fai {
   id: string;
@@ -28,6 +29,7 @@ interface Fai {
   decidedBy: string | null;
   decidedAt: string | null;
   files: Array<{ linkId: string; fileId: string; name: string }>;
+  specificationSnapshot: GoverningSnapshot | null;
   results: Array<{ charKey: string; charName: string; unit: string | null; lower: string | null; upper: string | null; value: string | null; visualResult: string | null; evaluation: string; note: string | null }>;
 }
 
@@ -50,6 +52,7 @@ interface SourceData {
   repointCandidates: Array<{ id: string; revisionLabel: string }>;
   quality: QualityContext;
   sourceRestrictions: Array<{ id: string; reason: string; decidedAt: string; decidedBy: string }>;
+  contractualCoverage: { informational: boolean; governing: GoverningSnapshot | null; pending: Array<{ number: string; status: string }> } | null;
   permissions: { canManage: boolean; canDecideFai: boolean; canApprove: boolean; approveBlockedReason: string | null; canRegisterFai: boolean; canRestrict: boolean };
 }
 
@@ -257,6 +260,16 @@ export function Source() {
                     <span className="badge badge-review">open</span>
                   )}
                   <EventRecordStatus entity="FAI" entityId={x.id} />
+                  {x.specificationSnapshot && (
+                    <div className="small">
+                      Governing specifications at receipt:{' '}
+                      {x.specificationSnapshot.requirements
+                        .filter((r) => r.role === 'SPECIFICATION' || r.role === 'PART_SCHEDULE')
+                        .map((r) => `${r.documentNumber} Rev ${r.revisionLabel}`)
+                        .join(', ') || 'none'}{' '}
+                      <span className="muted">(VAL-02 criteria come from the released baseline)</span>
+                    </div>
+                  )}
                   {x.correctiveRationale && <div className="small">Corrective rationale: {x.correctiveRationale}</div>}
                   {x.defects && <div className="small">Defects: {x.defects}</div>}
                   {x.conditions && <div className="small">Conditions: {x.conditions}</div>}
@@ -755,6 +768,11 @@ export function Source() {
           </div>
         )}
       </Dialog>
+      <GoverningRequirements
+        snapshot={data.contractualCoverage?.governing}
+        title="Contractual coverage"
+        note={`Shown for information. Coverage is not a source-approval gate and does not change this source's approval.${data.contractualCoverage?.pending.length ? ` In progress: ${data.contractualCoverage.pending.map((x) => x.number).join(', ')}.` : ''}`}
+      />
       <ControlledFormsPanel entity="SOURCE" entityId={id} />
     </>
   );

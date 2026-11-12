@@ -50,6 +50,14 @@ const COUNTED_TABLES = [
   'controlled_record_signature',
   'controlled_output_validation',
   'controlled_attachment_check',
+  'specification_category',
+  'document_classification',
+  'document_clause',
+  'supplier_acknowledgment',
+  'supplier_agreement',
+  'supplier_agreement_site',
+  'supplier_agreement_document',
+  'supplier_agreement_signature',
 ] as const;
 
 export interface BackupFile {

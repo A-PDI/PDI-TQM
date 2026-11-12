@@ -9,6 +9,7 @@ import type { EffectiveSourceStatus } from '../../shared/sourcing';
 import { RequestConcessionDialog } from './Concessions';
 import { IssueScarDialog } from './Scars';
 import { ControlledFormsPanel } from '../components/controlled';
+import { type NcrRequirement, NcrRequirementPanel } from '../components/agreements';
 
 export function NcrList() {
   const navigate = useNavigate();
@@ -144,6 +145,7 @@ interface NcrData {
   inspections: Array<{ id: string; number: string; lotNumber: string | null; outcome: string; completedAt: string }>;
   history: HistoryRow[];
   renditions: Rendition[];
+  requirement?: NcrRequirement;
   permissions: {
     manage: boolean;
     authorizeContainment: boolean;
@@ -543,6 +545,7 @@ export function NcrDetail() {
         )}
         <RecordPdfs renditions={data.renditions} issueUrl={`/api/ncrs/${id}/report`} docCode="OPS-06" canIssue={p.manage || closed} onIssued={reload} controlled={data.controlled ?? null} />
       </section>
+      <NcrRequirementPanel ncrId={id} requirement={data.requirement} canEdit={p.manage} onChanged={reload} />
       <ControlledFormsPanel entity="NCR" entityId={id} />
       <HistoryCard history={data.history} />
 

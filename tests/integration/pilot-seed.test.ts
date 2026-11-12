@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { seedPilot } from '../../src/server/pilot-seed.js';
+import { type PilotSessions, pilotSessions, seedPilot, seedPilotAgreements } from '../../src/server/pilot-seed.js';
 import { standInFiles } from '../fixtures/controlled-templates.js';
 import { type Harness, PASSWORD, startHarness } from './harness.js';
 
@@ -12,14 +12,33 @@ import { type Harness, PASSWORD, startHarness } from './harness.js';
  */
 let h: Harness;
 let dir: string;
+let sessions: PilotSessions;
 const log = { info: () => undefined, warn: () => undefined };
 
 beforeAll(async () => {
   h = await startHarness();
+  // One sign-in per persona across both stages (sign-in is rate limited).
+  sessions = pilotSessions(h.app, PASSWORD);
   dir = mkdtempSync(path.join(h.storageRoot, 'pilot-templates-'));
   for (const f of await standInFiles(['INT-01', 'OPS-02', 'OPS-04', 'OPS-05', 'OPS-06', 'OPS-07', 'VAL-02'])) writeFileSync(path.join(dir, f.name), f.bytes);
 });
 afterAll(async () => h?.close());
+
+describe('pilot agreements', () => {
+  it('creates an executed, a superseded, an amended and a draft agreement once, without templates', async () => {
+    const r = await seedPilotAgreements(h.app, h.svc, { password: PASSWORD, log, drain: true, sessions });
+    expect(r.status).toBe('SEEDED');
+    expect(r.records).toHaveLength(6);
+    const rows = (await h.pool.query(`SELECT a.kind, a.status, s.code FROM supplier_agreement a JOIN supplier s ON s.id = a.supplier_id ORDER BY a.created_at`)).rows;
+    expect(rows.map((x) => `${x.code}:${x.kind}:${x.status}`)).toEqual(['BSC:AGREEMENT:SUPERSEDED', 'BSC:RENEWAL:EXECUTED', 'BSC:AMENDMENT:EXECUTED', 'NWR:AGREEMENT:DRAFT']);
+    const packages = (await h.pool.query(`SELECT v.ok FROM report_rendition r JOIN controlled_output_validation v ON v.rendition_id = r.id WHERE r.subject_type = 'SUPPLIER_AGREEMENT'`)).rows;
+    expect(packages.map((p) => p.ok)).toEqual([true, true, true, true, true, true]);
+    const labels = (await h.pool.query(`SELECT r.revision_label FROM controlled_document_revision r JOIN controlled_document d ON d.id = r.document_id WHERE d.number = 'SCS-001' ORDER BY r.effective_from`)).rows;
+    expect(labels.map((x) => x.revision_label)).toEqual(['S1.0', 'S1.1']);
+    const again = await seedPilotAgreements(h.app, h.svc, { password: PASSWORD, log, sessions });
+    expect(again).toMatchObject({ status: 'SKIPPED', reason: expect.stringMatching(/already seeded/) });
+  });
+});
 
 describe('pilot seed', () => {
   it('waits for the controlled templates rather than recording events without their forms', async () => {
@@ -29,7 +48,7 @@ describe('pilot seed', () => {
   });
 
   it('imports the templates, creates one record per module through its single approval path, and runs once', async () => {
-    const r = await seedPilot(h.app, h.svc, { password: PASSWORD, templatesDir: dir, log, drain: true });
+    const r = await seedPilot(h.app, h.svc, { password: PASSWORD, templatesDir: dir, log, drain: true, sessions });
     expect(r.status).toBe('SEEDED');
     expect(r.templates.failed).toEqual([]);
     expect(r.records).toHaveLength(9);
@@ -40,7 +59,7 @@ describe('pilot seed', () => {
     );
     const outputs = (await h.pool.query(`SELECT v.ok FROM report_rendition r JOIN controlled_output_validation v ON v.rendition_id = r.id WHERE r.subject_type = 'CONTROLLED_RECORD'`)).rows;
     expect(outputs.map((o) => o.ok)).toEqual([true, true, true]);
-    const again = await seedPilot(h.app, h.svc, { password: PASSWORD, templatesDir: dir, log });
+    const again = await seedPilot(h.app, h.svc, { password: PASSWORD, templatesDir: dir, log, sessions });
     expect(again).toMatchObject({ status: 'SKIPPED', reason: expect.stringMatching(/already seeded/) });
   });
 

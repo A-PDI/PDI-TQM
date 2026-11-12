@@ -5,7 +5,7 @@
  *   OPS-07_actions_Continuation_Rev03.pdf       → continuation sheet OPS-07/actions
  *   PDI_Master_Form_Standard_Rev03.pdf          → library document PDI-Master-Form-Standard
  */
-export type DocumentKind = 'FORM' | 'CONTINUATION' | 'LIBRARY';
+export type DocumentKind = 'FORM' | 'CONTINUATION' | 'LIBRARY' | 'SPECIFICATION';
 
 export interface ParsedDocumentName {
   number: string;
@@ -66,6 +66,8 @@ export const DOCUMENT_FAMILIES: Record<string, string> = {
   PRS: 'Product requirements',
   SYS: 'System administration',
   PDI: 'Library',
+  SCS: 'Supplier quality specifications',
+  MSA: 'Supplier agreements',
 };
 
 /**
@@ -100,7 +102,7 @@ const humanize = (s: string) =>
 /** Reads document identity from a file name; returns null when it does not follow the convention. */
 export function parseDocumentFilename(fileName: string): ParsedDocumentName | null {
   const base = fileName.split(/[\\/]/).pop() ?? '';
-  const m = /^(.+)_Rev([0-9A-Za-z]{1,6})\.pdf$/i.exec(base);
+  const m = /^(.+)_Rev([0-9A-Za-z][0-9A-Za-z.]{0,7})\.pdf$/i.exec(base);
   if (!m) return null;
   const [, stem, revisionLabel] = m as unknown as [string, string, string];
 
@@ -113,7 +115,9 @@ export function parseDocumentFilename(fileName: string): ParsedDocumentName | nu
       const section = continuation[1]!;
       return { number: `${code}/${section.replace(/_/g, '-')}`, typeCode: code, family, kind: 'CONTINUATION', title: `Continuation sheet — ${humanize(section)}`, revisionLabel };
     }
-    return { number: code, typeCode: code, family, kind: 'FORM', title: DOCUMENT_TYPES[code] ?? humanize(rest), revisionLabel };
+    // Appendix B types are forms; any other coded document (e.g. SCS-001, MSA-001) is a controlled specification.
+    const registered = DOCUMENT_TYPES[code] !== undefined;
+    return { number: code, typeCode: code, family, kind: registered ? 'FORM' : 'SPECIFICATION', title: DOCUMENT_TYPES[code] ?? humanize(rest), revisionLabel };
   }
 
   const library = /^PDI_([A-Za-z0-9_&-]+)$/.exec(stem);
@@ -124,4 +128,4 @@ export function parseDocumentFilename(fileName: string): ParsedDocumentName | nu
   return null;
 }
 
-export const FILENAME_RULE = 'Name files <CODE>_<Title>_Rev<NN>.pdf (for example OPS-06_Nonconformance_Report_Rev03.pdf), <CODE>_<section>_Continuation_Rev<NN>.pdf, or PDI_<Title>_Rev<NN>.pdf';
+export const FILENAME_RULE = 'Name files <CODE>_<Title>_Rev<NN>.pdf (for example OPS-06_Nonconformance_Report_Rev03.pdf or SCS-001_Cast_Component_Quality_Identification_Standard_Rev1.0.pdf), <CODE>_<section>_Continuation_Rev<NN>.pdf, or PDI_<Title>_Rev<NN>.pdf';

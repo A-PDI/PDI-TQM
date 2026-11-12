@@ -107,6 +107,8 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
                 WHEN 'CHANGE_ACTION' THEN '/changes/' || (SELECT ca.change_id FROM change_action ca WHERE ca.id = w.subject_id)
                 WHEN 'FORM_REVISION' THEN '/forms/' || w.subject_id
                 WHEN 'INSPECTION_STAGE' THEN '/inspection-stages/' || w.subject_id
+                WHEN 'SUPPLIER_AGREEMENT' THEN '/agreements/' || w.subject_id
+                WHEN 'SUPPLIER_ACKNOWLEDGMENT' THEN '/suppliers/' || (SELECT k.supplier_id FROM supplier_acknowledgment k WHERE k.id = w.subject_id) || '#agreements'
               END AS link,
               (w.due_at IS NOT NULL AND w.due_at < now()) AS overdue
          FROM work_item w LEFT JOIN app_user a ON a.id = w.assignee_id
@@ -203,7 +205,9 @@ export function registerCoreRoutes(app: FastifyInstance, svc: Services) {
                  CASE
                    WHEN l.inspection_id IS NOT NULL THEN '/inspections/' || l.inspection_id
                    WHEN l.entity_type = 'EVIDENCE_REQUIREMENT' THEN '/sourcing/' || (SELECT r.sourcing_request_id FROM evidence_requirement r WHERE r.id = l.entity_id)
-                   WHEN l.entity_type = 'ACKNOWLEDGMENT' THEN '/sources/' || (SELECT a.source_id FROM supplier_acknowledgment a WHERE a.id = l.entity_id)
+                   WHEN l.entity_type = 'ACKNOWLEDGMENT' THEN coalesce('/sources/' || (SELECT a.source_id FROM supplier_acknowledgment a WHERE a.id = l.entity_id),
+                                                                         '/suppliers/' || (SELECT a.supplier_id FROM supplier_acknowledgment a WHERE a.id = l.entity_id))
+                   WHEN l.entity_type = 'SUPPLIER_AGREEMENT' THEN '/agreements/' || l.entity_id
                    WHEN l.entity_type = 'FAI' THEN '/sources/' || (SELECT x.source_id FROM fai_sample x WHERE x.id = l.entity_id)
                    WHEN l.entity_type = 'QUALIFICATION' THEN '/suppliers/' || (SELECT x.supplier_id FROM supplier_qualification x WHERE x.id = l.entity_id)
                    WHEN l.entity_type = 'CERTIFICATE' THEN '/suppliers/' || (SELECT x.supplier_id FROM supplier_certificate x WHERE x.id = l.entity_id)

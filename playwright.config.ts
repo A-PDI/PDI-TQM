@@ -4,9 +4,10 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const STUB_PORT = Number(process.env.CARBONZAPP_STUB_PORT ?? 3199);
 const VISUAL = /visual\.spec\.ts$/;
-// Released controlled forms bind module events (one approval path per event). These specs release them,
-// so they run after the module walkthroughs, which exercise the modules with no controlled form in force.
-const CONTROLLED = /(controlled-forms|documents)\.spec\.ts$/;
+// Released controlled forms bind module events (one approval path per event), and agreement documents
+// change the Document Library. These specs release them, so they run after the module walkthroughs,
+// which exercise the modules with no controlled form in force.
+const CONTROLLED = /(agreements|controlled-forms|documents)\.spec\.ts$/;
 const VISUAL_FONTS = path.resolve(import.meta.dirname, 'tests/fixtures/fonts.conf');
 
 export default defineConfig({

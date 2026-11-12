@@ -20,6 +20,7 @@ import { ApiError, api, fmtDate, fmtDateTime } from '../api';
 import { Dialog, LoadState, OutcomeBadge, type PartOption, PartTypeahead, StatusBadge, useLoad } from '../components/ui';
 import { RequestConcessionDialog } from './Concessions';
 import { ControlledFormsPanel } from '../components/controlled';
+import { type GoverningSnapshot, GoverningRequirements } from '../components/agreements';
 
 export interface Detail {
   id: string;
@@ -43,6 +44,7 @@ export interface Detail {
   completedBy: string | null;
   form: { revisionId: string; definition: FormDefinition };
   baseline: { baselineTitle: string; revisionLabel: string; synthetic: boolean } | null;
+  specifications: GoverningSnapshot | null;
   limits: Record<string, GoverningLimit>;
   units: Array<{ unitIndex: number; serialNumber: string | null; dispositionNote: string | null }>;
   activated: string[];
@@ -714,6 +716,9 @@ export function Workbench() {
       </section>
 
       <GeneralPhotos detail={detail} photos={photos} editable={editable} uploadPhoto={uploadPhoto} removePhoto={removePhoto} />
+      {detail.specifications && (
+        <GoverningRequirements snapshot={detail.specifications} title="Applicable controlled requirements" note="Recorded when the inspection was launched. Pass/fail limits come only from the released technical baseline above." />
+      )}
       {/* The inspection's OPS-02 is completed alongside it and submitted when the inspection is completed. */}
       <ControlledFormsPanel entity="INSPECTION" entityId={id} hideWhenEmpty />
       <HistoryPanel id={id} detail={detail} />

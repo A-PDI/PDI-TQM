@@ -14,6 +14,10 @@ const uuid = z.string().uuid();
 
 interface EntityRule {
   capability: Capability;
+  /** Overrides the capability for a particular record (e.g. specification acknowledgments are supplier records). */
+  capabilityFor?: (db: Queryable, id: string) => Promise<Capability>;
+  /** Why a linked file cannot be unlinked, beyond the record being closed. */
+  lockedReason?: (db: Queryable, id: string, fileId: string) => Promise<string | null>;
   /** Returns whether files may be added/removed now, plus the record the audit entry belongs to. */
   resolve: (db: Queryable, id: string) => Promise<{ open: boolean; closedReason: string; auditType: string; auditId: string } | null>;
 }
@@ -29,8 +33,26 @@ const RULES: Record<string, EntityRule> = {
   ACKNOWLEDGMENT: {
     capability: 'sourcing.manage',
     resolve: async (db, id) => {
-      const r = await one<{ response: string; source_id: string }>(db, 'SELECT response, source_id FROM supplier_acknowledgment WHERE id = $1', [id]);
-      return r && { open: true, closedReason: '', auditType: 'source', auditId: r.source_id };
+      const r = await one<{ response: string; source_id: string | null; supplier_id: string | null }>(db, 'SELECT response, source_id, supplier_id FROM supplier_acknowledgment WHERE id = $1', [id]);
+      // A specification acknowledgment (no source) belongs to the supplier record.
+      return r && { open: true, closedReason: '', auditType: r.source_id ? 'source' : 'supplier', auditId: (r.source_id ?? r.supplier_id)! };
+    },
+    capabilityFor: async (db, id) => ((await one(db, 'SELECT 1 FROM supplier_acknowledgment WHERE id = $1 AND source_id IS NULL', [id])) ? 'supplier.manage' : 'sourcing.manage'),
+  },
+  SUPPLIER_AGREEMENT: {
+    capability: 'supplier.manage',
+    resolve: async (db, id) => {
+      const r = await one<{ status: string; number: string }>(db, 'SELECT status, number FROM supplier_agreement WHERE id = $1', [id]);
+      return r && { open: !['CANCELLED', 'SUPERSEDED', 'TERMINATED'].includes(r.status), closedReason: `${r.number} is ${r.status.toLowerCase()}`, auditType: 'supplier_agreement', auditId: id };
+    },
+    // The signed copy, an exhibit in a manifest, and anything on an agreement past draft stay linked.
+    lockedReason: async (db, id, fileId) => {
+      const r = await one<{ status: string; executed_file_id: string | null }>(db, 'SELECT status, executed_file_id FROM supplier_agreement WHERE id = $1', [id]);
+      if (!r) return 'Agreement not found';
+      if (r.executed_file_id === fileId) return 'The signed agreement stays on record';
+      if (await one(db, 'SELECT 1 FROM supplier_agreement_document WHERE agreement_id = $1 AND file_id = $2', [id, fileId])) return 'The file is an exhibit in the manifest; remove it from the manifest first';
+      if (r.status !== 'DRAFT' && r.status !== 'AWAITING_EXECUTION') return 'Documents on this agreement can no longer be removed';
+      return null;
     },
   },
   FAI: {
@@ -133,7 +155,7 @@ export function registerDocumentRoutes(app: FastifyInstance, svc: Services) {
     const rule = RULES[entityType];
     if (!rule) throw badRequest('Unsupported evidence target');
     if (!uuid.safeParse(entityId).success) throw notFound('Record');
-    const auth = await requireCapability(db, req, rule.capability, { action: 'evidence.upload', entityType, entityId });
+    const auth = await requireCapability(db, req, rule.capabilityFor ? await rule.capabilityFor(db, entityId) : rule.capability, { action: 'evidence.upload', entityType, entityId });
     const target = await rule.resolve(db, entityId);
     if (!target) throw notFound('Record');
     if (!target.open) throw conflict(target.closedReason);
@@ -196,17 +218,19 @@ export function registerDocumentRoutes(app: FastifyInstance, svc: Services) {
   app.delete('/api/evidence/links/:linkId', async (req) => {
     const { linkId } = req.params as { linkId: string };
     if (!uuid.safeParse(linkId).success) throw notFound('Link');
-    const link = await one<{ entity_type: string; entity_id: string; unlinked_at: Date | null }>(
+    const link = await one<{ entity_type: string; entity_id: string; file_id: string; unlinked_at: Date | null }>(
       db,
-      'SELECT entity_type, entity_id, unlinked_at FROM evidence_link WHERE id = $1',
+      'SELECT entity_type, entity_id, file_id, unlinked_at FROM evidence_link WHERE id = $1',
       [linkId],
     );
     const rule = link ? RULES[link.entity_type] : undefined;
     if (!link || !rule || link.unlinked_at) throw notFound('Link');
-    const auth = await requireCapability(db, req, rule.capability, { action: 'evidence.unlink', entityType: link.entity_type, entityId: link.entity_id });
+    const auth = await requireCapability(db, req, rule.capabilityFor ? await rule.capabilityFor(db, link.entity_id) : rule.capability, { action: 'evidence.unlink', entityType: link.entity_type, entityId: link.entity_id });
     return withTransaction(db, async (tx) => {
       const target = await rule.resolve(tx, link.entity_id);
       if (!target?.open || link.entity_type === 'ACKNOWLEDGMENT') throw conflict('Evidence on this record can no longer be removed');
+      const locked = rule.lockedReason ? await rule.lockedReason(tx, link.entity_id, link.file_id) : null;
+      if (locked) throw conflict(locked);
       await tx.query(`UPDATE evidence_link SET unlinked_at = now(), unlinked_by = $2, unlink_reason = 'Removed before decision' WHERE id = $1`, [linkId, auth.userId]);
       await audit(tx, { actorId: auth.userId, action: 'evidence.unlink', entityType: target.auditType, entityId: target.auditId, summary: 'Evidence link removed (file retained)', requestId: req.id });
       return { ok: true };

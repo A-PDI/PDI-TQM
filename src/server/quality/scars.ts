@@ -203,7 +203,12 @@ export function registerScarRoutes(app: FastifyInstance, svc: Services) {
     );
     const ncrs = await many(
       db,
-      `SELECT n.id, n.number, n.title, n.status, x.relation, x.linked_at AS "linkedAt" FROM scar_ncr x JOIN ncr n ON n.id = x.ncr_id WHERE x.scar_id = $1 ORDER BY x.linked_at`,
+      `SELECT n.id, n.number, n.title, n.status, x.relation, x.linked_at AS "linkedAt",
+              -- The governing requirement cited on the NCR (exact specification revision and clause, part schedule).
+              nullif(concat_ws(' ', (SELECT d.number || ' Rev ' || cr.revision_label FROM controlled_document_revision cr JOIN controlled_document d ON d.id = cr.document_id WHERE cr.id = n.governing_revision_id),
+                               n.governing_clause,
+                               (SELECT 'part schedule ' || p.part_number || ' Rev ' || br.revision_label FROM baseline_revision br JOIN technical_baseline tb ON tb.id = br.baseline_id JOIN company_part p ON p.id = tb.part_id WHERE br.id = n.governing_baseline_revision_id)), '') AS "governingRequirement"
+         FROM scar_ncr x JOIN ncr n ON n.id = x.ncr_id WHERE x.scar_id = $1 ORDER BY x.linked_at`,
       [id],
     );
     const reopens = await many(

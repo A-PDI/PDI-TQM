@@ -75,6 +75,7 @@ const router = createBrowserRouter([
           { path: '/sources', element: page(master, 'SourcesList') },
           { path: '/sources/:id', element: page(() => import('./pages/Source'), 'Source') },
           { path: '/baselines/:id', element: page(() => import('./pages/Baseline'), 'Baseline') },
+          { path: '/agreements/:id', element: page(() => import('./pages/Agreement'), 'Agreement') },
           { path: '/injectors', element: page(injectors, 'InjectorList') },
           { path: '/injectors/bench', element: page(injectors, 'BenchResults') },
           { path: '/injectors/imports', element: page(injectors, 'ImportList') },

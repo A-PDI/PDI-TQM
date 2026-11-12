@@ -6,6 +6,7 @@ import { DOCUMENT_USAGE, FILENAME_RULE, type ParsedDocumentName, parseDocumentFi
 import { RECORD_TYPES } from '../../shared/sourcing.js';
 import { audit } from '../audit.js';
 import { templateFor } from '../controlled/service.js';
+import { documentAgreementInfo, openRevisionImpactReviews } from '../agreements/specifications.js';
 import { requireCapability } from '../auth.js';
 import { type Queryable, many, one, withTransaction } from '../db.js';
 import { AppError, badRequest, conflict, notFound, unprocessable } from '../errors.js';
@@ -15,7 +16,7 @@ import { FileTooLargeError, type StagedFile } from '../storage.js';
 
 const uuid = z.string().uuid();
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a date in YYYY-MM-DD form');
-const revisionLabel = z.string().trim().regex(/^[0-9A-Za-z]{1,6}$/, 'Revision is 1–6 letters or digits, e.g. 04');
+const revisionLabel = z.string().trim().regex(/^[0-9A-Za-z][0-9A-Za-z.]{0,7}$/, 'Revision is up to 8 letters, digits or dots, e.g. 04 or 1.0').refine((v) => !v.endsWith('.'), 'A revision cannot end with a dot');
 
 type RevisionStatus = 'CURRENT' | 'PENDING' | 'SUPERSEDED';
 
@@ -113,7 +114,7 @@ export function registerControlledDocumentRoutes(app: FastifyInstance, svc: Serv
     const statused = withStatus(revisions, asOf);
     const inForce = statused.find((r) => r.status === 'CURRENT');
     let template: unknown = null;
-    if (inForce && doc.kind !== 'LIBRARY') {
+    if (inForce && doc.kind !== 'LIBRARY' && doc.kind !== 'SPECIFICATION') {
       try {
         const t = await templateFor(db, storage, inForce.id);
         template = {
@@ -141,6 +142,7 @@ export function registerControlledDocumentRoutes(app: FastifyInstance, svc: Serv
       related,
       usage: doc.typeCode ? (DOCUMENT_USAGE[doc.typeCode] ?? null) : null,
       evidenceType: doc.typeCode && RECORD_TYPES[doc.typeCode] ? RECORD_TYPES[doc.typeCode] : null,
+      agreements: await documentAgreementInfo(db, id, revisions.map((r) => r.id)),
     };
   });
 
@@ -245,7 +247,7 @@ async function storeRevision(svc: Services, req: FastifyRequest, actorId: string
       const label = t.revisionLabel.toUpperCase();
       const same = await one<{ sha256: string }>(tx, 'SELECT sha256 FROM controlled_document_revision WHERE document_id = $1 AND upper(revision_label) = $2', [doc.id, label]);
       if (same) {
-        if (same.sha256 === staged.sha256) return { status: 'UNCHANGED' as const, documentId: doc.id, number: doc.number, revisionLabel: label, revisionId: null as string | null };
+        if (same.sha256 === staged.sha256) return { status: 'UNCHANGED' as const, documentId: doc.id, number: doc.number, revisionLabel: label, revisionId: null as string | null, impactedAgreements: 0 };
         throw conflict(`${doc.number} Rev ${label} is already recorded with a different file; issue a new revision instead`);
       }
       const latest = await one<{ effective_from: string; revision_label: string }>(
@@ -277,10 +279,12 @@ async function storeRevision(svc: Services, req: FastifyRequest, actorId: string
         after: { revisionId: rev!.id, fileId: file!.id, sha256: staged.sha256, file: name },
         requestId: req.id,
       });
-      return { status: created ? ('CREATED' as const) : ('ADDED_REVISION' as const), documentId: doc.id, number: doc.number, revisionLabel: label, revisionId: rev!.id };
+      // A classified document's new revision never changes an executed agreement: it opens a review on each one still incorporating an earlier revision.
+      const impactedAgreements = created ? 0 : await openRevisionImpactReviews(tx, doc.id, rev!.id, actorId, req.id);
+      return { status: created ? ('CREATED' as const) : ('ADDED_REVISION' as const), documentId: doc.id, number: doc.number, revisionLabel: label, revisionId: rev!.id, impactedAgreements };
     });
     if (result.status === 'UNCHANGED') await storage.removeOrphan(storageKey);
-    else if (result.revisionId) {
+    else if (result.revisionId && (await one<{ kind: string }>(db, 'SELECT kind FROM controlled_document WHERE id = $1', [result.documentId]))?.kind !== 'SPECIFICATION') {
       // Derive the data-entry definition now so the first record does not wait for it; failures only log.
       await templateFor(db, storage, result.revisionId).catch((err) => req.log.warn({ err }, 'template derivation failed'));
     }
